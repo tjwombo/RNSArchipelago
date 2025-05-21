@@ -98,6 +98,34 @@ namespace Rabit_and_Steel_Test
                 // Shop argv[2] == 2
                 // Player argv[2] == 7
 
+                // full heal argv[0] == 487
+                // level up argv[0] == 488
+                // regen potion argv[0] == 489
+                // essence spell argv[0] == 490
+                // darkness potion argv[0] == 491
+                // quickening potion argv[0] == 492
+                // winged potion argv[0] == 493
+                // essence wit argv[0] == 494
+                // swifthand potion argv[0] == 495
+                // fire potion argv[0] == 496
+                // strength potion argv[0] == 497
+                // gold potion argv[0] == 498
+                // luck potion argv[0] == 499
+                // essence of steel argv[0] == 500
+                // evasion potion argv[0] == 501
+                // longarm potion argv[0] == 502
+                // vitality potion argv[0] == 503
+
+                // opal primary argv[0] == 504
+                // opal secondary argv[0] == 505
+                // opal special argv[0] == 506
+                // opal defensive argv[0] == 507
+                // sapphire argv[0] == 508-511
+                // ruby argv[0] == 512-515
+                // garnet argv[0] == 516-519
+                // emerald argv[0] == 520-523
+
+
                 //TODO: GET DATA FROM ARCHIPELAGO
                 //TODO: Defender special does not work - needs another defender ability to charge, doesn't handle stored charges correct
                 //TODO: Similarly, any defender ability adds a counter to you special that does nothing
@@ -171,8 +199,8 @@ namespace Rabit_and_Steel_Test
                 rnsReloaded.utils.setHallway(new List<Notch> {
                 new Notch(NotchType.IntroRoom, "", 0, 0),
                 // Temp for testing because I'm too lazy to steel yourself lol
-                new Notch(NotchType.Chest, "", 0, 0),
-                new Notch(NotchType.Chest, "", 0, 0),
+                new Notch(NotchType.Shop, "", 0, 0),
+                new Notch(NotchType.Shop, "", 0, 0),
                 new Notch(NotchType.Chest, "", 0, 0),
                 new Notch(NotchType.Chest, "", 0, 0),
                 new Notch(NotchType.Chest, "", 0, Notch.BOSS_FLAG),
@@ -241,7 +269,7 @@ namespace Rabit_and_Steel_Test
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            this.logger.PrintMessage(this.PrintHook("item", returnValue, argc, argv), Color.Gray);
+            this.logger.PrintMessage(this.PrintHook("char", returnValue, argc, argv), Color.Gray);
             if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 int abilityId = (int)rnsReloaded.utils.RValueToLong(argv[0]);
@@ -259,7 +287,7 @@ namespace Rabit_and_Steel_Test
                     *argv[0] = new RValue(availableDefensive[random.Next(availableDefensive.Count)]);
                 }
             }
-            returnValue = this.inventoryHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            returnValue = this.selectCharacterAbilitiesHook!.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
         }
 
