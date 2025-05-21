@@ -1,10 +1,10 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\tjwom\\source\\repos\\Rabit and Steel Test\\",
+  "WorkspaceRootPath": "C:\\Users\\Tim\\Documents\\GitHub\\RNSArchipelago\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{3646891E-7C30-4AE8-9437-FA39E34FCA8F}|Rabit and Steel Test\\Rabit and Steel Test.csproj|c:\\users\\tjwom\\source\\repos\\rabit and steel test\\rabit and steel test\\mod.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3646891E-7C30-4AE8-9437-FA39E34FCA8F}|Rabit and Steel Test\\Rabit and Steel Test.csproj|solutionrelative:rabit and steel test\\mod.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{3646891E-7C30-4AE8-9437-FA39E34FCA8F}|Rabit and Steel Test.csproj|c:\\users\\tim\\documents\\github\\rnsarchipelago\\mod.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3646891E-7C30-4AE8-9437-FA39E34FCA8F}|Rabit and Steel Test.csproj|solutionrelative:mod.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -20,13 +20,13 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Mod.cs",
-              "DocumentMoniker": "C:\\Users\\tjwom\\source\\repos\\Rabit and Steel Test\\Rabit and Steel Test\\Mod.cs",
-              "RelativeDocumentMoniker": "Rabit and Steel Test\\Mod.cs",
-              "ToolTip": "C:\\Users\\tjwom\\source\\repos\\Rabit and Steel Test\\Rabit and Steel Test\\Mod.cs",
-              "RelativeToolTip": "Rabit and Steel Test\\Mod.cs",
-              "ViewState": "AQIAALgAAAAAAAAAAAAswGgAAAAzAAAA",
+              "DocumentMoniker": "C:\\Users\\Tim\\Documents\\GitHub\\RNSArchipelago\\Mod.cs",
+              "RelativeDocumentMoniker": "Mod.cs",
+              "ToolTip": "C:\\Users\\Tim\\Documents\\GitHub\\RNSArchipelago\\Mod.cs",
+              "RelativeToolTip": "Mod.cs",
+              "ViewState": "AgIAACsAAAAAAAAAAAAQwB0AAABAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-19T23:36:54.525Z",
+              "WhenOpened": "2025-05-21T19:14:57.802Z",
               "EditorCaption": ""
             }
           ]
