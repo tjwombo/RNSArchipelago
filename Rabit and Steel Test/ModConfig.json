@@ -1,0 +1,24 @@
+{
+  "ModId": "Rabit_and_Steel_Test",
+  "ModName": "rabitnsteeltest",
+  "ModAuthor": "Me",
+  "ModVersion": "1.0.0",
+  "ModDescription": "Description",
+  "ModDll": "Rabit and Steel Test.dll",
+  "ModIcon": "Preview.png",
+  "ModR2RManagedDll32": "x86/Rabit_and_Steel_Test.dll",
+  "ModR2RManagedDll64": "x64/Rabit_and_Steel_Test.dll",
+  "ModNativeDll32": "",
+  "ModNativeDll64": "",
+  "IsLibrary": false,
+  "ReleaseMetadataFileName": "Rabit_and_Steel_Test.ReleaseMetadata.json",
+  "PluginData": {},
+  "IsUniversalMod": false,
+  "ModDependencies": [ 
+	"reloaded.sharedlib.hooks" ,
+	"RNSReloaded"
+  ],
+  "OptionalDependencies": [],
+  "SupportedAppId": ["rabbitsteel.exe"],
+  "ProjectUrl": ""
+}

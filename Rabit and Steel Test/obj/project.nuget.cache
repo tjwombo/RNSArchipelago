@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "gCYhKf2yLIg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\tjwom\\source\\repos\\Rabit and Steel Test\\Rabit and Steel Test\\Rabit and Steel Test.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\tjwom\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.8\\microsoft.net.illink.tasks.8.0.8.nupkg.sha512",
+    "C:\\Users\\tjwom\\.nuget\\packages\\reloaded.hooks.definitions\\1.11.0\\reloaded.hooks.definitions.1.11.0.nupkg.sha512",
+    "C:\\Users\\tjwom\\.nuget\\packages\\reloaded.mod.interfaces\\2.4.0\\reloaded.mod.interfaces.2.4.0.nupkg.sha512",
+    "C:\\Users\\tjwom\\.nuget\\packages\\reloaded.sharedlib.hooks\\1.9.0\\reloaded.sharedlib.hooks.1.9.0.nupkg.sha512"
+  ],
+  "logs": []
+}

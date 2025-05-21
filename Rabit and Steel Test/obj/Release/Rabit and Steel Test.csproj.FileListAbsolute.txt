@@ -1,0 +1,20 @@
+C:\Users\tjwom\OneDrive\Desktop\Reloaded-II\Mods\Rabit_and_Steel_Test\Preview.png
+C:\Users\tjwom\OneDrive\Desktop\Reloaded-II\Mods\Rabit_and_Steel_Test\ModConfig.json
+C:\Users\tjwom\OneDrive\Desktop\Reloaded-II\Mods\Rabit_and_Steel_Test\Rabit and Steel Test.deps.json
+C:\Users\tjwom\OneDrive\Desktop\Reloaded-II\Mods\Rabit_and_Steel_Test\Rabit and Steel Test.dll
+C:\Users\tjwom\OneDrive\Desktop\Reloaded-II\Mods\Rabit_and_Steel_Test\Rabit and Steel Test.pdb
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit and Steel Test.csproj.AssemblyReference.cache
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit and Steel Test.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit and Steel Test.AssemblyInfoInputs.cache
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit and Steel Test.AssemblyInfo.cs
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit and Steel Test.csproj.CoreCompileInputs.cache
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit an.F0D16DD1.Up2Date
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit and Steel Test.dll
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\refint\Rabit and Steel Test.dll
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\Rabit and Steel Test.pdb
+C:\Users\tjwom\source\repos\Rabit and Steel Test\Rabit and Steel Test\obj\Release\ref\Rabit and Steel Test.dll
+C:\Users\tjwom\OneDrive\Documents\Reloaded-II\Mods\Rabit_and_Steel_Test\Preview.png
+C:\Users\tjwom\OneDrive\Documents\Reloaded-II\Mods\Rabit_and_Steel_Test\ModConfig.json
+C:\Users\tjwom\OneDrive\Documents\Reloaded-II\Mods\Rabit_and_Steel_Test\Rabit and Steel Test.deps.json
+C:\Users\tjwom\OneDrive\Documents\Reloaded-II\Mods\Rabit_and_Steel_Test\Rabit and Steel Test.dll
+C:\Users\tjwom\OneDrive\Documents\Reloaded-II\Mods\Rabit_and_Steel_Test\Rabit and Steel Test.pdb
