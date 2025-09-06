@@ -1,13 +1,11 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
-using RNSReloaded;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Xml.Linq;
+using System.Runtime.InteropServices;
 
 namespace Rabit_and_Steel_Test
 {
@@ -55,76 +53,37 @@ namespace Rabit_and_Steel_Test
                 && this.hooksRef.TryGetTarget(out var hooks)
             )
             {
-                var encounterId = rnsReloaded.ScriptFindId("scr_enemy_add_pattern");
-                var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
-
-                var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
-                this.outskirtsHook =
-                    hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
-                this.outskirtsHook.Activate();
-                this.outskirtsHook.Enable();
-                var outskirtsScriptN = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts_n") - 100000);
-                this.outskirtsHook =
-                    hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
-                this.outskirtsHook.Activate();
-                this.outskirtsHook.Enable();
+                //var encounterId = rnsReloaded.ScriptFindId("scr_enemy_add_pattern"); // unsure what this was for, probably just to have for later use
+                //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
 
 
-                var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item");
+                OopsAllChests(rnsReloaded, hooks); // replaces all fights with chests / shops
+
+
+                /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.CreateTestItem, createItemScript->Functions->Function);
                 this.setItemHook.Activate();
-                this.setItemHook.Enable();
+                this.setItemHook.Enable();*/
 
-                //var charId = rnsReloaded.ScriptFindId("scr_runmenu_charinfo_return");
+                //var charId = rnsReloaded.ScriptFindId("scr_runmenu_charinfo_return"); // unsure what this was for, probably just to see player abiliies and their ids
                 //var charScript = rnsReloaded.GetScriptData(createItemId - 100000);
                 //this.setCharHook = hooks.CreateHook<ScriptDelegate>(this.CharTest, charScript->Functions->Function);
                 //this.setCharHook.Activate();
                 //this.setCharHook.Enable();
 
-                var inventoryId = rnsReloaded.ScriptFindId("scr_itemsys_populate_loot");
+                /*var inventoryId = rnsReloaded.ScriptFindId("scr_itemsys_populate_loot"); // unsure what this was for, probably to force items in chests
                 var inventoryScript = rnsReloaded.GetScriptData(createItemId - 100000);
                 this.inventoryHook = hooks.CreateHook<ScriptDelegate>(this.InventoryTest, inventoryScript->Functions->Function);
                 this.inventoryHook.Activate();
-                this.inventoryHook.Enable();
+                this.inventoryHook.Enable();*/
 
-                var charId = rnsReloaded.ScriptFindId("scr_runmenu_charinfo_return");
-                var charScript = rnsReloaded.GetScriptData(createItemId - 100000);
-                this.selectCharacterAbilitiesHook = hooks.CreateHook<ScriptDelegate>(this.ChooseCharacterAbilities, charScript->Functions->Function);
-                this.selectCharacterAbilitiesHook.Activate();
-                this.selectCharacterAbilitiesHook.Enable();
 
-                // Loot argv[2] == 1
-                // Shop argv[2] == 2
-                // Player argv[2] == 7
+                AddArchipelagoOptionsToMenu(rnsReloaded, hooks); // Adds archipelago as a lobbyType
 
-                // full heal argv[0] == 487
-                // level up argv[0] == 488
-                // regen potion argv[0] == 489
-                // essence spell argv[0] == 490
-                // darkness potion argv[0] == 491
-                // quickening potion argv[0] == 492
-                // winged potion argv[0] == 493
-                // essence wit argv[0] == 494
-                // swifthand potion argv[0] == 495
-                // fire potion argv[0] == 496
-                // strength potion argv[0] == 497
-                // gold potion argv[0] == 498
-                // luck potion argv[0] == 499
-                // essence of steel argv[0] == 500
-                // evasion potion argv[0] == 501
-                // longarm potion argv[0] == 502
-                // vitality potion argv[0] == 503
 
-                // opal primary argv[0] == 504
-                // opal secondary argv[0] == 505
-                // opal special argv[0] == 506
-                // opal defensive argv[0] == 507
-                // sapphire argv[0] == 508-511
-                // ruby argv[0] == 512-515
-                // garnet argv[0] == 516-519
-                // emerald argv[0] == 520-523
-
+                //RandomizePlayerAbilities(rnsReloaded, hooks); // randomize the player abilities
+ 
 
                 //TODO: GET DATA FROM ARCHIPELAGO
                 //TODO: Defender special does not work - needs another defender ability to charge, doesn't handle stored charges correct
@@ -175,6 +134,121 @@ namespace Rabit_and_Steel_Test
             }
         }
 
+        private enum ModificationType
+        {
+            ModifyLiteral,
+            ModifyObject,
+            ModifyArray,
+            InsertToArray,
+        }
+
+        private void ModifyElementVariable(CLayerElementBase* element, String variable, ModificationType modification, params RValue[] value)
+        {
+            if (this.rnsReloadedRef!.TryGetTarget(out var rnsReloaded))
+            {
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
+                RValue* objectToModify = rnsReloaded.FindValue((&instanceValue)->Object, variable);
+                switch (modification)
+                {
+                    case ModificationType.ModifyLiteral:
+                        *objectToModify = value[0];
+                        return;
+                    case ModificationType.ModifyObject:
+                        return;
+                    case ModificationType.ModifyArray:
+                        *objectToModify->Get(value[0].Int32) = value[1];
+                        return;
+                    case ModificationType.InsertToArray:
+                        var args = new RValue[value.Length + 1];
+                        Array.Copy(value, 0, args, 1, value.Length);
+                        args[0] = *objectToModify;
+                        rnsReloaded.ExecuteCodeFunction("array_push", null, null, args);
+                        return;
+                    default:
+                        return;
+                }
+            }
+        }
+
+        private void AddArchipelagoOptionsToMenu(IRNSReloaded rnsReloaded, IReloadedHooks hooks)
+        {
+            var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
+            var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
+            this.inventoryHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoLobbyType, menuScript->Functions->Function);
+            this.inventoryHook.Activate();
+            this.inventoryHook.Enable();
+        }
+
+        private RValue* CreateArchipelagoLobbyType(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            // Create the object
+            returnValue = this.inventoryHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+            if (this.rnsReloadedRef!.TryGetTarget(out var rnsReloaded))
+            {
+                var room = rnsReloaded.GetCurrentRoom();
+                if (room != null)
+                {
+                    
+                    // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+                    var layer = room->Layers.First;
+                    while (layer != null)
+                    {
+                        if (Marshal.PtrToStringAnsi((nint)layer->Name) == "RunMenu_Options")
+                        {
+                            // Find the element in the layer that is the lobby type selector, has name lobby
+                            var element = layer->Elements.First;
+                            while (element != null)
+                            {
+                                var instance = (CLayerInstanceElement*)element;
+                                var instanceValue = new RValue(instance->Instance);
+
+                                if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "name")) == "LOBBY")
+                                {
+                                    ModifyElementVariable(element, "nameXSc", ModificationType.ModifyArray, [new RValue(1), new(0.75)]);
+                                    ModifyElementVariable(element, "nameXSc", ModificationType.InsertToArray, new RValue(0.75));
+
+                                    RValue nameValue = new RValue(0);
+                                    rnsReloaded.CreateString(&nameValue, "ARCHIPELAGO");
+                                    ModifyElementVariable(element, "nameStr", ModificationType.InsertToArray, nameValue);
+
+                                    RValue descValue = new RValue(0);
+                                    rnsReloaded.CreateString(&descValue, "lobby is open for archipelago");
+                                    ModifyElementVariable(element, "descStr", ModificationType.InsertToArray, descValue);
+
+                                    ModifyElementVariable(element, "colorInd", ModificationType.ModifyArray, [new RValue(3), new(8678193)]);
+
+                                    ModifyElementVariable(element, "diffXPos", ModificationType.ModifyArray, [new RValue(0), new(-210)]);
+                                    ModifyElementVariable(element, "diffXPos", ModificationType.ModifyArray, [new RValue(1), new(40)]);
+                                    ModifyElementVariable(element, "diffXPos", ModificationType.ModifyArray, [new RValue(2), new(290)]);
+                                    ModifyElementVariable(element, "diffXPos", ModificationType.InsertToArray, new RValue(540));
+
+                                    ModifyElementVariable(element, "diffYPos", ModificationType.InsertToArray, new RValue(-20));
+
+                                    ModifyElementVariable(element, "maxIndex", ModificationType.ModifyLiteral, new RValue(4));
+
+                                    ModifyElementVariable(element, "selectionWidth", ModificationType.ModifyLiteral, new RValue(250));
+
+                                    return returnValue;
+                                }
+
+                                element = element->Next;
+                            }
+                                
+                        }
+
+                        layer = layer->Next;
+                    }
+                    
+                }
+            }
+            return returnValue;
+        }
+
+
         private bool IsReady(
             [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
         )
@@ -187,6 +261,20 @@ namespace Rabit_and_Steel_Test
             }
             rnsReloaded = null;
             return false;
+        }
+
+        private void OopsAllChests(IRNSReloaded rnsReloaded, IReloadedHooks hooks)
+        {
+            var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
+            this.outskirtsHook =
+                hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
+            this.outskirtsHook.Activate();
+            this.outskirtsHook.Enable();
+            var outskirtsScriptN = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts_n") - 100000);
+            this.outskirtsHook =
+                hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
+            this.outskirtsHook.Activate();
+            this.outskirtsHook.Enable();
         }
 
         private RValue* OutskirtsDetour(
@@ -221,11 +309,12 @@ namespace Rabit_and_Steel_Test
                 else
                 {
                     var args = new List<string>();
+                    var argsType = new List<string>();
                     for (var i = 0; i < argc; i++)
                     {
                         args.Add(rnsReloaded.GetString(argv[i]));
+                        argsType.Add(argv[i]->Type.ToString());
                     }
-
                     return $"{name}({string.Join(", ", args)}) -> {rnsReloaded.GetString(returnValue)}";
                 }
             }
@@ -263,6 +352,15 @@ namespace Rabit_and_Steel_Test
             this.logger.PrintMessage(this.PrintHook("inventory", returnValue, argc, argv), Color.Gray);
             returnValue = this.inventoryHook!.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
+        }
+
+        private void RandomizePlayerAbilities(IRNSReloaded rnsReloaded, IReloadedHooks hooks)
+        {
+            var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item");
+            var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
+            this.selectCharacterAbilitiesHook = hooks.CreateHook<ScriptDelegate>(this.ChooseCharacterAbilities, createItemScript->Functions->Function);
+            this.selectCharacterAbilitiesHook.Activate();
+            this.selectCharacterAbilitiesHook.Enable();
         }
 
         private RValue* ChooseCharacterAbilities(
