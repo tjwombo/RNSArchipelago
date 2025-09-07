@@ -10,7 +10,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
-namespace Rabit_and_Steel_Test
+namespace RnSArchipelago
 {
     public unsafe class Mod : IMod
     {
@@ -29,6 +29,8 @@ namespace Rabit_and_Steel_Test
         private IHook<ScriptDelegate>? inventoryHook;
 
         private IHook<ScriptDelegate>? archipelagoButtonHook;
+
+        private IHook<ScriptDelegate>? lobbySettingsDisplayHook;
 
         private IHook<ScriptDelegate>? archipelagoOptionsHook;
 
@@ -305,6 +307,12 @@ namespace Rabit_and_Steel_Test
                 this.archipelagoOptionsHook.Activate();
                 this.archipelagoOptionsHook.Enable();
 
+                var displayId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobbysettings");
+                var displayScript = rnsReloaded.GetScriptData(displayId - 100000);
+                this.lobbySettingsDisplayHook = hooks.CreateHook<ScriptDelegate>(this.UpdateLobbySettingsDisplay, displayScript->Functions->Function);
+                this.lobbySettingsDisplayHook.Activate();
+                this.lobbySettingsDisplayHook.Enable();
+
                 var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
                 var nameScript = rnsReloaded.GetScriptData(nameId - 100000);
                 this.setNameHook = hooks.CreateHook<ScriptDelegate>(this.UpdateLobbySettingsName, nameScript->Functions->Function);
@@ -329,6 +337,16 @@ namespace Rabit_and_Steel_Test
                 this.archipelagoOptionsReturnHook.Activate();
                 this.archipelagoOptionsReturnHook.Enable();
             }
+        }
+
+        // An empty hook used when invoking a script isn't feasible, so we create a hook to invoke original function that way
+        private RValue* UpdateLobbySettingsDisplay(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            this.logger.PrintMessage(this.PrintHook("disp", returnValue, argc, argv), Color.Red);
+            this.lobbySettingsDisplayHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
         }
 
         // An empty hook used when invoking a script isn't feasible, so we create a hook to invoke original function that way
