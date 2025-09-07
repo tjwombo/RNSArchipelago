@@ -1,11 +1,14 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using RNSReloaded;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Xml.Linq;
 
 namespace Rabit_and_Steel_Test
 {
@@ -25,20 +28,45 @@ namespace Rabit_and_Steel_Test
 
         private IHook<ScriptDelegate>? inventoryHook;
 
+        private IHook<ScriptDelegate>? archipelagoButtonHook;
+
+        private IHook<ScriptDelegate>? archipelagoOptionsHook;
+
+        private IHook<ScriptDelegate>? setNameHook;
+        private IHook<ScriptDelegate>? setDescHook;
+        private IHook<ScriptDelegate>? setPassHook;
+        private IHook<ScriptDelegate>? setNumHook;
+
+        private IHook<ScriptDelegate>? archipelagoOptionsReturnHook;
+
+        private IHook<ScriptDelegate>? archipelagoWebsocketHook;
+
         private IHook<ScriptDelegate>? selectCharacterAbilitiesHook;
         private List<int> availablePrimary = new List<int>();
         private List<int> availableSecondary = new List<int>();
         private List<int> availableSpecial = new List<int>();
         private List<int> availableDefensive = new List<int>();
 
+        private string archipelagoAddress = "archipelago.gg:12345";
+        private string archipelagoName = "Player";
+        private string archipelagoPassword = "";
+        private int archipelagoNum = 4;
+
+
+        private string originalName = "";
+        private string originalDesc = "";
+        private string originalPass = "";
+        private int originalNum = 4;
+        private bool returnUpdate = false;
+
         public void Start(IModLoaderV1 loader)
         {
             this.rnsReloadedRef = loader.GetController<IRNSReloaded>();
-            this.hooksRef = loader.GetController<IReloadedHooks>()!;
+            this.hooksRef = loader.GetController<IReloadedHooks>();
 
             this.logger = loader.GetLogger();
 
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            if (this.IsReady(out var rnsReloaded))
             {
                 rnsReloaded.OnReady += this.Ready;
             }
@@ -47,17 +75,14 @@ namespace Rabit_and_Steel_Test
         public void Ready()
         {
             if (
-                this.rnsReloadedRef != null
-                && this.rnsReloadedRef.TryGetTarget(out var rnsReloaded)
+                this.IsReady(out var rnsReloaded)
                 && this.hooksRef != null
                 && this.hooksRef.TryGetTarget(out var hooks)
             )
             {
+
                 //var encounterId = rnsReloaded.ScriptFindId("scr_enemy_add_pattern"); // unsure what this was for, probably just to have for later use
                 //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
-
-
-                OopsAllChests(rnsReloaded, hooks); // replaces all fights with chests / shops
 
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
@@ -79,7 +104,10 @@ namespace Rabit_and_Steel_Test
                 this.inventoryHook.Enable();*/
 
 
-                AddArchipelagoOptionsToMenu(rnsReloaded, hooks); // Adds archipelago as a lobbyType
+                AddArchipelagoButtonToMenu(); // Adds archipelago as a lobbyType
+                AddArchipelagoOptionsToMenu(); // Adds the options for archipelago
+                SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
+
 
 
                 //RandomizePlayerAbilities(rnsReloaded, hooks); // randomize the player abilities
@@ -142,13 +170,15 @@ namespace Rabit_and_Steel_Test
             InsertToArray,
         }
 
+        // Helper function to easily modify variables of an element
         private void ModifyElementVariable(CLayerElementBase* element, String variable, ModificationType modification, params RValue[] value)
         {
-            if (this.rnsReloadedRef!.TryGetTarget(out var rnsReloaded))
+            if (this.IsReady(out var rnsReloaded))
             {
                 var instance = (CLayerInstanceElement*)element;
                 var instanceValue = new RValue(instance->Instance);
                 RValue* objectToModify = rnsReloaded.FindValue((&instanceValue)->Object, variable);
+
                 switch (modification)
                 {
                     case ModificationType.ModifyLiteral:
@@ -171,24 +201,36 @@ namespace Rabit_and_Steel_Test
             }
         }
 
-        private void AddArchipelagoOptionsToMenu(IRNSReloaded rnsReloaded, IReloadedHooks hooks)
+        // Set up the hooks relating to archipelago options
+        private void AddArchipelagoButtonToMenu()
         {
-            var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
-            var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
-            this.inventoryHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoLobbyType, menuScript->Functions->Function);
-            this.inventoryHook.Activate();
-            this.inventoryHook.Enable();
+            if (
+                this.IsReady(out var rnsReloaded, out var hooks)
+            )
+            {
+                var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
+                var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
+                this.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoLobbyType, menuScript->Functions->Function);
+                this.archipelagoButtonHook.Activate();
+                this.archipelagoButtonHook.Enable();
+            }
         }
 
+        // Modify the lobby types to have an archipelago option
         private RValue* CreateArchipelagoLobbyType(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
             // Create the object
-            returnValue = this.inventoryHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            returnValue = this.archipelagoButtonHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
-            if (this.rnsReloadedRef!.TryGetTarget(out var rnsReloaded))
+            if (this.IsReady(out var rnsReloaded))
             {
+                originalName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(0));
+                originalDesc = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(1));
+                originalPass = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));
+                originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(4)->Real;
+
                 var room = rnsReloaded.GetCurrentRoom();
                 if (room != null)
                 {
@@ -232,14 +274,16 @@ namespace Rabit_and_Steel_Test
 
                                     ModifyElementVariable(element, "selectionWidth", ModificationType.ModifyLiteral, new RValue(250));
 
+                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                                    {
+                                        ModifyElementVariable(element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
+                                    }
+
                                     return returnValue;
                                 }
-
                                 element = element->Next;
-                            }
-                                
+                            }  
                         }
-
                         layer = layer->Next;
                     }
                     
@@ -248,35 +292,394 @@ namespace Rabit_and_Steel_Test
             return returnValue;
         }
 
+        // Set up the hooks relating to archipelago options
+        private void AddArchipelagoOptionsToMenu()
+        {
+            if (
+                this.IsReady(out var rnsReloaded, out var hooks)
+            )
+            {
+                var optionsId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_setup");
+                var optionsScript = rnsReloaded.GetScriptData(optionsId - 100000);
+                this.archipelagoOptionsHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoOptions, optionsScript->Functions->Function);
+                this.archipelagoOptionsHook.Activate();
+                this.archipelagoOptionsHook.Enable();
 
-        private bool IsReady(
-            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
+                var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
+                var nameScript = rnsReloaded.GetScriptData(nameId - 100000);
+                this.setNameHook = hooks.CreateHook<ScriptDelegate>(this.UpdateLobbySettingsName, nameScript->Functions->Function);
+                this.setNameHook.Activate();
+                this.setNameHook.Enable();
+
+                var descId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_desc");
+                var descScript = rnsReloaded.GetScriptData(descId - 100000);
+                this.setDescHook = hooks.CreateHook<ScriptDelegate>(this.UpdateLobbySettingsDesc, descScript->Functions->Function);
+                this.setDescHook.Activate();
+                this.setDescHook.Enable();
+
+                var passId = rnsReloaded.ScriptFindId("textboxcomp_set_password");
+                var passScript = rnsReloaded.GetScriptData(passId - 100000);
+                this.setPassHook = hooks.CreateHook<ScriptDelegate>(this.UpdateLobbySettingsPass, passScript->Functions->Function);
+                this.setPassHook.Activate();
+                this.setPassHook.Enable();
+
+                var returnId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_return");
+                var returnScript = rnsReloaded.GetScriptData(returnId - 100000);
+                this.archipelagoOptionsReturnHook = hooks.CreateHook<ScriptDelegate>(this.UpdateLobbySettings, returnScript->Functions->Function);
+                this.archipelagoOptionsReturnHook.Activate();
+                this.archipelagoOptionsReturnHook.Enable();
+            }
+        }
+
+        // An empty hook used when invoking a script isn't feasible, so we create a hook to invoke original function that way
+        private RValue* empty(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            if (this.rnsReloadedRef != null)
-            {
-                this.rnsReloadedRef.TryGetTarget(out var rnsReloadedRef);
-                rnsReloaded = rnsReloadedRef;
-                return rnsReloaded != null;
-            }
-            rnsReloaded = null;
-            return false;
+            return returnValue;
         }
 
-        private void OopsAllChests(IRNSReloaded rnsReloaded, IReloadedHooks hooks)
+        // Modify the archipelago lobby settings to display appropriate information
+        private RValue* CreateArchipelagoOptions(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
         {
-            var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
-            this.outskirtsHook =
-                hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
-            this.outskirtsHook.Activate();
-            this.outskirtsHook.Enable();
-            var outskirtsScriptN = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts_n") - 100000);
-            this.outskirtsHook =
-                hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
-            this.outskirtsHook.Activate();
-            this.outskirtsHook.Enable();
+            returnValue = this.archipelagoOptionsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                // If the lobby type is archipelago set up the websocket
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                {
+                    var room = rnsReloaded.GetCurrentRoom();
+                    if (room != null)
+                    {
+
+                        // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+                        var layer = room->Layers.First;
+                        while (layer != null)
+                        {
+                            if (Marshal.PtrToStringAnsi((nint)layer->Name) == "RunMenu_Options")
+                            {
+                                // Find the element in the layer that is the lobby type selector, has name lobby
+                                var element = layer->Elements.First;
+
+                                CLayerElementBase* passwordBox = null;
+                                while (element != null)
+                                {
+                                    var instance = (CLayerInstanceElement*)element;
+                                    var instanceValue = new RValue(instance->Instance);
+
+                                    switch (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "text")))
+                                    {
+                                        case "LOBBY SETTINGS":
+                                            RValue lobbyVar = new RValue(0);
+                                            rnsReloaded.CreateString(&lobbyVar, "ARCHIPELAGO SETTINGS");
+                                            ModifyElementVariable(element, "text", ModificationType.ModifyLiteral, lobbyVar);
+
+                                            break;
+                                        case "name":
+                                            RValue nameVar = new RValue(0);
+                                            rnsReloaded.CreateString(&nameVar, "Archipelago name");
+                                            ModifyElementVariable(element, "text", ModificationType.ModifyLiteral, nameVar);
+
+                                            RValue nameValue = new RValue(0);
+                                            rnsReloaded.CreateString(&nameValue, archipelagoName);
+                                            ModifyElementVariable(element, "defText", ModificationType.ModifyLiteral, nameValue);
+
+                                            break;
+                                        case "description":
+                                            RValue descVar = new RValue(0);
+                                            rnsReloaded.CreateString(&descVar, "Archipelago address");
+                                            ModifyElementVariable(element, "text", ModificationType.ModifyLiteral, descVar);
+
+                                            RValue descValue = new RValue(0);
+                                            rnsReloaded.CreateString(&descValue, archipelagoAddress);
+                                            ModifyElementVariable(element, "defText", ModificationType.ModifyLiteral, descValue);
+
+                                            break;
+                                        case "set password:":
+                                            RValue passVar = new RValue(0);
+                                            rnsReloaded.CreateString(&passVar, "enter password:");
+                                            ModifyElementVariable(element, "text", ModificationType.ModifyLiteral, passVar);
+
+                                            RValue passValue = new RValue(0);
+                                            rnsReloaded.CreateString(&passValue, archipelagoPassword);
+                                            *rnsReloaded.utils.GetGlobalVar("lobbyPassword") = passValue;
+
+                                            break;
+                                        case "[ \"no password\",\"password locked\" ]":
+                                            if (archipelagoPassword != "")
+                                            {
+                                                ModifyElementVariable(element, "cursorPos", ModificationType.ModifyLiteral, new RValue(1));
+                                            } else
+                                            {
+                                                ModifyElementVariable(element, "cursorPos", ModificationType.ModifyLiteral, new RValue(0));
+                                            }
+
+                                            RValue dummy = new RValue(0);
+                                            var passId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_passwordlock");
+                                            var passScript = rnsReloaded.GetScriptData(passId - 100000);
+                                            var createPasswordBoxHook = hooks.CreateHook<ScriptDelegate>(this.empty, passScript->Functions->Function);
+                                            createPasswordBoxHook!.OriginalFunction.Invoke(instance->Instance, other, &dummy, 0, argv);
+
+                                            break;
+                                        case "[ \"single player\",\"two players\",\"three players\",\"four players\" ]":
+                                            ModifyElementVariable(element, "cursorPos", ModificationType.ModifyLiteral, new RValue(archipelagoNum-1));
+                                            break;
+                                        default:
+                                            break;
+                                    }
+
+                                    element = element->Next;
+                                }
+                                return returnValue;
+                            }
+
+                            layer = layer->Next;
+                        }
+
+                    }
+                }
+            }
+            return returnValue;
         }
 
+        // Update lobby settings such that archipelago and normal lobby settings are not coupled
+        private RValue* UpdateLobbySettings(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                {
+
+                    RValue originalPassVal = new RValue(0);
+                    rnsReloaded.CreateString(&originalPassVal, originalPass);
+                    *rnsReloaded.utils.GetGlobalVar("lobbyPassword") = originalPassVal;
+
+                    archipelagoNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
+
+                    returnUpdate = true;
+                    returnValue = this.archipelagoOptionsReturnHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                    returnUpdate = false;
+
+                    *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4) = new RValue(originalNum);
+                }
+                else
+                {
+                    originalPass = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));
+
+                    originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
+
+                    returnValue = this.archipelagoOptionsReturnHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                }
+                return returnValue;
+            }
+            returnValue = this.archipelagoOptionsReturnHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
+        }
+
+        // Update specifically the name
+        private RValue* UpdateLobbySettingsName(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            returnValue = this.setNameHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                {
+                    var room = rnsReloaded.GetCurrentRoom();
+                    if (room != null)
+                    {
+
+                        // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+                        var layer = room->Layers.First;
+                        while (layer != null)
+                        {
+                            if (Marshal.PtrToStringAnsi((nint)layer->Name) == "RunMenu_Options")
+                            {
+                                // Find the element in the layer that is the lobby type selector, has name lobby
+                                var element = layer->Elements.First;
+                                while (element != null)
+                                {
+                                    var instance = (CLayerInstanceElement*)element;
+                                    var instanceValue = new RValue(instance->Instance);
+
+                                    switch (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "text")))
+                                    {
+                                        case "Archipelago name":
+                                            archipelagoName = rnsReloaded.GetString(rnsReloaded.FindValue(instanceValue.Object, "defText"));
+                                            RValue originalNameVal = new RValue(0);
+                                            rnsReloaded.CreateString(&originalNameVal, originalName);
+                                            *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0) = originalNameVal;
+
+                                            return returnValue;
+                                        default:
+                                            break;
+                                    }
+
+                                    element = element->Next;
+                                }
+
+                            }
+                            layer = layer->Next;
+                        }
+                    }
+                }
+                else
+                {
+                    originalName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0));
+                }
+            }
+            return returnValue;
+        }
+
+        // Update specifically the description/address
+        private RValue* UpdateLobbySettingsDesc(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            returnValue = this.setDescHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                {
+                    var room = rnsReloaded.GetCurrentRoom();
+                    if (room != null)
+                    {
+
+                        // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+                        var layer = room->Layers.First;
+                        while (layer != null)
+                        {
+                            if (Marshal.PtrToStringAnsi((nint)layer->Name) == "RunMenu_Options")
+                            {
+                                // Find the element in the layer that is the lobby type selector, has name lobby
+                                var element = layer->Elements.First;
+                                while (element != null)
+                                {
+                                    var instance = (CLayerInstanceElement*)element;
+                                    var instanceValue = new RValue(instance->Instance);
+
+                                    switch (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "text")))
+                                    {
+                                        case "Archipelago address":
+                                            archipelagoAddress = rnsReloaded.GetString(rnsReloaded.FindValue(instanceValue.Object, "defText"));
+                                            RValue originalDescVal = new RValue(0);
+                                            rnsReloaded.CreateString(&originalDescVal, originalDesc);
+                                            *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1) = originalDescVal;
+
+                                            return returnValue;
+                                        default:
+                                            break;
+                                    }
+
+                                    element = element->Next;
+                                }
+                                
+                            }
+                            layer = layer->Next;
+                        }
+                    }
+                }
+                else
+                {
+                    originalDesc = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
+                }
+            }
+            
+            return returnValue;
+        }
+
+        // Update specifically the password
+        private RValue* UpdateLobbySettingsPass(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            returnValue = this.setPassHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                {
+                    archipelagoPassword = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));
+
+                    // If the update is because of leaving, instead of entering the textbox, we need to restore the original password back
+                    if (returnUpdate)
+                    {
+                        RValue originalPassVal = new RValue(0);
+                        rnsReloaded.CreateString(&originalPassVal, originalPass);
+                        *rnsReloaded.utils.GetGlobalVar("lobbyPassword") = originalPassVal;
+                    }
+                }
+                else
+                {
+                    originalPass = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));
+                }
+            }
+            return returnValue;
+        }
+
+        // Create the hooks to set up the websocket
+        private void SetupArchipelagoWebsocket()
+        {
+            if (
+                this.IsReady(out var rnsReloaded, out var hooks)
+            )
+            {
+                var menuId = rnsReloaded.ScriptFindId("scr_runmenu_main_startrun_multi");
+                var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
+                this.archipelagoWebsocketHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoWebsocket, menuScript->Functions->Function);
+                this.archipelagoWebsocketHook.Activate();
+                this.archipelagoWebsocketHook.Enable();
+            }
+        }
+
+        // Create and validate the websocket connection to archipelago before moving to the character selection room
+        private RValue* CreateArchipelagoWebsocket(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            if (this.IsReady(out var rnsReloaded))
+            {
+                // If the lobby type is archipelago set up the websocket
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                {
+                    // Validate archipelago options / connection
+
+                    // Show error and return if connection problem
+
+
+                    // Setup as if a friends only lobby or solo lobby based on the number of players
+                    if (archipelagoNum > 1)
+                    {
+                        *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
+                    } else
+                    {
+                        *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(0);
+                    }
+                    returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+                    // Return to archipelago lobby
+                    *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
+                } else
+                {
+                    // Otherwise continue normally
+                    returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                }
+                
+            }
+           
+            return returnValue;
+        }
+
+        // Changes the outskirts routing to only have shots and chests besides the boss
         private RValue* OutskirtsDetour(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
@@ -298,9 +701,10 @@ namespace Rabit_and_Steel_Test
             return returnValue;
         }
 
+        // Prints information about the function that is getting hooked, namely the amount of arguments and their values
         private string PrintHook(string name, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            if (this.IsReady(out var rnsReloaded))
             {
                 if (argc == 0)
                 {
@@ -323,7 +727,6 @@ namespace Rabit_and_Steel_Test
                 return string.Empty;
             }
         }
-
 
         private RValue* CreateTestItem(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
@@ -354,21 +757,29 @@ namespace Rabit_and_Steel_Test
             return returnValue;
         }
 
-        private void RandomizePlayerAbilities(IRNSReloaded rnsReloaded, IReloadedHooks hooks)
+        // Sets up the hooks to randomize the player abiliteis
+        private void RandomizePlayerAbilities()
         {
-            var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item");
-            var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
-            this.selectCharacterAbilitiesHook = hooks.CreateHook<ScriptDelegate>(this.ChooseCharacterAbilities, createItemScript->Functions->Function);
-            this.selectCharacterAbilitiesHook.Activate();
-            this.selectCharacterAbilitiesHook.Enable();
+            if (
+                this.IsReady(out var rnsReloaded)
+                && this.hooksRef != null
+                && this.hooksRef.TryGetTarget(out var hooks)
+            )
+            {
+                var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item");
+                var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
+                this.selectCharacterAbilitiesHook = hooks.CreateHook<ScriptDelegate>(this.ChooseCharacterAbilities, createItemScript->Functions->Function);
+                this.selectCharacterAbilitiesHook.Activate();
+                this.selectCharacterAbilitiesHook.Enable();
+            }
         }
 
+        // Randomly assign an ability of the same type from the available list of abilities
         private RValue* ChooseCharacterAbilities(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            this.logger.PrintMessage(this.PrintHook("char", returnValue, argc, argv), Color.Gray);
-            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            if (this.IsReady(out var rnsReloaded))
             {
                 int abilityId = (int)rnsReloaded.utils.RValueToLong(argv[0]);
                 if (isPrimary(abilityId))
@@ -385,6 +796,7 @@ namespace Rabit_and_Steel_Test
                     *argv[0] = new RValue(availableDefensive[random.Next(availableDefensive.Count)]);
                 }
             }
+
             returnValue = this.selectCharacterAbilitiesHook!.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
         }
@@ -457,6 +869,38 @@ namespace Rabit_and_Steel_Test
         private bool isAncient(int abilityId)
         {
             return abilityId == 258 || abilityId == 265 || abilityId == 272 || abilityId == 279;
+        }
+
+        // Helper function to check if the weakreference are ready and get the strong reference
+        private bool IsReady(
+            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
+        )
+        {
+            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
+            {
+                return rnsReloaded != null;
+            }
+            rnsReloaded = null;
+            return false;
+        }
+
+        private bool IsReady(
+            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded,
+            [MaybeNullWhen(false), NotNullWhen(true)] out IReloadedHooks hooks
+        )
+        {
+            if (
+            this.rnsReloadedRef != null
+            && this.rnsReloadedRef.TryGetTarget(out rnsReloaded)
+            && this.hooksRef != null
+            && this.hooksRef.TryGetTarget(out hooks)
+        )
+            {
+                return rnsReloaded != null;
+            }
+            rnsReloaded = null;
+            hooks = null;
+            return false;
         }
 
         public void Suspend()
