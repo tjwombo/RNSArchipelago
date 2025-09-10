@@ -32,6 +32,8 @@ namespace RnSArchipelago
 
         private IHook<ScriptDelegate>? inventoryHook;
 
+        private IHook<ScriptDelegate>? endGameHook;
+
         
 
         private IHook<ScriptDelegate>? archipelagoWebsocketHook;
@@ -41,8 +43,6 @@ namespace RnSArchipelago
         private List<int> availableSecondary = new List<int>();
         private List<int> availableSpecial = new List<int>();
         private List<int> availableDefensive = new List<int>();
-
-        private List<IHook<ScriptDelegate>?> roomSpecificHooks = new List<IHook<ScriptDelegate>?>();
 
         LobbySettings lobby;
 
@@ -72,8 +72,6 @@ namespace RnSArchipelago
 
                 lobby = new LobbySettings(rnsReloaded, logger, hooks);
 
-                roomSpecificHooks.Add(lobby.scuffedLobbySettingsDisplayHook);
-
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.CreateTestItem, createItemScript->Functions->Function);
@@ -95,6 +93,9 @@ namespace RnSArchipelago
 
                 AddArchipelagoButtonToMenu(); // Adds archipelago as a lobbyType
                 AddArchipelagoOptionsToMenu(); // Adds the options for archipelago
+
+
+
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
 
 
@@ -153,7 +154,7 @@ namespace RnSArchipelago
 
         
 
-        private void DisableRoomHooks()
+        /*private void DisableRoomHooks()
         {
             foreach (var hook in roomSpecificHooks)
             {
@@ -162,7 +163,7 @@ namespace RnSArchipelago
                     hook.Disable();
                 }
             }
-        }
+        }*/
 
         // Set up the hooks relating to archipelago options
         private void AddArchipelagoButtonToMenu()
@@ -191,24 +192,24 @@ namespace RnSArchipelago
                 lobby.archipelagoOptionsHook.Activate();
                 lobby.archipelagoOptionsHook.Enable();
 
-                var displayId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobbysettings");
+                /*var displayId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobbysettings");
                 var displayScript = rnsReloaded.GetScriptData(displayId - 100000);
                 lobby.lobbySettingsDisplayHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplay, displayScript->Functions->Function);
                 lobby.lobbySettingsDisplayHook.Activate();
-                lobby.lobbySettingsDisplayHook.Enable();
+                lobby.lobbySettingsDisplayHook.Enable();*/
 
                 // VERY SCUFFED WAY TO MAKING A STEP FUNCTION
-                var osId = rnsReloaded.CodeFunctionFind("os_get_info");
+                /*var osId = rnsReloaded.CodeFunctionFind("os_get_info");
                 if (osId.HasValue)
                 {
                     var osScript = rnsReloaded.GetScriptData(osId.Value);
                     this.logger.PrintMessage("" + (osScript != null), Color.Red);
-                    lobby.scuffedLobbySettingsDisplayHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayOsRedirect, osScript->Functions->Function);
-                    lobby.scuffedLobbySettingsDisplayHook.Activate();
-                    lobby.scuffedLobbySettingsDisplayHook.Enable();
-                }
+                    lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, osScript->Functions->Function);
+                    lobby.lobbySettingsDisplayStepHook.Activate();
+                    //lobby.scuffedLobbySettingsDisplayHook.Enable();
+                }*/
 
-                var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
+                /*var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
                 var nameScript = rnsReloaded.GetScriptData(nameId - 100000);
                 lobby.setNameHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsName, nameScript->Functions->Function);
                 lobby.setNameHook.Activate();
@@ -224,13 +225,20 @@ namespace RnSArchipelago
                 var passScript = rnsReloaded.GetScriptData(passId - 100000);
                 lobby.setPassHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsPass, passScript->Functions->Function);
                 lobby.setPassHook.Activate();
-                lobby.setPassHook.Enable();
+                lobby.setPassHook.Enable();*/
 
                 var returnId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_return");
                 var returnScript = rnsReloaded.GetScriptData(returnId - 100000);
                 lobby.archipelagoOptionsReturnHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettings, returnScript->Functions->Function);
                 lobby.archipelagoOptionsReturnHook.Activate();
                 lobby.archipelagoOptionsReturnHook.Enable();
+
+                var titleId = rnsReloaded.ScriptFindId("scr_runmenu_char_return");
+                var titleScript = rnsReloaded.GetScriptData(titleId - 100000);
+                lobby.lobbyTitleHook = hooks.CreateHook<ScriptDelegate>(lobby.LobbyToTitle, titleScript->Functions->Function);
+                lobby.lobbyTitleHook.Activate();
+                lobby.lobbyTitleHook.Enable();
+
             }
         }
 
@@ -266,6 +274,7 @@ namespace RnSArchipelago
 
 
                     // Setup as if a friends only lobby or solo lobby based on the number of players
+                    this.logger.PrintMessage("" + lobby.ArchipelagoNum, Color.Red);
                     if (lobby.ArchipelagoNum > 1)
                     {
                         *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
