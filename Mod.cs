@@ -199,7 +199,7 @@ namespace RnSArchipelago
                 lobby.lobbySettingsDisplayHook.Enable();*/
 
                 // VERY SCUFFED WAY TO MAKING A STEP FUNCTION
-                /*var osId = rnsReloaded.CodeFunctionFind("os_get_info");
+                var osId = rnsReloaded.CodeFunctionFind("os_get_info");
                 if (osId.HasValue)
                 {
                     var osScript = rnsReloaded.GetScriptData(osId.Value);
@@ -207,25 +207,7 @@ namespace RnSArchipelago
                     lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, osScript->Functions->Function);
                     lobby.lobbySettingsDisplayStepHook.Activate();
                     //lobby.scuffedLobbySettingsDisplayHook.Enable();
-                }*/
-
-                /*var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
-                var nameScript = rnsReloaded.GetScriptData(nameId - 100000);
-                lobby.setNameHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsName, nameScript->Functions->Function);
-                lobby.setNameHook.Activate();
-                lobby.setNameHook.Enable();
-
-                var descId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_desc");
-                var descScript = rnsReloaded.GetScriptData(descId - 100000);
-                lobby.setDescHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDesc, descScript->Functions->Function);
-                lobby.setDescHook.Activate();
-                lobby.setDescHook.Enable();
-
-                var passId = rnsReloaded.ScriptFindId("textboxcomp_set_password");
-                var passScript = rnsReloaded.GetScriptData(passId - 100000);
-                lobby.setPassHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsPass, passScript->Functions->Function);
-                lobby.setPassHook.Activate();
-                lobby.setPassHook.Enable();*/
+                }
 
                 var returnId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_return");
                 var returnScript = rnsReloaded.GetScriptData(returnId - 100000);
