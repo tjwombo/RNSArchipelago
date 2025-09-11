@@ -4,13 +4,8 @@ using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.IO;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
 
 namespace RnSArchipelago
 {
@@ -152,19 +147,6 @@ namespace RnSArchipelago
             }
         }
 
-        
-
-        /*private void DisableRoomHooks()
-        {
-            foreach (var hook in roomSpecificHooks)
-            {
-                if (hook != null)
-                {
-                    hook.Disable();
-                }
-            }
-        }*/
-
         // Set up the hooks relating to archipelago options
         private void AddArchipelagoButtonToMenu()
         {
@@ -192,13 +174,7 @@ namespace RnSArchipelago
                 lobby.archipelagoOptionsHook.Activate();
                 lobby.archipelagoOptionsHook.Enable();
 
-                /*var displayId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobbysettings");
-                var displayScript = rnsReloaded.GetScriptData(displayId - 100000);
-                lobby.lobbySettingsDisplayHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplay, displayScript->Functions->Function);
-                lobby.lobbySettingsDisplayHook.Activate();
-                lobby.lobbySettingsDisplayHook.Enable();*/
-
-                // VERY SCUFFED WAY TO MAKING A STEP FUNCTION
+                // Create a sudo step function to run while the display is visible
                 var osId = rnsReloaded.CodeFunctionFind("os_get_info");
                 if (osId.HasValue)
                 {
@@ -206,8 +182,25 @@ namespace RnSArchipelago
                     this.logger.PrintMessage("" + (osScript != null), Color.Red);
                     lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, osScript->Functions->Function);
                     lobby.lobbySettingsDisplayStepHook.Activate();
-                    //lobby.scuffedLobbySettingsDisplayHook.Enable();
                 }
+
+                var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
+                var nameScript = rnsReloaded.GetScriptData(nameId - 100000);
+                lobby.setNameHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsName, nameScript->Functions->Function);
+                lobby.setNameHook.Activate();
+                lobby.setNameHook.Enable();
+
+                var descId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_desc");
+                var descScript = rnsReloaded.GetScriptData(descId - 100000);
+                lobby.setDescHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDesc, descScript->Functions->Function);
+                lobby.setDescHook.Activate();
+                lobby.setDescHook.Enable();
+
+                var passId = rnsReloaded.ScriptFindId("textboxcomp_set_password");
+                var passScript = rnsReloaded.GetScriptData(passId - 100000);
+                lobby.setPassHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsPass, passScript->Functions->Function);
+                lobby.setPassHook.Activate();
+                lobby.setPassHook.Enable();
 
                 var returnId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_return");
                 var returnScript = rnsReloaded.GetScriptData(returnId - 100000);
