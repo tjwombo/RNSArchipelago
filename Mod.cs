@@ -1,6 +1,7 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using RnSArchipelago.Utils;
 using RNSReloaded;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
@@ -29,7 +30,6 @@ namespace RnSArchipelago
 
         private IHook<ScriptDelegate>? endGameHook;
 
-        
 
         private IHook<ScriptDelegate>? archipelagoWebsocketHook;
 
@@ -40,6 +40,7 @@ namespace RnSArchipelago
         private List<int> availableDefensive = new List<int>();
 
         LobbySettings lobby;
+        ArchipelagoConnection conn;
 
         public void Start(IModLoaderV1 loader)
         {
@@ -66,6 +67,7 @@ namespace RnSArchipelago
                 //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
 
                 lobby = new LobbySettings(rnsReloaded, logger, hooks);
+                conn = new ArchipelagoConnection(rnsReloaded, logger, hooks);
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
@@ -230,7 +232,28 @@ namespace RnSArchipelago
                 this.archipelagoWebsocketHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoWebsocket, menuScript->Functions->Function);
                 this.archipelagoWebsocketHook.Activate();
                 this.archipelagoWebsocketHook.Enable();
+
+                var messageId = rnsReloaded.ScriptFindId("scr_chat_add_message");
+                var messageScript = rnsReloaded.GetScriptData(messageId - 100000);
+                this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, messageScript->Functions->Function);
+                this.setItemHook.Activate();
+                this.setItemHook.Enable();
             }
+        }
+
+        private RValue* test(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            if (
+                this.IsReady(out var rnsReloaded, out var hooks)
+            )
+            {
+                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "message", returnValue, argc, argv), Color.Gray);
+                
+            }
+            returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
         }
 
         // Create and validate the websocket connection to archipelago before moving to the character selection room
@@ -244,6 +267,10 @@ namespace RnSArchipelago
                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                 {
                     // Validate archipelago options / connection
+                    ArchipelagoConfig config = ArchipelagoConfig.Instance;
+                    config.setConfig(lobby.ArchipelagoName, lobby.ArchipelagoAddress, lobby.ArchipelagoNum, lobby.ArchipelagoPassword);
+                    conn.StartConnection();
+
 
                     // Show error and return if connection problem
 

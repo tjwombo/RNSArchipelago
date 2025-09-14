@@ -1,11 +1,16 @@
-﻿using RNSReloaded.Interfaces;
-using RNSReloaded.Interfaces.Structs;
+﻿using RNSReloaded.Interfaces.Structs;
+using RNSReloaded.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace RnSArchipelago
+namespace RnSArchipelago.Utils
 {
-    internal unsafe static class Util
+    internal unsafe static class HookUtil
     {
-        public enum ModificationType
+        internal enum ModificationType
         {
             ModifyLiteral,
             ModifyObject,
@@ -14,7 +19,7 @@ namespace RnSArchipelago
         }
 
         // Helper function to easily modify variables of an element
-        public static  void ModifyElementVariable(IRNSReloaded rnsReloaded, CLayerElementBase* element, String variable, ModificationType modification, params RValue[] value)
+        internal static void ModifyElementVariable(IRNSReloaded rnsReloaded, CLayerElementBase* element, String variable, ModificationType modification, params RValue[] value)
         {
 
             var instance = (CLayerInstanceElement*)element;
@@ -43,7 +48,7 @@ namespace RnSArchipelago
         }
 
         // Prints information about the function that is getting hooked, namely the amount of arguments and their values
-        public static string PrintHook(IRNSReloaded rnsReloaded, string name, RValue* returnValue, int argc, RValue** argv)
+        internal static string PrintHook(IRNSReloaded rnsReloaded, string name, RValue* returnValue, int argc, RValue** argv)
         {
             if (argc == 0)
             {
@@ -63,7 +68,7 @@ namespace RnSArchipelago
         }
 
         // An empty hook used when invoking a script isn't feasible, so we create a hook to invoke original function that way
-        public static RValue* empty(
+        internal static RValue* empty(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {

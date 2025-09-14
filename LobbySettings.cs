@@ -4,7 +4,7 @@ using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using System.Runtime.InteropServices;
 using System.Drawing;
-using static RnSArchipelago.Util;
+using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago
 {
@@ -14,25 +14,24 @@ namespace RnSArchipelago
         private ILoggerV1 logger;
         private IReloadedHooks hooks;
 
-        public IHook<ScriptDelegate>? archipelagoButtonHook;
+        internal IHook<ScriptDelegate>? archipelagoButtonHook;
 
-        public IHook<ScriptDelegate>? lobbySettingsDisplayHook;
-        public IHook<ScriptDelegate>? lobbySettingsDisplayStepHook;
+        internal IHook<ScriptDelegate>? lobbySettingsDisplayStepHook;
 
-        public IHook<ScriptDelegate>? archipelagoOptionsHook;
+        internal IHook<ScriptDelegate>? archipelagoOptionsHook;
 
-        public IHook<ScriptDelegate>? setNameHook;
-        public IHook<ScriptDelegate>? setDescHook;
-        public IHook<ScriptDelegate>? setPassHook;
-        public IHook<ScriptDelegate>? setNumHook;
-        public IHook<ScriptDelegate>? archipelagoOptionsReturnHook;
+        internal IHook<ScriptDelegate>? setNameHook;
+        internal IHook<ScriptDelegate>? setDescHook;
+        internal IHook<ScriptDelegate>? setPassHook;
+        internal IHook<ScriptDelegate>? setNumHook;
+        internal IHook<ScriptDelegate>? archipelagoOptionsReturnHook;
 
-        public IHook<ScriptDelegate>? lobbyTitleHook;
+        internal IHook<ScriptDelegate>? lobbyTitleHook;
 
-        public string ArchipelagoAddress { get; private set; } = "archipelago.gg:12345";
-        public string ArchipelagoName { get; private set; } = "Player";
-        public string ArchipelagoPassword { get; private set; } = "";
-        public int ArchipelagoNum { get; private set; } = 4;
+        internal string ArchipelagoAddress { get; private set; } = "localhost:38281";
+        internal string ArchipelagoName { get; private set; } = "AutoFister";
+        internal string ArchipelagoPassword { get; private set; } = "";
+        internal int ArchipelagoNum { get; private set; } = 4;
         private bool archipelagoPassSet = false;
 
         private string originalDesc = "";
@@ -44,7 +43,7 @@ namespace RnSArchipelago
 
         private bool initialSetup = true;
 
-        public LobbySettings(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks)
+        internal LobbySettings(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks)
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
@@ -52,7 +51,7 @@ namespace RnSArchipelago
         }
 
         // Modify the lobby types to have an archipelago option
-        public RValue* CreateArchipelagoLobbyType(
+        internal RValue* CreateArchipelagoLobbyType(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -96,33 +95,33 @@ namespace RnSArchipelago
 
                             if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "name")) == "LOBBY")
                             {
-                                Util.ModifyElementVariable(rnsReloaded, element, "nameXSc", Util.ModificationType.ModifyArray, [new RValue(1), new(0.75)]);
-                                Util.ModifyElementVariable(rnsReloaded, element, "nameXSc", Util.ModificationType.InsertToArray, new RValue(0.75));
+                                ModifyElementVariable(rnsReloaded, element, "nameXSc", ModificationType.ModifyArray, [new RValue(1), new(0.75)]);
+                                ModifyElementVariable(rnsReloaded, element, "nameXSc", ModificationType.InsertToArray, new RValue(0.75));
 
                                 RValue nameValue = new RValue(0);
                                 rnsReloaded.CreateString(&nameValue, "ARCHIPELAGO");
-                                Util.ModifyElementVariable(rnsReloaded, element, "nameStr", Util.ModificationType.InsertToArray, nameValue);
+                                ModifyElementVariable(rnsReloaded, element, "nameStr", ModificationType.InsertToArray, nameValue);
 
                                 RValue descValue = new RValue(0);
                                 rnsReloaded.CreateString(&descValue, "lobby is open for archipelago");
-                                Util.ModifyElementVariable(rnsReloaded, element, "descStr", Util.ModificationType.InsertToArray, descValue);
+                                ModifyElementVariable(rnsReloaded, element, "descStr", ModificationType.InsertToArray, descValue);
 
-                                Util.ModifyElementVariable(rnsReloaded, element, "colorInd", Util.ModificationType.ModifyArray, [new RValue(3), new(8678193)]);
+                                ModifyElementVariable(rnsReloaded, element, "colorInd", ModificationType.ModifyArray, [new RValue(3), new(8678193)]);
 
-                                Util.ModifyElementVariable(rnsReloaded, element, "diffXPos", Util.ModificationType.ModifyArray, [new RValue(0), new(-210)]);
-                                Util.ModifyElementVariable(rnsReloaded, element, "diffXPos", Util.ModificationType.ModifyArray, [new RValue(1), new(40)]);
-                                Util.ModifyElementVariable(rnsReloaded, element, "diffXPos", Util.ModificationType.ModifyArray, [new RValue(2), new(290)]);
-                                Util.ModifyElementVariable(rnsReloaded, element, "diffXPos", Util.ModificationType.InsertToArray, new RValue(540));
+                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(0), new(-210)]);
+                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(1), new(40)]);
+                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(2), new(290)]);
+                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.InsertToArray, new RValue(540));
 
-                                Util.ModifyElementVariable(rnsReloaded, element, "diffYPos", Util.ModificationType.InsertToArray, new RValue(-20));
+                                ModifyElementVariable(rnsReloaded, element, "diffYPos", ModificationType.InsertToArray, new RValue(-20));
 
-                                Util.ModifyElementVariable(rnsReloaded, element, "maxIndex", Util.ModificationType.ModifyLiteral, new RValue(4));
+                                ModifyElementVariable(rnsReloaded, element, "maxIndex", ModificationType.ModifyLiteral, new RValue(4));
 
-                                Util.ModifyElementVariable(rnsReloaded, element, "selectionWidth", Util.ModificationType.ModifyLiteral, new RValue(250));
+                                ModifyElementVariable(rnsReloaded, element, "selectionWidth", ModificationType.ModifyLiteral, new RValue(250));
 
                                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                                 {
-                                    Util.ModifyElementVariable(rnsReloaded, element, "selectIndex", Util.ModificationType.ModifyLiteral, new RValue(3));
+                                    ModifyElementVariable(rnsReloaded, element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
                                 }
 
                                 return returnValue;
@@ -137,7 +136,7 @@ namespace RnSArchipelago
         }
 
         // Modify the archipelago lobby settings to display appropriate information
-        public RValue* CreateArchipelagoOptions(
+        internal RValue* CreateArchipelagoOptions(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -254,7 +253,7 @@ namespace RnSArchipelago
                                     RValue dummy = new RValue(0);
                                     var passId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_passwordlock");
                                     var passScript = rnsReloaded.GetScriptData(passId - 100000);
-                                    var createPasswordBoxHook = hooks.CreateHook<ScriptDelegate>(Util.empty, passScript->Functions->Function);
+                                    var createPasswordBoxHook = hooks.CreateHook<ScriptDelegate>(empty, passScript->Functions->Function);
                                     createPasswordBoxHook!.OriginalFunction.Invoke(instance->Instance, other, &dummy, 0, argv);
 
                                     break;
@@ -287,7 +286,7 @@ namespace RnSArchipelago
         }
 
         // Update lobby settings such that archipelago and normal lobby settings are not coupled
-        public RValue* UpdateLobbySettings(
+        internal RValue* UpdateLobbySettings(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -333,7 +332,7 @@ namespace RnSArchipelago
         }
 
         // Update lobby settings such that archipelago and normal lobby settings are not coupled
-        public RValue* LobbyToTitle(
+        internal RValue* LobbyToTitle(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -358,7 +357,7 @@ namespace RnSArchipelago
 
         }
 
-        public RValue* UpdateLobbySettingsDisplayStep(
+        internal RValue* UpdateLobbySettingsDisplayStep(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -511,7 +510,7 @@ namespace RnSArchipelago
             return false;
         }
 
-        public RValue* UpdateLobbySettingsName(
+        internal RValue* UpdateLobbySettingsName(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -529,7 +528,7 @@ namespace RnSArchipelago
             return returnValue;
         }
 
-        public RValue* UpdateLobbySettingsDesc(
+        internal RValue* UpdateLobbySettingsDesc(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -547,7 +546,7 @@ namespace RnSArchipelago
             return returnValue;
         }
 
-        public RValue* UpdateLobbySettingsPass(
+        internal RValue* UpdateLobbySettingsPass(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
