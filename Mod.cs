@@ -2,11 +2,13 @@
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Utils;
+using RnSArchipelago.Config;
 using RNSReloaded;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using RnSArchipelago.Connection;
 
 namespace RnSArchipelago
 {
@@ -17,6 +19,9 @@ namespace RnSArchipelago
         private WeakReference<IRNSReloaded>? rnsReloadedRef;
         private WeakReference<IReloadedHooks>? hooksRef;
         private ILoggerV1 logger = null!;
+
+        private Configurator configurator = null!;
+        private Config.Config config = null!;
 
         private IHook<ScriptDelegate>? roomChangeHook;
 
@@ -42,7 +47,7 @@ namespace RnSArchipelago
         LobbySettings lobby;
         ArchipelagoConnection conn;
 
-        public void Start(IModLoaderV1 loader)
+        public void StartEx(IModLoaderV1 loader, IModConfigV1 modConfig)
         {
             this.rnsReloadedRef = loader.GetController<IRNSReloaded>();
             this.hooksRef = loader.GetController<IReloadedHooks>();
@@ -53,6 +58,15 @@ namespace RnSArchipelago
             {
                 rnsReloaded.OnReady += this.Ready;
             }
+
+            this.configurator = new Configurator(((IModLoader)loader).GetModConfigDirectory(modConfig.ModId));
+            this.config = this.configurator.GetConfiguration<Config.Config>(0);
+            this.config.ConfigurationUpdated += this.ConfigurationUpdated;
+        }
+
+        private void ConfigurationUpdated(IUpdatableConfigurable newConfig)
+        {
+            this.config = (Config.Config)newConfig;
         }
 
         public void Ready()
@@ -67,7 +81,7 @@ namespace RnSArchipelago
                 //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
 
                 lobby = new LobbySettings(rnsReloaded, logger, hooks);
-                conn = new ArchipelagoConnection(rnsReloaded, logger, hooks);
+                conn = new ArchipelagoConnection(rnsReloaded, logger, hooks, this.config);
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);

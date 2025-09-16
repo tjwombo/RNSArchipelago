@@ -29,7 +29,7 @@ namespace RnSArchipelago
         internal IHook<ScriptDelegate>? lobbyTitleHook;
 
         internal string ArchipelagoAddress { get; private set; } = "localhost:38281";
-        internal string ArchipelagoName { get; private set; } = "AutoFister";
+        internal string ArchipelagoName { get; private set; } = "Player1";
         internal string ArchipelagoPassword { get; private set; } = "";
         internal int ArchipelagoNum { get; private set; } = 4;
         private bool archipelagoPassSet = false;
