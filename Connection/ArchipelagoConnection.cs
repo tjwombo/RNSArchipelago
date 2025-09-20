@@ -7,6 +7,8 @@ using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Packets;
 using Archipelago.MultiClient.Net.Models;
+using RnSArchipelago.Data;
+using RnSArchipelago.Utils;
 
 namespace RnSArchipelago.Connection
 {
@@ -16,92 +18,113 @@ namespace RnSArchipelago.Connection
         private ILoggerV1 logger;
         private IReloadedHooks hooks;
         private Config.Config modConfig;
+        private SharedData data;
 
         internal IHook<ScriptDelegate>? startConnectionHook;
 
-        private ArchipelagoSession session;
+        internal ArchipelagoSession session;
 
-        internal static readonly NetworkVersion VERSION = new NetworkVersion(0, 6, 3);
-        internal static readonly string GAME = "Rabbit and Steel";
+        private static readonly NetworkVersion VERSION = new NetworkVersion(0, 6, 3);
+        private static readonly string GAME = "Rabbit and Steel";
 
-        internal ArchipelagoConnection(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks, Config.Config config)
+        internal ArchipelagoConnection(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks, Config.Config config, SharedData data)
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
             this.hooks = hooks;
             this.modConfig = config;
+            this.data = data;
         }
 
         // Attempt to start a connection to archipelago with the given configs
         internal async void StartConnection()
         {
-            var config = ArchipelagoConfig.Instance;
-            (_, string address, _, _) = config.getConfig();
 
+            var address = data.GetValue<string>(DataContext.Connection, "address");
 
-            session = ArchipelagoSessionFactory.CreateSession(address);
-
-            var message = MessageHandler.Instance;
-            message.rnsReloaded = rnsReloaded;
-            message.logger = logger;
-            message.modConfig = modConfig;
-
-            session.Socket.PacketReceived += message.OnPacketReceived;
-            session.MessageLog.OnMessageReceived += message.OnMessageReceived;
-            session.Socket.SocketOpened += ConnectionOpened;
-            session.Socket.ErrorReceived += ErrorReceived;
-            session.Socket.SocketClosed += ConnectionClosed;
-
-            try
+            if (session == null)
             {
-                var roomInfo = await session.ConnectAsync();
-                JoinRoom(roomInfo!);
 
-                return;
-            }
-            catch (Exception e)
-            {
-                LoginFailure failure = new LoginFailure(e.GetBaseException().Message);
-                string errorMessage = $"Failed to Connect to {address}:";
-                foreach (string error in failure.Errors)
-                {
-                    errorMessage += $"\n    {error}";
-                }
-                foreach (ConnectionRefusedError error in failure.ErrorCodes)
-                {
-                    errorMessage += $"\n    {error}";
-                }
-                logger.PrintMessage(errorMessage, System.Drawing.Color.Red);
-                return;
-            }
+                session = ArchipelagoSessionFactory.CreateSession(address);
+                var message = MessageHandler.Instance;
+                message.rnsReloaded = rnsReloaded;
+                message.logger = logger;
+                message.modConfig = modConfig;
+                message.data = data;
 
+                session.Socket.PacketReceived += message.OnPacketReceived;
+                session.MessageLog.OnMessageReceived += message.OnMessageReceived;
+                session.Socket.SocketOpened += ConnectionOpened;
+                session.Socket.ErrorReceived += ErrorReceived;
+                session.Socket.SocketClosed += ConnectionClosed;
+
+                try
+                {
+                    var roomInfo = await session.ConnectAsync();
+                    JoinRoom(roomInfo!);
+
+                    return;
+                }
+                catch (Exception e)
+                {
+                    LoginFailure failure = new LoginFailure(e.GetBaseException().Message);
+                    string errorMessage = $"Failed to Connect to {address}:";
+                    foreach (string error in failure.Errors)
+                    {
+                        errorMessage += $"\n    {error}";
+                    }
+                    foreach (ConnectionRefusedError error in failure.ErrorCodes)
+                    {
+                        errorMessage += $"\n    {error}";
+                    }
+                    logger.PrintMessage(errorMessage, System.Drawing.Color.Red);
+                    return;
+                }
+            }
+        }
+
+        internal async void ResetConn()
+        {
+            InventoryUtil.Instance.ResetItems();
+            this.logger.PrintMessage("reseting", System.Drawing.Color.Red);
+            data.SetValue<string>(DataContext.Connection, "name", default);
+            data.SetValue<string>(DataContext.Connection, "address", default);
+            data.SetValue<string>(DataContext.Connection, "numPlayers", default);
+            data.SetValue<string>(DataContext.Connection, "password", default);
+            await this.session.Socket.DisconnectAsync();
+            this.session = null;
         }
 
         internal void ConnectionOpened()
         {
-            //ServerCommandDispatcher.Instance.Session = session;
             Console.WriteLine("connection opened");
-            //session.Socket.SendPacketAsync(new LocationChecksPacket { Locations = [1, 2, 3, 4, 5] });
         }
 
         internal void ConnectionClosed(string reason)
         {
-            logger.PrintMessage(reason, System.Drawing.Color.Red);
-            //session.Socket.PacketReceived -= ServerCommandDispatcher.Instance.Dispatch;
+            logger.PrintMessage("Connection closed: " + reason, System.Drawing.Color.Red);
             session.MessageLog.OnMessageReceived -= MessageHandler.Instance.OnMessageReceived;
-            session.Socket.SocketOpened -= ConnectionOpened;
-            session.Socket.SocketClosed -= ConnectionClosed;
+            if (session != null)
+            {
+                session.Socket.SocketOpened -= ConnectionOpened;
+                session.Socket.SocketClosed -= ConnectionClosed;
+            }
         }
 
         internal async void ErrorReceived(Exception e, string message)
         {
-            logger.PrintMessage(message, System.Drawing.Color.Red);
-            await session.Socket.DisconnectAsync();
+            logger.PrintMessage("Error: " + message, System.Drawing.Color.Red);
+            if (session != null)
+            {
+                await session.Socket.DisconnectAsync();
+            }
         }
 
         internal void JoinRoom(RoomInfoPacket roomInfo)
         {
-            (var name, _, _, var password) = ArchipelagoConfig.Instance.getConfig();
+
+            var name = this.data.GetValue<string>(DataContext.Connection, "name");
+            var password = this.data.GetValue<string>(DataContext.Connection, "password");
 
             var connect = new ConnectPacket();
             if (roomInfo.Password)
@@ -146,11 +169,20 @@ namespace RnSArchipelago.Connection
                     var cache = JsonSerializer.Deserialize<JsonElement>(textReader.ReadToEnd());
                     if (cache.TryGetProperty("location_name_to_id", out var locations))
                     {
-                        ArchipelagoConfig.Instance.setLocations(locations.Deserialize<Dictionary<string, long>>()!);
+                        var locationId = locations.Deserialize<Dictionary<string, long>>()!;
+                        foreach (var location in locationId) {
+                            this.data.SetValue<long>(DataContext.LocationToId, location.Key, location.Value);
+                            this.data.SetValue<string>(DataContext.IdToLocation, location.Value, location.Key);
+                        }
                     }
                     if (cache.TryGetProperty("item_name_to_id", out var items))
                     {
-                        ArchipelagoConfig.Instance.setItems(items.Deserialize<Dictionary<string, long>>()!);
+                        var itemId = items.Deserialize<Dictionary<string, long>>()!;
+                        foreach (var item in itemId)
+                        {
+                            this.data.SetValue<long>(DataContext.ItemToId, item.Key, item.Value);
+                            this.data.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
+                        }
                     }
 
                     session.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { connect, locationPacket });

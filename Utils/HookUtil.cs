@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RNSReloaded;
+using System.Runtime.InteropServices;
 
 namespace RnSArchipelago.Utils
 {
@@ -16,6 +18,7 @@ namespace RnSArchipelago.Utils
             ModifyObject,
             ModifyArray,
             InsertToArray,
+            DeleteFromArray
         }
 
         // Helper function to easily modify variables of an element
@@ -42,9 +45,95 @@ namespace RnSArchipelago.Utils
                     args[0] = *objectToModify;
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, args);
                     return;
+                case ModificationType.DeleteFromArray:
+                    var args2 = new RValue[3];
+                    args2[0] = *objectToModify;
+                    args2[1] = value[0];
+                    args2[2] = value[1];
+                    rnsReloaded.ExecuteCodeFunction("array_delete", null, null, args2);
+                    return;
                 default:
                     return;
             }
+        }
+
+        internal static void FindLayer(IRNSReloaded rnsReloaded, string layerName, out CLayer* layer)
+        {
+            var room = rnsReloaded.GetCurrentRoom();
+            // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+            layer = room->Layers.First;
+            while (layer != null)
+            {
+                if (Marshal.PtrToStringAnsi((nint)layer->Name) == layerName)
+                {
+                    return;
+                }
+                layer = layer->Next;
+            }
+            layer = null;
+            return;
+        }
+
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string elementIdentifier, CLayer* layer, out CLayerElementBase* element, string identifierField="name")
+        {
+            // Find the element in the layer that is the lobby type selector, has name lobby
+            element = layer->Elements.First;
+            while (element != null)
+            {
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
+
+                if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, identifierField)) == elementIdentifier)
+                {
+                    return;
+                }
+                element = element->Next;
+            }
+            element = null;
+        }
+
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string elementIdentifier, out CLayerElementBase* element, string identifierField="name")
+        {
+            // Find the element in the layer that is the lobby type selector, has name lobby
+            FindLayer(rnsReloaded, layerName, out var layer);
+            if (layer != null)
+            {
+                element = layer->Elements.First;
+                while (element != null)
+                {
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+
+                    if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, identifierField)) == elementIdentifier)
+                    {
+                        return;
+                    }
+                    element = element->Next;
+                }
+            }
+            element = null;
+        }
+
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, out CLayer* layer, string elementIdentifier, out CLayerElementBase* element, string identifierField="name")
+        {
+            // Find the element in the layer that is the lobby type selector, has name lobby
+            FindLayer(rnsReloaded, layerName, out layer);
+            if (layer != null)
+            {
+                element = layer->Elements.First;
+                while (element != null)
+                {
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+
+                    if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, identifierField)) == elementIdentifier)
+                    {
+                        return;
+                    }
+                    element = element->Next;
+                }
+            }
+            element = null;
         }
 
         // Prints information about the function that is getting hooked, namely the amount of arguments and their values

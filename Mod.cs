@@ -9,6 +9,8 @@ using RNSReloaded.Interfaces.Structs;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using RnSArchipelago.Connection;
+using RnSArchipelago.Data;
+using RnSArchipelago.Game;
 
 namespace RnSArchipelago
 {
@@ -22,6 +24,9 @@ namespace RnSArchipelago
 
         private Configurator configurator = null!;
         private Config.Config config = null!;
+        private KingdomHandler kingdom = null!;
+
+        private SharedData data = new SharedData();
 
         private IHook<ScriptDelegate>? roomChangeHook;
 
@@ -80,8 +85,10 @@ namespace RnSArchipelago
                 //var encounterId = rnsReloaded.ScriptFindId("scr_enemy_add_pattern"); // unsure what this was for, probably just to have for later use
                 //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
 
-                lobby = new LobbySettings(rnsReloaded, logger, hooks);
-                conn = new ArchipelagoConnection(rnsReloaded, logger, hooks, this.config);
+                conn = new ArchipelagoConnection(rnsReloaded, logger, hooks, this.config, data);
+                lobby = new LobbySettings(rnsReloaded, logger, hooks, conn, data);
+                kingdom = new KingdomHandler(rnsReloaded, logger, hooks, data);
+
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
@@ -109,10 +116,14 @@ namespace RnSArchipelago
 
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
 
+                SetupKingdomSanity();
+                SetupQuickEnd();
+
+
 
 
                 //RandomizePlayerAbilities(rnsReloaded, hooks); // randomize the player abilities
- 
+
 
                 //TODO: GET DATA FROM ARCHIPELAGO
                 //TODO: Defender special does not work - needs another defender ability to charge, doesn't handle stored charges correct
@@ -281,8 +292,10 @@ namespace RnSArchipelago
                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                 {
                     // Validate archipelago options / connection
-                    ArchipelagoConfig config = ArchipelagoConfig.Instance;
-                    config.setConfig(lobby.ArchipelagoName, lobby.ArchipelagoAddress, lobby.ArchipelagoNum, lobby.ArchipelagoPassword);
+                    this.data.SetValue<string>(DataContext.Connection, "name", lobby.ArchipelagoName);
+                    this.data.SetValue<string>(DataContext.Connection, "address", lobby.ArchipelagoAddress);
+                    this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
+                    this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
                     conn.StartConnection();
 
 
@@ -312,6 +325,29 @@ namespace RnSArchipelago
            
             return returnValue;
         }
+
+        private void SetupKingdomSanity()
+        {
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                var chooseHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_choose_halls") - 100000);
+                kingdom.chooseHallsHook = hooks.CreateHook<ScriptDelegate>(kingdom.CreateRoute, chooseHallsScript->Functions->Function);
+                kingdom.chooseHallsHook.Activate();
+                kingdom.chooseHallsHook.Enable();
+            }
+        }
+
+        private void SetupQuickEnd()
+        {
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                var endHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_move_next") - 100000);
+                kingdom.endHallsHook = hooks.CreateHook<ScriptDelegate>(kingdom.EndRouteEarly, endHallsScript->Functions->Function);
+                kingdom.endHallsHook.Activate();
+                kingdom.endHallsHook.Enable();
+            }
+        }
+
 
         // Changes the outskirts routing to only have shots and chests besides the boss
         private RValue* OutskirtsDetour(

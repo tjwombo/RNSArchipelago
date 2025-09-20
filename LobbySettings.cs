@@ -5,6 +5,9 @@ using RNSReloaded.Interfaces;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using static RnSArchipelago.Utils.HookUtil;
+using RnSArchipelago.Connection;
+using RnSArchipelago.Data;
+using RnSArchipelago.Utils;
 
 namespace RnSArchipelago
 {
@@ -13,6 +16,8 @@ namespace RnSArchipelago
         private IRNSReloaded rnsReloaded;
         private ILoggerV1 logger;
         private IReloadedHooks hooks;
+        private ArchipelagoConnection conn;
+        private SharedData data;
 
         internal IHook<ScriptDelegate>? archipelagoButtonHook;
 
@@ -43,11 +48,13 @@ namespace RnSArchipelago
 
         private bool initialSetup = true;
 
-        internal LobbySettings(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks)
+        internal LobbySettings(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks, ArchipelagoConnection conn, SharedData data)
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
             this.hooks = hooks;
+            this.conn = conn;
+            this.data = data;
         }
 
         // Modify the lobby types to have an archipelago option
@@ -55,6 +62,12 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
+            if (this.conn.session != null)
+            {
+
+                this.conn.ResetConn();
+            }
+
             // Create the object
             returnValue = this.archipelagoButtonHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
@@ -69,67 +82,49 @@ namespace RnSArchipelago
                 initialSetup = false;
             }
 
-            var room = rnsReloaded.GetCurrentRoom();
-            if (room != null)
+            FindElementInLayer(rnsReloaded, "RunMenu_Options", out var layer, "LOBBY", out var element);
+            if (layer != null)
             {
-                // Find the layer in the room that contains the lobby type selector, RunMenu_Options
-                var layer = room->Layers.First;
-                while (layer != null)
+                // Attach a layer script to hook into to act as a step hook
+                var stepId = rnsReloaded.CodeFunctionFind("os_get_info");
+                if (stepId.HasValue)
                 {
-                    if (Marshal.PtrToStringAnsi((nint)layer->Name) == "RunMenu_Options")
+                    layer->BeginScript.Real = stepId.Value;
+                    this.lobbySettingsDisplayStepHook!.Enable();
+                }
+
+                if (element != null)
+                {
+                    ModifyElementVariable(rnsReloaded, element, "nameXSc", ModificationType.ModifyArray, [new RValue(1), new(0.75)]);
+                    ModifyElementVariable(rnsReloaded, element, "nameXSc", ModificationType.InsertToArray, new RValue(0.75));
+
+                    RValue nameValue = new RValue(0);
+                    rnsReloaded.CreateString(&nameValue, "ARCHIPELAGO");
+                    ModifyElementVariable(rnsReloaded, element, "nameStr", ModificationType.InsertToArray, nameValue);
+
+                    RValue descValue = new RValue(0);
+                    rnsReloaded.CreateString(&descValue, "lobby is open for archipelago");
+                    ModifyElementVariable(rnsReloaded, element, "descStr", ModificationType.InsertToArray, descValue);
+
+                    ModifyElementVariable(rnsReloaded, element, "colorInd", ModificationType.ModifyArray, [new RValue(3), new(8678193)]);
+
+                    ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(0), new(-210)]);
+                    ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(1), new(40)]);
+                    ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(2), new(290)]);
+                    ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.InsertToArray, new RValue(540));
+
+                    ModifyElementVariable(rnsReloaded, element, "diffYPos", ModificationType.InsertToArray, new RValue(-20));
+
+                    ModifyElementVariable(rnsReloaded, element, "maxIndex", ModificationType.ModifyLiteral, new RValue(4));
+
+                    ModifyElementVariable(rnsReloaded, element, "selectionWidth", ModificationType.ModifyLiteral, new RValue(250));
+
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                     {
-                        // Attach a layer script to hook into to act as a step hook
-                        var stepId = rnsReloaded.CodeFunctionFind("os_get_info");
-                        if (stepId.HasValue)
-                        {
-                            layer->BeginScript.Real = stepId.Value;
-                            this.lobbySettingsDisplayStepHook!.Enable();
-                        }
-
-                        // Find the element in the layer that is the lobby type selector, has name lobby
-                        var element = layer->Elements.First;
-                        while (element != null)
-                        {
-                            var instance = (CLayerInstanceElement*)element;
-                            var instanceValue = new RValue(instance->Instance);
-
-                            if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "name")) == "LOBBY")
-                            {
-                                ModifyElementVariable(rnsReloaded, element, "nameXSc", ModificationType.ModifyArray, [new RValue(1), new(0.75)]);
-                                ModifyElementVariable(rnsReloaded, element, "nameXSc", ModificationType.InsertToArray, new RValue(0.75));
-
-                                RValue nameValue = new RValue(0);
-                                rnsReloaded.CreateString(&nameValue, "ARCHIPELAGO");
-                                ModifyElementVariable(rnsReloaded, element, "nameStr", ModificationType.InsertToArray, nameValue);
-
-                                RValue descValue = new RValue(0);
-                                rnsReloaded.CreateString(&descValue, "lobby is open for archipelago");
-                                ModifyElementVariable(rnsReloaded, element, "descStr", ModificationType.InsertToArray, descValue);
-
-                                ModifyElementVariable(rnsReloaded, element, "colorInd", ModificationType.ModifyArray, [new RValue(3), new(8678193)]);
-
-                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(0), new(-210)]);
-                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(1), new(40)]);
-                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.ModifyArray, [new RValue(2), new(290)]);
-                                ModifyElementVariable(rnsReloaded, element, "diffXPos", ModificationType.InsertToArray, new RValue(540));
-
-                                ModifyElementVariable(rnsReloaded, element, "diffYPos", ModificationType.InsertToArray, new RValue(-20));
-
-                                ModifyElementVariable(rnsReloaded, element, "maxIndex", ModificationType.ModifyLiteral, new RValue(4));
-
-                                ModifyElementVariable(rnsReloaded, element, "selectionWidth", ModificationType.ModifyLiteral, new RValue(250));
-
-                                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                {
-                                    ModifyElementVariable(rnsReloaded, element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
-                                }
-
-                                return returnValue;
-                            }
-                            element = element->Next;
-                        }
+                        ModifyElementVariable(rnsReloaded, element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
                     }
-                    layer = layer->Next;
+
+                    return returnValue;
                 }
             }
             return returnValue;
@@ -142,144 +137,135 @@ namespace RnSArchipelago
         {
             returnValue = this.archipelagoOptionsHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
-            var room = rnsReloaded.GetCurrentRoom();
-            if (room != null)
+            FindLayer(rnsReloaded, "RunMenu_Options", out var layer);
+
+            if (layer != null)
             {
-                // Find the layer in the room that contains the lobby type selector, RunMenu_Options
-                var layer = room->Layers.First;
-                while (layer != null)
+                // Find the element in the layer that is the lobby type selector, has name lobby
+                var element = layer->Elements.First;
+
+                CLayerElementBase* passwordBox = null;
+                while (element != null)
                 {
-                    if (Marshal.PtrToStringAnsi((nint)layer->Name) == "RunMenu_Options")
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+
+                    switch (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "text")))
                     {
-                        // Find the element in the layer that is the lobby type selector, has name lobby
-                        var element = layer->Elements.First;
-
-                        CLayerElementBase* passwordBox = null;
-                        while (element != null)
-                        {
-                            var instance = (CLayerInstanceElement*)element;
-                            var instanceValue = new RValue(instance->Instance);
-
-                            switch (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "text")))
+                        case "LOBBY SETTINGS":
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                             {
-                                case "LOBBY SETTINGS":
-                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                    {
-                                        RValue lobbyVar = new RValue(0);
-                                        rnsReloaded.CreateString(&lobbyVar, "ARCHIPELAGO SETTINGS");
-                                        ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, lobbyVar);
-                                    }
-
-                                    break;
-                                case "name":
-                                    RValue nameValue = new RValue(0);
-                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                    {
-                                        RValue nameVar = new RValue(0);
-                                        rnsReloaded.CreateString(&nameVar, "Archipelago name");
-                                        ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, nameVar);
-
-
-                                        rnsReloaded.CreateString(&nameValue, ArchipelagoName);
-
-                                    }
-                                    else
-                                    {
-                                        rnsReloaded.CreateString(&nameValue, originalName);
-                                    }
-
-                                    ModifyElementVariable(rnsReloaded, element, "defText", ModificationType.ModifyLiteral, nameValue);
-                                    *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0) = nameValue;
-
-                                    break;
-                                case "description":
-                                    RValue descValue = new RValue(0);
-                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                    {
-                                        RValue descVar = new RValue(0);
-                                        rnsReloaded.CreateString(&descVar, "Archipelago address");
-                                        ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, descVar);
-
-
-                                        rnsReloaded.CreateString(&descValue, ArchipelagoAddress);
-
-                                    }
-                                    else
-                                    {
-                                        rnsReloaded.CreateString(&descValue, originalDesc);
-                                    }
-                                    ModifyElementVariable(rnsReloaded, element, "defText", ModificationType.ModifyLiteral, descValue);
-                                    *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1) = descValue;
-
-                                    break;
-                                case "set password:":
-                                    RValue passValue = new RValue(0);
-                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                    {
-                                        RValue passVar = new RValue(0);
-                                        rnsReloaded.CreateString(&passVar, "enter password:");
-                                        ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, passVar);
-
-
-                                        rnsReloaded.CreateString(&passValue, ArchipelagoPassword);
-
-                                    }
-                                    else
-                                    {
-                                        rnsReloaded.CreateString(&passValue, originalPass);
-                                    }
-                                    *rnsReloaded.utils.GetGlobalVar("lobbyPassword") = passValue;
-
-                                    break;
-                                case "[ \"no password\",\"password locked\" ]":
-                                    RValue passVal = new RValue(0);
-                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                    {
-                                        if (ArchipelagoPassword != "")
-                                        {
-                                            passVal = new RValue(1);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (originalPass != "")
-                                        {
-                                            passVal = new RValue(1);
-                                        }
-                                    }
-                                    ModifyElementVariable(rnsReloaded, element, "cursorPos", ModificationType.ModifyLiteral, passVal);
-                                    *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2) = passVal;
-
-                                    RValue dummy = new RValue(0);
-                                    var passId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_passwordlock");
-                                    var passScript = rnsReloaded.GetScriptData(passId - 100000);
-                                    var createPasswordBoxHook = hooks.CreateHook<ScriptDelegate>(empty, passScript->Functions->Function);
-                                    createPasswordBoxHook!.OriginalFunction.Invoke(instance->Instance, other, &dummy, 0, argv);
-
-                                    break;
-                                case "[ \"single player\",\"two players\",\"three players\",\"four players\" ]":
-                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                    {
-                                        ModifyElementVariable(rnsReloaded, element, "cursorPos", ModificationType.ModifyLiteral, new RValue(ArchipelagoNum - 1));
-                                        rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = ArchipelagoNum;
-                                    }
-                                    else
-                                    {
-                                        ModifyElementVariable(rnsReloaded, element, "cursorPos", ModificationType.ModifyLiteral, new RValue(originalNum - 1));
-                                        rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = originalNum;
-                                    }
-                                    break;
-                                default:
-                                    break;
+                                RValue lobbyVar = new RValue(0);
+                                rnsReloaded.CreateString(&lobbyVar, "ARCHIPELAGO SETTINGS");
+                                ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, lobbyVar);
                             }
 
-                            element = element->Next;
-                        }
-                        return returnValue;
+                            break;
+                        case "name":
+                            RValue nameValue = new RValue(0);
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            {
+                                RValue nameVar = new RValue(0);
+                                rnsReloaded.CreateString(&nameVar, "Archipelago name");
+                                ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, nameVar);
+
+
+                                rnsReloaded.CreateString(&nameValue, ArchipelagoName);
+
+                            }
+                            else
+                            {
+                                rnsReloaded.CreateString(&nameValue, originalName);
+                            }
+
+                            ModifyElementVariable(rnsReloaded, element, "defText", ModificationType.ModifyLiteral, nameValue);
+                            *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0) = nameValue;
+
+                            break;
+                        case "description":
+                            RValue descValue = new RValue(0);
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            {
+                                RValue descVar = new RValue(0);
+                                rnsReloaded.CreateString(&descVar, "Archipelago address");
+                                ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, descVar);
+
+
+                                rnsReloaded.CreateString(&descValue, ArchipelagoAddress);
+
+                            }
+                            else
+                            {
+                                rnsReloaded.CreateString(&descValue, originalDesc);
+                            }
+                            ModifyElementVariable(rnsReloaded, element, "defText", ModificationType.ModifyLiteral, descValue);
+                            *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1) = descValue;
+
+                            break;
+                        case "set password:":
+                            RValue passValue = new RValue(0);
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            {
+                                RValue passVar = new RValue(0);
+                                rnsReloaded.CreateString(&passVar, "enter password:");
+                                ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, passVar);
+
+
+                                rnsReloaded.CreateString(&passValue, ArchipelagoPassword);
+
+                            }
+                            else
+                            {
+                                rnsReloaded.CreateString(&passValue, originalPass);
+                            }
+                            *rnsReloaded.utils.GetGlobalVar("lobbyPassword") = passValue;
+
+                            break;
+                        case "[ \"no password\",\"password locked\" ]":
+                            RValue passVal = new RValue(0);
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            {
+                                if (ArchipelagoPassword != "")
+                                {
+                                    passVal = new RValue(1);
+                                }
+                            }
+                            else
+                            {
+                                if (originalPass != "")
+                                {
+                                    passVal = new RValue(1);
+                                }
+                            }
+                            ModifyElementVariable(rnsReloaded, element, "cursorPos", ModificationType.ModifyLiteral, passVal);
+                            *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2) = passVal;
+
+                            RValue dummy = new RValue(0);
+                            var passId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_passwordlock");
+                            var passScript = rnsReloaded.GetScriptData(passId - 100000);
+                            var createPasswordBoxHook = hooks.CreateHook<ScriptDelegate>(empty, passScript->Functions->Function);
+                            createPasswordBoxHook!.OriginalFunction.Invoke(instance->Instance, other, &dummy, 0, argv);
+
+                            break;
+                        case "[ \"single player\",\"two players\",\"three players\",\"four players\" ]":
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            {
+                                ModifyElementVariable(rnsReloaded, element, "cursorPos", ModificationType.ModifyLiteral, new RValue(ArchipelagoNum - 1));
+                                rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = ArchipelagoNum;
+                            }
+                            else
+                            {
+                                ModifyElementVariable(rnsReloaded, element, "cursorPos", ModificationType.ModifyLiteral, new RValue(originalNum - 1));
+                                rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = originalNum;
+                            }
+                            break;
+                        default:
+                            break;
                     }
 
-                    layer = layer->Next;
+                    element = element->Next;
                 }
+                return returnValue;
             }
 
             return returnValue;
@@ -361,111 +347,95 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            var room = rnsReloaded.GetCurrentRoom();
-            if (room != null)
+            FindLayer(rnsReloaded, "RunMenu_Options", out var layer);
+            if (layer != null)
             {
-                // Find the layer in the room that contains the lobby type selector, RunMenu_Options
-                var layer = room->Layers.First;
-                while (layer != null)
+                if (layer->Elements.Count == 8)
                 {
-                    if (Marshal.PtrToStringAnsi((nint)layer->Name) == "RunMenu_Options")
+                    FindElementInLayer(rnsReloaded, "click to edit", layer, out var lobbyButton);
+                    if (lobbyButton != null)
                     {
-                        if (layer->Elements.Count == 8)
+                        if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                         {
-                            var lobbyButton = layer->Elements.First;
-                            while (lobbyButton != null)
-                            {
-                                var instance = (CLayerInstanceElement*)lobbyButton;
-                                var instanceValue = new RValue(instance->Instance);
+                            RValue nameVar = new RValue(0);
+                            rnsReloaded.CreateString(&nameVar, "click to edit archipelago settings");
+                            ModifyElementVariable(rnsReloaded, lobbyButton, "name", ModificationType.ModifyLiteral, nameVar);
 
-                                if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "name")).StartsWith("click to edit"))
-                                {
-
-                                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                    {
-                                        RValue nameVar = new RValue(0);
-                                        rnsReloaded.CreateString(&nameVar, "click to edit archipelago settings");
-                                        ModifyElementVariable(rnsReloaded, lobbyButton, "name", ModificationType.ModifyLiteral, nameVar);
-
-                                    }
-                                    else if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 1 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 1 ||
-                                            rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 2 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 2
-                                    )
-                                    {
-                                        RValue lobbyVar = new RValue(0);
-                                        rnsReloaded.CreateString(&lobbyVar, "click to edit lobby settings");
-                                        ModifyElementVariable(rnsReloaded, lobbyButton, "name", ModificationType.ModifyLiteral, lobbyVar);
-
-                                    }
-
-                                    break;
-                                }
-
-
-                                lobbyButton = lobbyButton->Next;
-                            }
-
-
-                            // Find the element in the layer that is the lobby display, has name lobby
-                            layer = room->Layers.First;
-                            while (layer != null)
-                            {
-                                var display = layer->Elements.First;
-                                while (display != null)
-                                {
-                                    var instance = (CLayerInstanceElement*)display;
-                                    var instanceValue = new RValue(instance->Instance);  
-
-                                    if (UpdateBanner(instanceValue, display))
-                                    {
-                                        return returnValue;
-                                    }
-
-                                    display = display->Next;
-
-                                }
-
-                                layer = layer->Next;
-                            }
-
-                            return returnValue;
-                        } else if (layer->Elements.Count == 9)
+                        }
+                        else if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 1 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 1 ||
+                                rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 2 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 2
+                        )
                         {
-                            var display = layer->Elements.First;
-                            while (display != null)
+                            RValue lobbyVar = new RValue(0);
+                            rnsReloaded.CreateString(&lobbyVar, "click to edit lobby settings");
+                            ModifyElementVariable(rnsReloaded, lobbyButton, "name", ModificationType.ModifyLiteral, lobbyVar);
+
+                        }
+                    }
+
+
+
+
+                    // Find the element in the layer that is the lobby display, has name lobby
+                    var room = rnsReloaded.GetCurrentRoom();
+                    layer = room->Layers.First;
+                    while (layer != null)
+                    {
+                        var display = layer->Elements.First;
+                        while (display != null)
+                        {
+                            var instance = (CLayerInstanceElement*)display;
+                            var instanceValue = new RValue(instance->Instance);
+
+                            if (UpdateBanner(instanceValue, display))
                             {
-                                var instance = (CLayerInstanceElement*)display;
-                                var instanceValue = new RValue(instance->Instance);
-
-                                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
-                                {
-                                    archipelagoPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1;
-                                    ArchipelagoNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
-                                } else
-                                {
-                                    originalPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1;
-                                    originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
-                                }
-
-                                if (UpdateBanner(instanceValue, display))
-                                {
-                                    return returnValue;
-                                }
-
-                                display = display->Next;
+                                return returnValue;
                             }
+
+                            display = display->Next;
+
+                        }
+
+                        layer = layer->Next;
+                    }
+
+                    return returnValue;
+                }
+                else if (layer->Elements.Count == 9)
+                {
+                    var display = layer->Elements.First;
+                    while (display != null)
+                    {
+                        var instance = (CLayerInstanceElement*)display;
+                        var instanceValue = new RValue(instance->Instance);
+
+                        if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                        {
+                            archipelagoPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1;
+                            ArchipelagoNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
                         }
                         else
                         {
-                            layer->BeginScript.Real = -1;
-                            this.lobbySettingsDisplayStepHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                            this.lobbySettingsDisplayStepHook!.Disable();
+                            originalPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1;
+                            originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
                         }
 
-                        return returnValue;
+                        if (UpdateBanner(instanceValue, display))
+                        {
+                            return returnValue;
+                        }
+
+                        display = display->Next;
                     }
-                    layer = layer->Next;
                 }
+                else
+                {
+                    layer->BeginScript.Real = -1;
+                    this.lobbySettingsDisplayStepHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                    this.lobbySettingsDisplayStepHook!.Disable();
+                }
+
+                return returnValue;
             }
 
             this.lobbySettingsDisplayStepHook!.OriginalFunction(self, other, returnValue, argc, argv);

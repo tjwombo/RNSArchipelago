@@ -13,6 +13,8 @@ using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Packets;
 using System.Drawing;
+using RnSArchipelago.Utils;
+using RnSArchipelago.Data;
 
 namespace RnSArchipelago.Connection
 {
@@ -28,6 +30,9 @@ namespace RnSArchipelago.Connection
         internal IRNSReloaded rnsReloaded;
         internal ILoggerV1 logger;
         internal Config.Config modConfig;
+        internal SharedData data;
+
+        private static readonly string GAME = "Rabbit and Steel";
 
 
         internal unsafe void OnMessageReceived(LogMessage message)
@@ -85,7 +90,7 @@ namespace RnSArchipelago.Connection
         {
             switch (packet.PacketType)
             {
-                case ArchipelagoPacketType.RoomInfo:
+                case ArchipelagoPacketType.RoomInfo: // Handled through ArchipelagoConnection, so will likely never use
                     break;
                 case ArchipelagoPacketType.ConnectionRefused:
                     var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
@@ -94,14 +99,40 @@ namespace RnSArchipelago.Connection
                     rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(), new(0), gameMessage, new(0)]);
                     this.logger.PrintMessage(message, Color.Red);
                     break;
-                case ArchipelagoPacketType.Connected:
-                case ArchipelagoPacketType.ReceivedItems:
+                case ArchipelagoPacketType.Connected: // Get the options the user selected
+                    var connected = (ConnectedPacket)packet;
+                    foreach (var option in connected.SlotData)
+                    {
+                        Console.WriteLine(option.Key + " " + option.Value);
+                        this.data.SetValue<object>(DataContext.Options, option.Key, option.Value);
+                    }
+                    break;
+                case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageRecieved, but actual mod use of items will be handled here
+                    var itemPacket = (ReceivedItemsPacket)packet;
+                    InventoryUtil.Instance.ReceiveItem(itemPacket, data);
+                    break;
                 case ArchipelagoPacketType.LocationInfo:
                 case ArchipelagoPacketType.RoomUpdate:
                     break;
                 case ArchipelagoPacketType.PrintJSON: // Handled through OnMessageRecieved, so will likely never use
                     break;
-                case ArchipelagoPacketType.DataPackage:
+                case ArchipelagoPacketType.DataPackage: // Happens when we request it becuase we dont have it in the cache
+                    if (((DataPackagePacket)packet).DataPackage.Games.TryGetValue(GAME, out var gameData))
+                    {
+                        var locationId = gameData.LocationLookup;
+                        foreach (var location in locationId)
+                        {
+                            this.data.SetValue<long>(DataContext.LocationToId, location.Key, location.Value);
+                            this.data.SetValue<string>(DataContext.IdToLocation, location.Value, location.Key);
+                        }
+                        var itemId = gameData.ItemLookup;
+                        foreach (var item in itemId)
+                        {
+                            this.data.SetValue<long>(DataContext.ItemToId, item.Key, item.Value);
+                            this.data.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
+                        }
+                    }
+                    break;
                 case ArchipelagoPacketType.Bounced:
                 case ArchipelagoPacketType.InvalidPacket:
                 case ArchipelagoPacketType.Retrieved:

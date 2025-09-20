@@ -1,4 +1,4 @@
-﻿//using RnSArchipelago.Handler;
+﻿/*//using RnSArchipelago.Handler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +26,8 @@ namespace RnSArchipelago
         internal Dictionary<long, string> ids_to_items;
         internal Dictionary<long, NetworkSlot> ids_to_slot;
         internal long player_id;
+
+        private static readonly string[] KINGDOMS = ["Kingdom Outskirts", "Scholar's Nest", "King's Arsenal", "Red Darkhouse", "Churchmouse Streets", "Emerald Lakeside", "The Pale Keep", "Moonlit Pinnacle"];
 
 
         internal void setConfig(string n, string a, int num, string p)
@@ -73,5 +75,11 @@ namespace RnSArchipelago
             return items_to_ids;
         }
 
+        internal bool isItemKingdom(string itemName)
+        {
+            return KINGDOMS.Contains(itemName);
+        }
+
     }
 }
+*/
