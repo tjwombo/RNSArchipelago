@@ -45,40 +45,51 @@ namespace RnSArchipelago.Game
                 var maxKingdoms = data.GetValue<long>(DataContext.Options, "max_kingdoms_per_run")!;
                 var kingdomCount = InventoryUtil.Instance.ProgressiveKingdoms;
                 var visitiableKingdomsCount = InventoryUtil.Instance.AvailableKingdomsCount();
-                if ((isKingdomSanity == 1 && visitiableKingdomsCount < maxKingdoms) || (isProgressive == 1 && kingdomCount < maxKingdoms))
+
+                var maxCanRun = (int) Math.Min(maxKingdoms, visitiableKingdomsCount);
+
+                if (isProgressive == 1)
                 {
-                    FindLayer(rnsReloaded, "RunMenu_Blocker", out var layer);
-                    if (layer != null)
+                    maxCanRun = Math.Min(maxCanRun, kingdomCount);
+                }
+
+
+                FindLayer(rnsReloaded, "RunMenu_Blocker", out var layer);
+                if (layer != null)
+                {
+                    var hallway = layer->Elements.First;
+                    while (hallway != null)
                     {
+                        var instance = (CLayerInstanceElement*)hallway;
+                        var instanceValue = new RValue(instance->Instance);
 
-                        var hallway = layer->Elements.First;
-                        while (hallway != null)
+
+
+                        if (rnsReloaded.FindValue((&instanceValue)->Object, "currentPos") != null &&
+                            (rnsReloaded.FindValue((&instanceValue)->Object, "currentPos")->Real == rnsReloaded.FindValue((&instanceValue)->Object, "notchNumber")->Real - 1))
                         {
-                            var instance = (CLayerInstanceElement*)hallway;
-                            var instanceValue = new RValue(instance->Instance);
-
-                            var maxCanRun = Math.Min(maxKingdoms, visitiableKingdomsCount);
-                            if (isProgressive == 1)
+                            if (rnsReloaded.utils.GetGlobalVar("hallwayCurrent")->Real == maxCanRun && ((isKingdomSanity == 1 && visitiableKingdomsCount < maxKingdoms) || (isProgressive == 1 && kingdomCount < maxKingdoms)))
                             {
-                                maxCanRun = Math.Min(maxCanRun, kingdomCount);
-                            }
-
-                            if (rnsReloaded.FindValue((&instanceValue)->Object, "currentPos") != null &&
-                                (rnsReloaded.FindValue((&instanceValue)->Object, "currentPos")->Real == rnsReloaded.FindValue((&instanceValue)->Object, "notchNumber")->Real - 1) &&
-                                rnsReloaded.utils.GetGlobalVar("hallwayCurrent")->Real == maxCanRun)
-                            {
-                                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end halls" + rnsReloaded.FindValue((&instanceValue)->Object, "currentPos")->Real, returnValue, argc, argv), System.Drawing.Color.Gray);
                                 rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
                                 return null;
+                            } else if (isKingdomSanity == 1 || isProgressive == 1)
+                            {
+                                var hallkey = rnsReloaded.FindValue(self, "hallkey");
+                                if (rnsReloaded.utils.GetGlobalVar("hallwayCurrent")->Real == maxCanRun && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun+1)) != "hw_keep")
+                                {
+                                    rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
+                                    return null;
+                                }
+                                else if (rnsReloaded.utils.GetGlobalVar("hallwayCurrent")->Real == maxCanRun + 1 && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2)) != "hw_pinnacle")
+                                {
+                                    rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
+                                    return null;
+                                }
                             }
-                            hallway = hallway->Next;
-
                         }
-
-                        layer = layer->Next;
-                        
-                        
+                        hallway = hallway->Next;
                     }
+                    layer = layer->Next;
                 }
             }
             returnValue = endHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
