@@ -3,7 +3,6 @@ using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Utils;
 using RnSArchipelago.Config;
-using RNSReloaded;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using System.Diagnostics.CodeAnalysis;
@@ -26,7 +25,7 @@ namespace RnSArchipelago
         private Config.Config config = null!;
         private KingdomHandler kingdom = null!;
 
-        private SharedData data = new SharedData();
+        private readonly SharedData data = new();
 
         private IHook<ScriptDelegate>? roomChangeHook;
 
@@ -40,17 +39,18 @@ namespace RnSArchipelago
 
         private IHook<ScriptDelegate>? endGameHook;
 
-
         private IHook<ScriptDelegate>? archipelagoWebsocketHook;
 
         private IHook<ScriptDelegate>? selectCharacterAbilitiesHook;
-        private List<int> availablePrimary = new List<int>();
-        private List<int> availableSecondary = new List<int>();
-        private List<int> availableSpecial = new List<int>();
-        private List<int> availableDefensive = new List<int>();
+        private readonly List<int> availablePrimary = [];
+        private readonly List<int> availableSecondary = [];
+        private readonly List<int> availableSpecial = [];
+        private readonly List<int> availableDefensive = [];
 
-        LobbySettings lobby;
-        ArchipelagoConnection conn;
+        internal IHook<ScriptDelegate>? oneShotHook;
+
+        private LobbySettings? lobby;
+        private ArchipelagoConnection? conn;
 
         public void StartEx(IModLoaderV1 loader, IModConfigV1 modConfig)
         {
@@ -85,9 +85,9 @@ namespace RnSArchipelago
                 //var encounterId = rnsReloaded.ScriptFindId("scr_enemy_add_pattern"); // unsure what this was for, probably just to have for later use
                 //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
 
-                conn = new ArchipelagoConnection(rnsReloaded, logger, hooks, this.config, data);
-                lobby = new LobbySettings(rnsReloaded, logger, hooks, conn, data);
-                kingdom = new KingdomHandler(rnsReloaded, logger, hooks, data);
+                conn = new ArchipelagoConnection(rnsReloaded, logger, this.config, data);
+                lobby = new LobbySettings(rnsReloaded, logger, hooks, data);
+                kingdom = new KingdomHandler(rnsReloaded, logger);
 
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
@@ -117,12 +117,12 @@ namespace RnSArchipelago
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
 
                 SetupKingdomSanity();
-                SetupQuickEnd();
+                oneShot();
 
 
 
 
-                //RandomizePlayerAbilities(rnsReloaded, hooks); // randomize the player abilities
+                RandomizePlayerAbilities(); // randomize the player abilities
 
 
                 //TODO: GET DATA FROM ARCHIPELAGO
@@ -181,7 +181,7 @@ namespace RnSArchipelago
             {
                 var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
                 var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
-                lobby.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoLobbyType, menuScript->Functions->Function);
+                lobby!.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoLobbyType, menuScript->Functions->Function);
                 lobby.archipelagoButtonHook.Activate();
                 lobby.archipelagoButtonHook.Enable();
 
@@ -195,9 +195,10 @@ namespace RnSArchipelago
                 this.IsReady(out var rnsReloaded, out var hooks)
             )
             {
+                // Create the archipelago lobby type
                 var optionsId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_setup");
                 var optionsScript = rnsReloaded.GetScriptData(optionsId - 100000);
-                lobby.archipelagoOptionsHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoOptions, optionsScript->Functions->Function);
+                lobby!.archipelagoOptionsHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoOptions, optionsScript->Functions->Function);
                 lobby.archipelagoOptionsHook.Activate();
                 lobby.archipelagoOptionsHook.Enable();
 
@@ -205,67 +206,89 @@ namespace RnSArchipelago
                 var osId = rnsReloaded.CodeFunctionFind("os_get_info");
                 if (osId.HasValue)
                 {
+                    // Update the info banner
                     var osScript = rnsReloaded.GetScriptData(osId.Value);
                     this.logger.PrintMessage("" + (osScript != null), Color.Red);
                     lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, osScript->Functions->Function);
                     lobby.lobbySettingsDisplayStepHook.Activate();
                 }
 
+                // Update the name if entered before returning
                 var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
                 var nameScript = rnsReloaded.GetScriptData(nameId - 100000);
                 lobby.setNameHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsName, nameScript->Functions->Function);
                 lobby.setNameHook.Activate();
                 lobby.setNameHook.Enable();
 
+                // Update the description if entered before returning
                 var descId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_desc");
                 var descScript = rnsReloaded.GetScriptData(descId - 100000);
                 lobby.setDescHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDesc, descScript->Functions->Function);
                 lobby.setDescHook.Activate();
                 lobby.setDescHook.Enable();
 
+                // Update the password if entered before returning
                 var passId = rnsReloaded.ScriptFindId("textboxcomp_set_password");
                 var passScript = rnsReloaded.GetScriptData(passId - 100000);
                 lobby.setPassHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsPass, passScript->Functions->Function);
                 lobby.setPassHook.Activate();
                 lobby.setPassHook.Enable();
 
+                // Update all the settings after returning
                 var returnId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_return");
                 var returnScript = rnsReloaded.GetScriptData(returnId - 100000);
                 lobby.archipelagoOptionsReturnHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettings, returnScript->Functions->Function);
                 lobby.archipelagoOptionsReturnHook.Activate();
                 lobby.archipelagoOptionsReturnHook.Enable();
 
+                // TODO: PROBABLY DOESN'T FIRE IF GAME CRASHES AND THAT CAUSES
+                // Restore settings to original when returned to the main menu
                 var titleId = rnsReloaded.ScriptFindId("scr_runmenu_char_return");
                 var titleScript = rnsReloaded.GetScriptData(titleId - 100000);
                 lobby.lobbyTitleHook = hooks.CreateHook<ScriptDelegate>(lobby.LobbyToTitle, titleScript->Functions->Function);
                 lobby.lobbyTitleHook.Activate();
                 lobby.lobbyTitleHook.Enable();
-
             }
         }
 
-
-        // Create the hooks to set up the websocket
+        // Set up the hooks to set up the websocket
         private void SetupArchipelagoWebsocket()
         {
             if (
                 this.IsReady(out var rnsReloaded, out var hooks)
             )
             {
+                // Start the connection to archipelago
                 var menuId = rnsReloaded.ScriptFindId("scr_runmenu_main_startrun_multi");
                 var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
                 this.archipelagoWebsocketHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoWebsocket, menuScript->Functions->Function);
                 this.archipelagoWebsocketHook.Activate();
                 this.archipelagoWebsocketHook.Enable();
 
-                var messageId = rnsReloaded.ScriptFindId("scr_chat_add_message");
+                // TEMP FUNCTION (PROBABLY STOLEN FROM THE ACTUAL SEND MESSAGE FUNCTION BUT IDK ANYMORE)
+                var messageId = rnsReloaded.ScriptFindId("scr_lobbyhost_check_adventureready");
                 var messageScript = rnsReloaded.GetScriptData(messageId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, messageScript->Functions->Function);
                 this.setItemHook.Activate();
                 this.setItemHook.Enable();
+
+                // Close the connection after returning to lobby settings
+                var resetId = rnsReloaded.ScriptFindId("scr_runmenu_disband_disband");
+                var resetScript = rnsReloaded.GetScriptData(resetId - 100000);
+                conn!.resetConnHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConn, resetScript->Functions->Function);
+                conn.resetConnHook.Activate();
+                conn.resetConnHook.Enable();
+
+                // Close the connection after returning to lobby settings from a victory/defeat screen
+                var resetEndId = rnsReloaded.ScriptFindId("scr_runmenu_victory_disbandlobby");
+                var resetEndScript = rnsReloaded.GetScriptData(resetEndId - 100000);
+                conn.resetConnEndHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnEnd, resetEndScript->Functions->Function);
+                conn.resetConnEndHook.Activate();
+                conn.resetConnEndHook.Enable();
             }
         }
 
+        // TODO: REMOVE Testing function for timing printing
         private RValue* test(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
@@ -274,8 +297,9 @@ namespace RnSArchipelago
                 this.IsReady(out var rnsReloaded, out var hooks)
             )
             {
-                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "message", returnValue, argc, argv), Color.Gray);
-                
+                returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "message", self, returnValue, argc, argv), Color.Gray);
+                return returnValue;
             }
             returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
@@ -292,14 +316,16 @@ namespace RnSArchipelago
                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                 {
                     // Validate archipelago options / connection
-                    this.data.SetValue<string>(DataContext.Connection, "name", lobby.ArchipelagoName);
+                    this.data.SetValue<string>(DataContext.Connection, "name", lobby!.ArchipelagoName);
                     this.data.SetValue<string>(DataContext.Connection, "address", lobby.ArchipelagoAddress);
                     this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
                     this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
-                    conn.StartConnection();
+                    conn!.StartConnection();
 
+                    // Tell the inventory utils that we are in archipelago mode
+                    InventoryUtil.Instance.isActive = true;
 
-                    // Show error and return if connection problem
+                    // TODO: Show error and return if connection problem
 
 
                     // Setup as if a friends only lobby or solo lobby based on the number of players
@@ -317,35 +343,66 @@ namespace RnSArchipelago
                     *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
                 } else
                 {
+                    // Tell the inventory utils that we are in normal mode
+                    InventoryUtil.Instance.isActive = false;
+
                     // Otherwise continue normally
                     returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);
                 }
-                
             }
            
             return returnValue;
         }
 
+        // Set up the hooks for kingdom sanity handling
         private void SetupKingdomSanity()
         {
             if (this.IsReady(out var rnsReloaded, out var hooks))
             {
+                // Create the planned route
                 var chooseHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_choose_halls") - 100000);
                 kingdom.chooseHallsHook = hooks.CreateHook<ScriptDelegate>(kingdom.CreateRoute, chooseHallsScript->Functions->Function);
                 kingdom.chooseHallsHook.Activate();
                 kingdom.chooseHallsHook.Enable();
+
+                // Modify the icons on the route selection screen
+                var iconsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stagefirst_available") - 100000);
+                kingdom.fixChooseIconsHook = hooks.CreateHook<ScriptDelegate>(kingdom.ModifyRouteIcons, iconsScript->Functions->Function);
+                kingdom.fixChooseIconsHook.Activate();
+                kingdom.fixChooseIconsHook.Enable();
+
+                // Make sure you can go to the next hallway
+                var endHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_move_next") - 100000);
+                kingdom.endHallsHook = hooks.CreateHook<ScriptDelegate>(kingdom.ManageRouteLength, endHallsScript->Functions->Function);
+                kingdom.endHallsHook.Activate();
+                kingdom.endHallsHook.Enable();
+
+                // Modify the kingdoms on the end screen
+                var iconsEndScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_victorydefeat_draw_char") - 100000);
+                kingdom.fixEndIconsHook = hooks.CreateHook<ScriptDelegate>(kingdom.ModifyEndScreenIcons, iconsEndScript->Functions->Function);
+                kingdom.fixEndIconsHook.Activate();
+                kingdom.fixEndIconsHook.Enable();
             }
         }
 
-        private void SetupQuickEnd()
+        // TODO: REMOVE Testing function to oneshot
+        private void oneShot()
         {
             if (this.IsReady(out var rnsReloaded, out var hooks))
             {
-                var endHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_move_next") - 100000);
-                kingdom.endHallsHook = hooks.CreateHook<ScriptDelegate>(kingdom.EndRouteEarly, endHallsScript->Functions->Function);
-                kingdom.endHallsHook.Activate();
-                kingdom.endHallsHook.Enable();
+                var endScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_pattern_deal_damage_enemy_subtract") - 100000);
+                this.oneShotHook = hooks.CreateHook<ScriptDelegate>(this.killquickly, endScript->Functions->Function);
+                this.oneShotHook.Activate();
+                this.oneShotHook.Enable();
             }
+        }
+
+        // TODO: REMOVE Testing function to oneshot
+        internal RValue* killquickly(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            argv[2]->Real = 100000000;
+            returnValue = this.oneShotHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
         }
 
 
@@ -377,8 +434,8 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            //this.logger.PrintMessage(this.PrintHook("item", returnValue, argc, argv), Color.Gray);
             returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            //this.logger.PrintMessage(this.PrintHook("item", returnValue, argc, argv), Color.Gray);
             return returnValue;
         }
 
@@ -387,9 +444,9 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            //this.logger.PrintMessage(this.PrintHook("char", returnValue, argc, argv), Color.Gray);
             // Original function seems to attach the character abilities
             returnValue = this.setCharHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            //this.logger.PrintMessage(this.PrintHook("char", returnValue, argc, argv), Color.Gray);
             return returnValue;
         }
 
@@ -397,8 +454,8 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-           // this.logger.PrintMessage(this.PrintHook("inventory", returnValue, argc, argv), Color.Gray);
             returnValue = this.inventoryHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            //this.logger.PrintMessage(this.PrintHook("inventory", returnValue, argc, argv), Color.Gray);
             return returnValue;
         }
 
@@ -429,16 +486,24 @@ namespace RnSArchipelago
                 int abilityId = (int)rnsReloaded.utils.RValueToLong(argv[0]);
                 if (isPrimary(abilityId))
                 {
-                    *argv[0] = new RValue(availablePrimary[random.Next(availablePrimary.Count)]);
+                    //*argv[0] = new RValue(availablePrimary[random.Next(availablePrimary.Count)]);
+                    *argv[0] = new RValue(67);
                 } else if (isSecondary(abilityId))
                 {
-                    *argv[0] = new RValue(availableSecondary[random.Next(availableSecondary.Count)]);
+                    //*argv[0] = new RValue(availableSecondary[random.Next(availableSecondary.Count)]);
+                    *argv[0] = new RValue(72);
                 } else if (isSpecial(abilityId))
                 {
-                    *argv[0] = new RValue(availableSpecial[random.Next(availableSpecial.Count)]);
+                    //*argv[0] = new RValue(availableSpecial[random.Next(availableSpecial.Count)]);
                 } else if (isDefensive(abilityId))
                 {
-                    *argv[0] = new RValue(availableDefensive[random.Next(availableDefensive.Count)]);
+                    //*argv[0] = new RValue(availableDefensive[random.Next(availableDefensive.Count)]);
+                }
+
+                if (argv[2]->Int32 == 1)
+                {
+                    
+                    *argv[0] = new(324);
                 }
             }
 

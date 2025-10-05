@@ -2,22 +2,17 @@
 using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
-using System.Runtime.InteropServices;
-using System.Drawing;
 using static RnSArchipelago.Utils.HookUtil;
-using RnSArchipelago.Connection;
 using RnSArchipelago.Data;
-using RnSArchipelago.Utils;
 
 namespace RnSArchipelago
 {
     internal unsafe class LobbySettings
     {
-        private IRNSReloaded rnsReloaded;
-        private ILoggerV1 logger;
-        private IReloadedHooks hooks;
-        private ArchipelagoConnection conn;
-        private SharedData data;
+        private readonly IRNSReloaded rnsReloaded;
+        private readonly ILoggerV1 logger;
+        private readonly IReloadedHooks hooks;
+        private readonly SharedData data;
 
         internal IHook<ScriptDelegate>? archipelagoButtonHook;
 
@@ -28,7 +23,7 @@ namespace RnSArchipelago
         internal IHook<ScriptDelegate>? setNameHook;
         internal IHook<ScriptDelegate>? setDescHook;
         internal IHook<ScriptDelegate>? setPassHook;
-        internal IHook<ScriptDelegate>? setNumHook;
+        //internal IHook<ScriptDelegate>? setNumHook;
         internal IHook<ScriptDelegate>? archipelagoOptionsReturnHook;
 
         internal IHook<ScriptDelegate>? lobbyTitleHook;
@@ -44,30 +39,23 @@ namespace RnSArchipelago
         private string originalPass = "";
         private int originalNum = 4;
         private bool originalPassSet = false;
-        private bool returnUpdate = false;
 
         private bool initialSetup = true;
 
-        internal LobbySettings(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks, ArchipelagoConnection conn, SharedData data)
+        internal LobbySettings(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks, SharedData data)
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
             this.hooks = hooks;
-            this.conn = conn;
             this.data = data;
         }
 
+        // TODO: ENSURE THIS DOESN'T APPEAR IN THE TOYBOX LOBBY
         // Modify the lobby types to have an archipelago option
         internal RValue* CreateArchipelagoLobbyType(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            if (this.conn.session != null)
-            {
-
-                this.conn.ResetConn();
-            }
-
             // Create the object
             returnValue = this.archipelagoButtonHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
@@ -150,7 +138,7 @@ namespace RnSArchipelago
                     var instance = (CLayerInstanceElement*)element;
                     var instanceValue = new RValue(instance->Instance);
 
-                    switch (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "text")))
+                    switch (rnsReloaded.GetString(instanceValue.Get("text")))
                     {
                         case "LOBBY SETTINGS":
                             if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
@@ -169,9 +157,7 @@ namespace RnSArchipelago
                                 rnsReloaded.CreateString(&nameVar, "Archipelago name");
                                 ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, nameVar);
 
-
                                 rnsReloaded.CreateString(&nameValue, ArchipelagoName);
-
                             }
                             else
                             {
@@ -190,9 +176,7 @@ namespace RnSArchipelago
                                 rnsReloaded.CreateString(&descVar, "Archipelago address");
                                 ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, descVar);
 
-
                                 rnsReloaded.CreateString(&descValue, ArchipelagoAddress);
-
                             }
                             else
                             {
@@ -210,9 +194,7 @@ namespace RnSArchipelago
                                 rnsReloaded.CreateString(&passVar, "enter password:");
                                 ModifyElementVariable(rnsReloaded, element, "text", ModificationType.ModifyLiteral, passVar);
 
-
                                 rnsReloaded.CreateString(&passValue, ArchipelagoPassword);
-
                             }
                             else
                             {
@@ -280,7 +262,6 @@ namespace RnSArchipelago
 
             if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
             {
-
                 ArchipelagoName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0));
 
                 ArchipelagoAddress = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
@@ -294,11 +275,9 @@ namespace RnSArchipelago
                 }
 
                 ArchipelagoNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
-
             }
             else
             {
-
                 originalName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0));
 
                 originalDesc = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
@@ -322,15 +301,15 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            RValue nameVal = new RValue(0);
+            RValue nameVal = new (0);
             rnsReloaded.CreateString(&nameVal, originalName);
             *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0) = nameVal;
 
-            RValue descVal = new RValue(0);
+            RValue descVal = new (0);
             rnsReloaded.CreateString(&descVal, originalDesc);
             *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1) = descVal;
 
-            RValue passVal = new RValue(0);
+            RValue passVal = new (0);
             rnsReloaded.CreateString(&passVal, originalPass);
             *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(3) = passVal;
 
@@ -343,6 +322,7 @@ namespace RnSArchipelago
 
         }
 
+        // Change between displaying archieplago settings and regular settings
         internal RValue* UpdateLobbySettingsDisplayStep(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
@@ -350,8 +330,10 @@ namespace RnSArchipelago
             FindLayer(rnsReloaded, "RunMenu_Options", out var layer);
             if (layer != null)
             {
+                // Banner in the main lobby screen
                 if (layer->Elements.Count == 8)
                 {
+                    // Update the text on the banner
                     FindElementInLayer(rnsReloaded, "click to edit", layer, out var lobbyButton);
                     if (lobbyButton != null)
                     {
@@ -373,10 +355,7 @@ namespace RnSArchipelago
                         }
                     }
 
-
-
-
-                    // Find the element in the layer that is the lobby display, has name lobby
+                    // update the info in the banner
                     var room = rnsReloaded.GetCurrentRoom();
                     layer = room->Layers.First;
                     while (layer != null)
@@ -401,6 +380,7 @@ namespace RnSArchipelago
 
                     return returnValue;
                 }
+                // Banner in the editing lobby screen
                 else if (layer->Elements.Count == 9)
                 {
                     var display = layer->Elements.First;
@@ -409,6 +389,7 @@ namespace RnSArchipelago
                         var instance = (CLayerInstanceElement*)display;
                         var instanceValue = new RValue(instance->Instance);
 
+                        // Update the text on the banner
                         if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                         {
                             archipelagoPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1;
@@ -420,6 +401,7 @@ namespace RnSArchipelago
                             originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
                         }
 
+                        // Update the info in the banner
                         if (UpdateBanner(instanceValue, display))
                         {
                             return returnValue;
@@ -432,6 +414,8 @@ namespace RnSArchipelago
                 {
                     layer->BeginScript.Real = -1;
                     this.lobbySettingsDisplayStepHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+                    // Called as a layer step function, so we want to disable it once we leave the screens
                     this.lobbySettingsDisplayStepHook!.Disable();
                 }
 
@@ -442,10 +426,11 @@ namespace RnSArchipelago
             return returnValue;
         }
 
+        // Update the banner that displays the current lobby settings
         private bool UpdateBanner(RValue instanceValue, CLayerElementBase* element)
         {
-            if (rnsReloaded.FindValue((&instanceValue)->Object, "diffTxt") != null &&
-                rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, "diffTxt")) == "[ \"CUTE\",\"NORMAL\",\"HARD\",\"LUNAR\" ]")
+            if (instanceValue.Get("diffTxt") != null &&
+                rnsReloaded.GetString(instanceValue.Get("diffTxt")) == "[ \"CUTE\",\"NORMAL\",\"HARD\",\"LUNAR\" ]")
             {
                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
                 {
@@ -480,6 +465,7 @@ namespace RnSArchipelago
             return false;
         }
 
+        // Update the lobby settings name
         internal RValue* UpdateLobbySettingsName(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
@@ -498,6 +484,7 @@ namespace RnSArchipelago
             return returnValue;
         }
 
+        // Update the lobby settings description
         internal RValue* UpdateLobbySettingsDesc(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
@@ -516,6 +503,7 @@ namespace RnSArchipelago
             return returnValue;
         }
 
+        // Update the lobby settings password
         internal RValue* UpdateLobbySettingsPass(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )

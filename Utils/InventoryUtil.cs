@@ -1,12 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
-using RnSArchipelago.Connection;
+using Newtonsoft.Json.Linq;
 using RnSArchipelago.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RnSArchipelago.Utils
 {
@@ -16,9 +10,51 @@ namespace RnSArchipelago.Utils
 
         internal static InventoryUtil Instance => _instance;
 
-        private InventoryUtil() {
+        internal bool isActive;
+        internal bool isKingdomSanity;
+        //internal bool isOutskirtsShuffled;
+        internal bool isProgressive;
+        internal long maxKingdoms;
+        internal long seed;
+        internal Dictionary<int, List<string>> kingdomOrder = [];
+
+        private InventoryUtil() => Reset();
+
+        internal void Reset()
+        {
+            isActive = false;
             AvailableKingdoms = KingdomFlags.None;
-            ProgressiveKingdoms = 0;
+            ProgressiveRegions = 0;
+            kingdomOrder = [];
+        }
+
+        // Init function to get the kingdom options the user has selected
+        internal void GetKingdomOptions(SharedData data)
+        {
+            isKingdomSanity = data.GetValue<long>(DataContext.Options, "kingdom_sanity") == 1;
+            isProgressive = data.GetValue<long>(DataContext.Options, "progressive_regions") == 1;
+            maxKingdoms = data.GetValue<long>(DataContext.Options, "max_kingdoms_per_run")!;
+            seed = data.GetValue<long>(DataContext.Options, "seed");
+
+            if (!isKingdomSanity)
+            {
+                AvailableKingdoms = KingdomFlags.All;
+            }
+
+            var kingdomOrderDict = data.GetValue<JObject>(DataContext.Options, "kingdom_order")!.ToObject<Dictionary<string, int>>();
+            kingdomOrder = [];
+            foreach (var entry in kingdomOrderDict!)
+            {
+                if (!kingdomOrder.ContainsKey(entry.Value-1))
+                {
+                    kingdomOrder[entry.Value-1] = [KingdomNameToNotch(entry.Key)];
+                }
+                else
+                {
+
+                    kingdomOrder[entry.Value - 1].Add(KingdomNameToNotch(entry.Key));
+                }
+            }
         }
 
         [Flags]
@@ -39,8 +75,10 @@ namespace RnSArchipelago.Utils
         private static readonly string[] KINGDOMS = ["Kingdom Outskirts", "Scholar's Nest", "King's Arsenal", "Red Darkhouse", "Churchmouse Streets", "Emerald Lakeside", "The Pale Keep", "Moonlit Pinnacle"];
 
         internal KingdomFlags AvailableKingdoms { get; set; }
-        internal int ProgressiveKingdoms { get; set; }
+        internal int ProgressiveRegions { get; set; }
 
+        // TODO: CREATE A SUBSCRIPTION OF SORTS TO UPDATE HOOKS IN REAL TIME WHEN NEEDED
+        // Handle receiving kingdom related items
         internal void ReceiveItem(ReceivedItemsPacket recievedItem, SharedData data)
         {
             foreach (var item in recievedItem.Items)
@@ -51,12 +89,87 @@ namespace RnSArchipelago.Utils
                     if (KINGDOMS.Contains(itemName))
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
+                        Console.WriteLine(AvailableKingdoms);
+                    } else if (itemName == "Progressive Region")
+                    {
+                        ProgressiveRegions++;
+                        Console.WriteLine(ProgressiveRegions);
                     }
                 }
                 
             }
         }
 
+        // Get the notchname from a kingdoms full name
+        internal static string KingdomNameToNotch(string name)
+        {
+            if (name == "Scholar's Nest")
+            {
+                return "hw_nest";
+            }
+            if (name == "King's Arsenal")
+            {
+                return "hw_arsenal";
+            }
+            if (name == "Emerald Lakeside")
+            {
+                return "hw_lakeside";
+            }
+            if (name == "Churchmouse Streets")
+            {
+                return "hw_streets";
+            }
+            if (name == "Red Darkhouse")
+            {
+                return "hw_lighthouse";
+            }
+            return "";
+        }
+
+        // Get all the kingdoms that are visitable at kingdom number n
+        internal List<string> GetKingdomsAvailableAtNthOrder(int n)
+        {
+            var kingdoms = new List<string>();
+
+            for (var i = 0; i < n; i++)
+            {
+                kingdoms = [.. kingdoms, .. GetNthOrderKingdoms(i+1)];
+            }
+
+            return kingdoms;
+        }
+
+        // Get the kingdoms that are of order n
+        internal List<string> GetNthOrderKingdoms(int n)
+        {
+            var kingdoms = new List<string>();
+            foreach (var kingdom in kingdomOrder[n-1])
+            {
+                if (kingdom == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                {
+                    kingdoms.Add(kingdom);
+                }
+                if (kingdom == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                {
+                    kingdoms.Add(kingdom);
+                }
+                if (kingdom == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                {
+                    kingdoms.Add(kingdom);
+                }
+                if (kingdom == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                {
+                    kingdoms.Add(kingdom);
+                }
+                if (kingdom == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                {
+                    kingdoms.Add(kingdom);
+                }
+            }
+            return kingdoms;
+        }
+
+        // Get the number of kingdoms that are visitable regardless of order
         internal int AvailableKingdomsCount()
         {
             int count = 0;
@@ -83,10 +196,15 @@ namespace RnSArchipelago.Utils
             return count;
         }
 
-        internal void ResetItems()
+        // TODO: LOOK INTO THE POSSIBILITY OF REMOVING THESE
+        internal bool isPaleKeepAccessible()
         {
-            AvailableKingdoms = KingdomFlags.None;
-            ProgressiveKingdoms = 0;
+            return ((AvailableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep)) != 0;// &&
+        }
+
+        internal bool isMoonlitPinnacleAccessible()
+        {
+            return ((AvailableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle)) != 0;// &&
         }
 
     }

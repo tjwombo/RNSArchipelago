@@ -1,11 +1,5 @@
 ﻿using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using RNSReloaded;
 using System.Runtime.InteropServices;
 
 namespace RnSArchipelago.Utils
@@ -27,7 +21,7 @@ namespace RnSArchipelago.Utils
 
             var instance = (CLayerInstanceElement*)element;
             var instanceValue = new RValue(instance->Instance);
-            RValue* objectToModify = rnsReloaded.FindValue((&instanceValue)->Object, variable);
+            RValue* objectToModify = instanceValue.Get(variable);
 
             switch (modification)
             {
@@ -57,6 +51,7 @@ namespace RnSArchipelago.Utils
             }
         }
 
+        // Find a given layer in the room
         internal static void FindLayer(IRNSReloaded rnsReloaded, string layerName, out CLayer* layer)
         {
             var room = rnsReloaded.GetCurrentRoom();
@@ -74,6 +69,7 @@ namespace RnSArchipelago.Utils
             return;
         }
 
+        // Given a layer, find an element
         internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string elementIdentifier, CLayer* layer, out CLayerElementBase* element, string identifierField="name")
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
@@ -83,7 +79,7 @@ namespace RnSArchipelago.Utils
                 var instance = (CLayerInstanceElement*)element;
                 var instanceValue = new RValue(instance->Instance);
 
-                if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, identifierField)) == elementIdentifier)
+                if (rnsReloaded.GetString(instanceValue.Get(identifierField)) == elementIdentifier)
                 {
                     return;
                 }
@@ -92,6 +88,7 @@ namespace RnSArchipelago.Utils
             element = null;
         }
 
+        // Find an element on a given layer
         internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string elementIdentifier, out CLayerElementBase* element, string identifierField="name")
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
@@ -104,7 +101,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     var instanceValue = new RValue(instance->Instance);
 
-                    if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, identifierField)) == elementIdentifier)
+                    if (rnsReloaded.GetString(instanceValue.Get(identifierField)) == elementIdentifier)
                     {
                         return;
                     }
@@ -114,6 +111,7 @@ namespace RnSArchipelago.Utils
             element = null;
         }
 
+        // Find a layer and an element
         internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, out CLayer* layer, string elementIdentifier, out CLayerElementBase* element, string identifierField="name")
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
@@ -126,7 +124,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     var instanceValue = new RValue(instance->Instance);
 
-                    if (rnsReloaded.GetString(rnsReloaded.FindValue((&instanceValue)->Object, identifierField)) == elementIdentifier)
+                    if (rnsReloaded.GetString(instanceValue.Get(identifierField)) == elementIdentifier)
                     {
                         return;
                     }
@@ -136,9 +134,12 @@ namespace RnSArchipelago.Utils
             element = null;
         }
 
-        // Prints information about the function that is getting hooked, namely the amount of arguments and their values
-        internal static string PrintHook(IRNSReloaded rnsReloaded, string name, RValue* returnValue, int argc, RValue** argv)
+        // Return a string that contains information about the function that is getting hooked, namely the amount of arguments and their values
+        internal static string PrintHook(IRNSReloaded rnsReloaded, string name, CInstance* self, RValue* returnValue, int argc, RValue** argv)
         {
+
+            RValue a = new(self);
+            var output = rnsReloaded.GetString(&a) + "\n";
             if (argc == 0)
             {
                 return $"{name}() -> {rnsReloaded.GetString(returnValue)}";

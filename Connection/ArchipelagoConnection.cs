@@ -14,24 +14,23 @@ namespace RnSArchipelago.Connection
 {
     internal class ArchipelagoConnection
     {
-        private IRNSReloaded rnsReloaded;
-        private ILoggerV1 logger;
-        private IReloadedHooks hooks;
-        private Config.Config modConfig;
-        private SharedData data;
+        private readonly IRNSReloaded rnsReloaded;
+        private readonly ILoggerV1 logger;
+        private readonly Config.Config modConfig;
+        private readonly SharedData data;
 
-        internal IHook<ScriptDelegate>? startConnectionHook;
+        internal IHook<ScriptDelegate>? resetConnHook;
+        internal IHook<ScriptDelegate>? resetConnEndHook;
 
-        internal ArchipelagoSession session;
+        internal ArchipelagoSession? session;
 
-        private static readonly NetworkVersion VERSION = new NetworkVersion(0, 6, 3);
+        private static readonly NetworkVersion VERSION = new(0, 6, 3);
         private static readonly string GAME = "Rabbit and Steel";
 
-        internal ArchipelagoConnection(IRNSReloaded rnsReloaded, ILoggerV1 logger, IReloadedHooks hooks, Config.Config config, SharedData data)
+        internal ArchipelagoConnection(IRNSReloaded rnsReloaded, ILoggerV1 logger, Config.Config config, SharedData data)
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
-            this.hooks = hooks;
             this.modConfig = config;
             this.data = data;
         }
@@ -42,7 +41,7 @@ namespace RnSArchipelago.Connection
 
             var address = data.GetValue<string>(DataContext.Connection, "address");
 
-            if (session == null)
+            if (session == null || !session.Socket.Connected)
             {
 
                 session = ArchipelagoSessionFactory.CreateSession(address);
@@ -83,16 +82,37 @@ namespace RnSArchipelago.Connection
             }
         }
 
-        internal async void ResetConn()
+        // Return to the lobby settings
+        internal unsafe RValue* ResetConn(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            InventoryUtil.Instance.ResetItems();
-            this.logger.PrintMessage("reseting", System.Drawing.Color.Red);
-            data.SetValue<string>(DataContext.Connection, "name", default);
-            data.SetValue<string>(DataContext.Connection, "address", default);
-            data.SetValue<string>(DataContext.Connection, "numPlayers", default);
-            data.SetValue<string>(DataContext.Connection, "password", default);
-            await this.session.Socket.DisconnectAsync();
-            this.session = null;
+            this.resetConnHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            ResetConn();
+            return returnValue;
+        }
+
+        // Return to the lobby settings, after a win/loss
+        internal unsafe RValue* ResetConnEnd(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            this.resetConnEndHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            ResetConn();
+            return returnValue;
+        }
+
+        // Reset the archipelago connection and inventory
+        internal void ResetConn()
+        {
+            InventoryUtil.Instance.Reset();
+
+            data.SetValue<string>(DataContext.Connection, "name", default!);
+            data.SetValue<string>(DataContext.Connection, "address", default!);
+            data.SetValue<string>(DataContext.Connection, "numPlayers", default!);
+            data.SetValue<string>(DataContext.Connection, "password", default!);
+
+            if (this.session != null && this.session.Socket != null && this.session.Socket.Connected)
+            {
+                var disconnect = this.session.Socket.DisconnectAsync();
+                disconnect.Wait();
+            }
         }
 
         internal void ConnectionOpened()
@@ -103,9 +123,9 @@ namespace RnSArchipelago.Connection
         internal void ConnectionClosed(string reason)
         {
             logger.PrintMessage("Connection closed: " + reason, System.Drawing.Color.Red);
-            session.MessageLog.OnMessageReceived -= MessageHandler.Instance.OnMessageReceived;
-            if (session != null)
+            if (session != null && session.Socket != null)
             {
+                session.MessageLog.OnMessageReceived -= MessageHandler.Instance.OnMessageReceived;
                 session.Socket.SocketOpened -= ConnectionOpened;
                 session.Socket.SocketClosed -= ConnectionClosed;
             }
@@ -120,6 +140,7 @@ namespace RnSArchipelago.Connection
             }
         }
 
+        // Attempt to join the archipelago room with the provided data
         internal void JoinRoom(RoomInfoPacket roomInfo)
         {
 
@@ -161,6 +182,7 @@ namespace RnSArchipelago.Connection
 
             Thread.Sleep(100);
 
+            // Don't request a datapackage if we have one
             if (roomInfo.DataPackageChecksums.TryGetValue("Rabbit and Steel", out var checksum))
             {
                 if (File.Exists(modConfig.Cache + "\\datapackage\\Rabbit and Steel\\" + checksum + ".json"))
@@ -185,7 +207,7 @@ namespace RnSArchipelago.Connection
                         }
                     }
 
-                    session.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { connect, locationPacket });
+                    session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { connect, /*locationPacket*/ }).Wait();
                     return;
                 }
             }
@@ -194,7 +216,7 @@ namespace RnSArchipelago.Connection
             {
                 Games = ["Rabbit and Steel"]
             };
-            session.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect, locationPacket });
+            session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect, /*locationPacket*/ }).Wait();
         }
 
     }
