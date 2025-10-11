@@ -91,8 +91,8 @@ namespace RnSArchipelago.Utils
             element = null;
         }
 
-        // Find an element on a given layer
-        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string elementIdentifier, out CLayerElementBase* element, string identifierField="name")
+        // Find an element on a given layer with a specific value
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string elementIdentifier, out CLayerElementBase* element, string identifierField)
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
             FindLayer(rnsReloaded, layerName, out var layer);
@@ -105,6 +105,29 @@ namespace RnSArchipelago.Utils
                     var instanceValue = new RValue(instance->Instance);
 
                     if (rnsReloaded.GetString(instanceValue.Get(identifierField)) == elementIdentifier)
+                    {
+                        return;
+                    }
+                    element = element->Next;
+                }
+            }
+            element = null;
+        }
+
+        // Find an element on a given layer
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string elementName, out CLayerElementBase* element)
+        {
+            // Find the element in the layer that is the lobby type selector, has name lobby
+            FindLayer(rnsReloaded, layerName, out var layer);
+            if (layer != null)
+            {
+                element = layer->Elements.First;
+                while (element != null)
+                {
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+
+                    if (instanceValue.Get(elementName) != null && instanceValue.Get(elementName)->ToString() != "unset")
                     {
                         return;
                     }

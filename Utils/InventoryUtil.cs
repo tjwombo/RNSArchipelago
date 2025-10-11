@@ -279,5 +279,10 @@ namespace RnSArchipelago.Utils
             }
             return false;
         }
+
+        internal string GetClass(int pos)
+        {
+            return CLASSES[pos];
+        }
     }
 }

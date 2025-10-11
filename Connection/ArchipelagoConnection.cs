@@ -9,6 +9,7 @@ using Archipelago.MultiClient.Net.Packets;
 using Archipelago.MultiClient.Net.Models;
 using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
+using RnSArchipelago.Game;
 
 namespace RnSArchipelago.Connection
 {
@@ -23,16 +24,18 @@ namespace RnSArchipelago.Connection
         internal IHook<ScriptDelegate>? resetConnEndHook;
 
         internal ArchipelagoSession? session;
+        internal LocationHandler locationHandler;
 
         private static readonly NetworkVersion VERSION = new(0, 6, 3);
         private static readonly string GAME = "Rabbit and Steel";
 
-        internal ArchipelagoConnection(IRNSReloaded rnsReloaded, ILoggerV1 logger, Config.Config config, SharedData data)
+        internal ArchipelagoConnection(IRNSReloaded rnsReloaded, ILoggerV1 logger, Config.Config config, SharedData data, LocationHandler locationHandler)
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
             this.modConfig = config;
             this.data = data;
+            this.locationHandler = locationHandler;
         }
 
         // Attempt to start a connection to archipelago with the given configs
@@ -61,6 +64,8 @@ namespace RnSArchipelago.Connection
                 {
                     var roomInfo = await session.ConnectAsync();
                     JoinRoom(roomInfo!);
+                    locationHandler.session = session;
+                    locationHandler.SendStartLocation();
 
                     return;
                 }
@@ -175,10 +180,8 @@ namespace RnSArchipelago.Connection
             connect.Version = VERSION;
 
             connect.ItemsHandling = ItemsHandlingFlags.AllItems;
-            connect.Tags = ["AP"]; // Read from settings (or roominfo?) to get deathlink
+            connect.Tags = ["AP"]; // TODO: Read from settings (or roominfo?) to get deathlink
             connect.RequestSlotData = true;
-
-            var locationPacket = new LocationChecksPacket { Locations = [1, 2, 3, 4, 5] };
 
             Thread.Sleep(100);
 
@@ -187,6 +190,7 @@ namespace RnSArchipelago.Connection
             {
                 if (File.Exists(modConfig.Cache + "\\datapackage\\Rabbit and Steel\\" + checksum + ".json"))
                 {
+                    // TODO: Look into getting rid of this, as we can get the info from the session
                     TextReader textReader = File.OpenText(modConfig.Cache + "\\datapackage\\Rabbit and Steel\\" + checksum + ".json");
                     var cache = JsonSerializer.Deserialize<JsonElement>(textReader.ReadToEnd());
                     if (cache.TryGetProperty("location_name_to_id", out var locations))
@@ -207,7 +211,7 @@ namespace RnSArchipelago.Connection
                         }
                     }
 
-                    session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { connect, /*locationPacket*/ }).Wait();
+                    session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { connect}).Wait();
                     return;
                 }
             }
@@ -216,8 +220,7 @@ namespace RnSArchipelago.Connection
             {
                 Games = ["Rabbit and Steel"]
             };
-            session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect, /*locationPacket*/ }).Wait();
+            session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect}).Wait();
         }
-
     }
 }

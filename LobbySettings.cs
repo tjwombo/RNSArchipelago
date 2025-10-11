@@ -253,6 +253,7 @@ namespace RnSArchipelago
             return returnValue;
         }
 
+        // TODO: MAKE LOBBY SETTINGS NOT CHANGEABLE DURING RUNS
         // Update lobby settings such that archipelago and normal lobby settings are not coupled
         internal RValue* UpdateLobbySettings(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv

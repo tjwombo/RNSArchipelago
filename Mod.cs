@@ -10,6 +10,8 @@ using System.Drawing;
 using RnSArchipelago.Connection;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
+using System.Runtime.InteropServices;
+using static RnSArchipelago.Connection.ArchipelagoConnection;
 
 namespace RnSArchipelago
 {
@@ -25,6 +27,7 @@ namespace RnSArchipelago
         private Config.Config config = null!;
         private KingdomHandler kingdom = null!;
         private ClassHandler classHandler = null!;
+        private LocationHandler locationHandler = null!;
 
         private readonly SharedData data = new();
 
@@ -86,7 +89,8 @@ namespace RnSArchipelago
                 //var encounterId = rnsReloaded.ScriptFindId("scr_enemy_add_pattern"); // unsure what this was for, probably just to have for later use
                 //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
 
-                conn = new ArchipelagoConnection(rnsReloaded, logger, this.config, data);
+                locationHandler = new LocationHandler(rnsReloaded, logger);
+                conn = new ArchipelagoConnection(rnsReloaded, logger, this.config, data, locationHandler);
                 lobby = new LobbySettings(rnsReloaded, logger, hooks, data);
                 kingdom = new KingdomHandler(rnsReloaded, logger);
                 classHandler = new ClassHandler(rnsReloaded, logger);
@@ -117,6 +121,8 @@ namespace RnSArchipelago
 
 
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
+
+                SetupSendLocations();
 
                 SetupKingdomSanity();
                 oneShot();
@@ -290,6 +296,19 @@ namespace RnSArchipelago
                 conn.resetConnEndHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnEnd, resetEndScript->Functions->Function);
                 conn.resetConnEndHook.Activate();
                 conn.resetConnEndHook.Enable();
+            }
+        }
+
+        // Set up the hooks to send locations through the websocket
+        private void SetupSendLocations()
+        {
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                var battleWonScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_notchexbattle_victory_transfer") - 100000);
+                locationHandler.notchCompleteHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SendNotchComplete, battleWonScript->Functions->Function);
+                locationHandler.notchCompleteHook.Activate();
+                locationHandler.notchCompleteHook.Enable();
+                
             }
         }
 
