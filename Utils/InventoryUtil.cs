@@ -18,6 +18,11 @@ namespace RnSArchipelago.Utils
         internal long seed;
         internal Dictionary<int, List<string>> kingdomOrder = [];
 
+        internal bool isClassSanity;
+        internal List<string> checksPerClass = [];
+        internal bool shuffleItemsets;
+        internal bool checksPerItemInChest;
+
         private InventoryUtil() => Reset();
 
         internal void Reset()
@@ -26,6 +31,8 @@ namespace RnSArchipelago.Utils
             AvailableKingdoms = KingdomFlags.None;
             ProgressiveRegions = 0;
             kingdomOrder = [];
+            AvailableClasses = ClassFlags.None;
+            checksPerClass = [];
         }
 
         // Init function to get the kingdom options the user has selected
@@ -55,6 +62,17 @@ namespace RnSArchipelago.Utils
                     kingdomOrder[entry.Value - 1].Add(KingdomNameToNotch(entry.Key));
                 }
             }
+
+            isClassSanity = data.GetValue<long>(DataContext.Options, "class_sanity") == 1;
+
+            if (!isClassSanity)
+            {
+                AvailableClasses = ClassFlags.All;
+            }
+
+            Console.WriteLine("a");
+            checksPerClass = data.GetValue<JArray>(DataContext.Options, "checks_per_class")!.ToObject<List<string>>()!;
+            Console.WriteLine(string.Join(", ", checksPerClass));
         }
 
         [Flags]
@@ -77,6 +95,29 @@ namespace RnSArchipelago.Utils
         internal KingdomFlags AvailableKingdoms { get; set; }
         internal int ProgressiveRegions { get; set; }
 
+        [Flags]
+        internal enum ClassFlags
+        {
+            None = 0b0000000000,
+            Wizard = 0b0000000001,
+            Assassin = 0b0000000010,
+            Heavyblade = 0b0000000100,
+            Dancer = 0b0000001000,
+            Druid = 0b0000010000,
+            Spellsword = 0b0000100000,
+            Sniper = 0b0001000000,
+            Bruiser = 0b0010000000,
+            Defender = 0b0100000000,
+            Ancient = 0b1000000000,
+            All = 0b1111111111
+        }
+
+        private static readonly string[] CLASSES = ["Wizard", "Assassin", "Heavyblade", "Dancer", "Druid", "Spellsword", "Sniper", "Bruiser", "Defender", "Ancient"];
+
+        internal ClassFlags AvailableClasses { get; set; }
+
+        internal int AvailableClassesCount => CLASSES.Length;
+
         // TODO: CREATE A SUBSCRIPTION OF SORTS TO UPDATE HOOKS IN REAL TIME WHEN NEEDED
         // Handle receiving kingdom related items
         internal void ReceiveItem(ReceivedItemsPacket recievedItem, SharedData data)
@@ -94,6 +135,10 @@ namespace RnSArchipelago.Utils
                     {
                         ProgressiveRegions++;
                         Console.WriteLine(ProgressiveRegions);
+                    } else if (CLASSES.Contains(itemName))
+                    {
+                        AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
+                        Console.WriteLine(AvailableClasses);
                     }
                 }
                 
@@ -207,5 +252,32 @@ namespace RnSArchipelago.Utils
             return ((AvailableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle)) != 0;// &&
         }
 
+        internal bool isClassAvailable(int pos)
+        {
+            switch (pos)
+            {
+                case 0:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Wizard) != 0;
+                case 1:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Assassin) != 0;
+                case 2:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Heavyblade) != 0;
+                case 3:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Dancer) != 0;
+                case 4:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Druid) != 0;
+                case 5:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Spellsword) != 0;
+                case 6:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Sniper) != 0;
+                case 7:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Bruiser) != 0;
+                case 8:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Defender) != 0;
+                case 9:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Ancient) != 0;
+            }
+            return false;
+        }
     }
 }

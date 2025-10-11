@@ -24,6 +24,7 @@ namespace RnSArchipelago
         private Configurator configurator = null!;
         private Config.Config config = null!;
         private KingdomHandler kingdom = null!;
+        private ClassHandler classHandler = null!;
 
         private readonly SharedData data = new();
 
@@ -88,6 +89,7 @@ namespace RnSArchipelago
                 conn = new ArchipelagoConnection(rnsReloaded, logger, this.config, data);
                 lobby = new LobbySettings(rnsReloaded, logger, hooks, data);
                 kingdom = new KingdomHandler(rnsReloaded, logger);
+                classHandler = new ClassHandler(rnsReloaded, logger);
 
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
@@ -119,6 +121,7 @@ namespace RnSArchipelago
                 SetupKingdomSanity();
                 oneShot();
 
+                SetupClassSanity();
 
 
 
@@ -272,6 +275,8 @@ namespace RnSArchipelago
                 this.setItemHook.Activate();
                 this.setItemHook.Enable();
 
+                // TODO: RESTARTING LOBBY BUTTON CRASHES
+
                 // Close the connection after returning to lobby settings
                 var resetId = rnsReloaded.ScriptFindId("scr_runmenu_disband_disband");
                 var resetScript = rnsReloaded.GetScriptData(resetId - 100000);
@@ -285,6 +290,31 @@ namespace RnSArchipelago
                 conn.resetConnEndHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnEnd, resetEndScript->Functions->Function);
                 conn.resetConnEndHook.Activate();
                 conn.resetConnEndHook.Enable();
+            }
+        }
+
+        // Set up the hooks for class sanity handling
+        private void SetupClassSanity()
+        {
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                // Visually lock characters not yet obtained
+                var lockVisualClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_update_chooseclass") - 100000);
+                classHandler.lockVisualClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockVisualClass, lockVisualClassScript->Functions->Function);
+                classHandler.lockVisualClassHook.Activate();
+                classHandler.lockVisualClassHook.Enable();
+
+                // Prevent the drawing of colors if trying to select a locked class
+                var stopColorScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_setup_colors") - 100000);
+                classHandler.stopColorHook = hooks.CreateHook<ScriptDelegate>(classHandler.StopColorDraw, stopColorScript->Functions->Function);
+                classHandler.stopColorHook.Activate();
+                classHandler.stopColorHook.Enable();
+
+                // Actually lock characters not yet obtained
+                var lockClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_update_choosecolor") - 100000);
+                classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockClass, lockClassScript->Functions->Function);
+                classHandler.lockClassHook.Activate();
+                classHandler.lockClassHook.Enable();
             }
         }
 

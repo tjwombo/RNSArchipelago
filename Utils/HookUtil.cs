@@ -1,6 +1,9 @@
 ﻿using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using System.Runtime.InteropServices;
+using RNSReloaded;
+using System.Reflection.Emit;
+using System.Xml.Linq;
 
 namespace RnSArchipelago.Utils
 {
@@ -134,6 +137,33 @@ namespace RnSArchipelago.Utils
             element = null;
         }
 
+        // Helper function to find a layer with a given field, so we can use the other ones 
+        internal static string FindLayerWithField(IRNSReloaded rnsReloaded, string field)
+        {
+            var room = rnsReloaded.GetCurrentRoom();
+            // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+            var layer = room->Layers.First;
+            while (layer != null)
+            {
+                // Find the element in the layer that is the lobby type selector, has name lobby
+                var element = layer->Elements.First;
+                while (element != null)
+                {
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+
+                    if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset")
+                    {
+                        return Marshal.PtrToStringAnsi((nint)layer->Name)!;
+                    }
+                    element = element->Next;
+                }
+                element = null;
+                layer = layer->Next;
+            }
+            layer = null;
+            return "";
+        }
         // Return a string that contains information about the function that is getting hooked, namely the amount of arguments and their values
         internal static string PrintHook(IRNSReloaded rnsReloaded, string name, CInstance* self, RValue* returnValue, int argc, RValue** argv)
         {

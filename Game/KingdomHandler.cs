@@ -425,6 +425,7 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
+        // TODO: HANDLE HAVING 0 KINGDOMS
         // Modify the route to take a route that corresponds to the kingdom order
         internal void ModifyRoute(CInstance* self, int maxCanRun, InventoryUtil.KingdomFlags visitableKingdoms)
         {
