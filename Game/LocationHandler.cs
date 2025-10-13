@@ -33,6 +33,7 @@ namespace RnSArchipelago.Game
             this.logger = logger;
         }
 
+        // Send the starting locations
         internal void SendStartLocation()
         {
             long[] locations = STARTING_LOCATIONS.Select(x => session!.Locations.GetLocationIdFromName(GAME, x)).ToArray();
@@ -40,17 +41,17 @@ namespace RnSArchipelago.Game
             session!.Socket.SendPacketAsync(locationPacket);
         }
 
-
+        // Send the location for finishing a notch if there is a generic location for it, i.e. battle, chest, or boss (not shop)
         internal RValue* SendNotchComplete(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             returnValue = this.notchCompleteHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
             HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "currentPos", out var instance);
             var element = ((CLayerInstanceElement*)instance)->Instance;
-            var notchPos = (int)rnsReloaded.FindValue(element, "currentPos")->Real;
+            
             var kingdomName = rnsReloaded.FindValue(element, "stageName")->ToString();
             kingdomName = kingdomName.Replace(Environment.NewLine, " ");
-            var baseLocation = GetNotchLocation(notchPos, kingdomName);
+            var baseLocation = kingdomName + GetNotchName(element);
 
             HookUtil.FindElementInLayer(rnsReloaded, "Ally", "allyId", out instance);
             element = ((CLayerInstanceElement*)instance)->Instance;
@@ -64,24 +65,36 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
-        private string GetNotchLocation(int notchPos, string kingdomName)
+        // Get the name of the location for the notch based on its image and number of occurence
+        private string GetNotchName(CInstance* element)
         {
-            switch (kingdomName) {
-                case "Kingdom Outskirts":
-                    if (notchPos == 1)
-                    {
-                        return kingdomName + " Battle " + 1;
-                    } else if (notchPos == 3)
-                    {
-                        return kingdomName + " Battle " + 2;
-                    } else if (notchPos == 5)
-                    {
-                        return kingdomName + " Battle " + 3;
-                    }
-                    break;
+            var notchPos = (int)rnsReloaded.FindValue(element, "currentPos")->Real;
+            var notches = rnsReloaded.FindValue(element, "xSubimg");
 
+            var notchType = rnsReloaded.ArrayGetEntry(notches, notchPos)->Real;
+
+            if (notchType == 4)
+            {
+                return " Boss";
             }
-            return "";
+
+            int count = 1;
+
+
+            for (var i = 0; i < notchPos; i++)
+            {
+                if (rnsReloaded.ArrayGetEntry(notches, i)->Real == notchType)
+                {
+                    count++;
+                }
+            }
+
+            if (notchType == 1)
+            {
+                return " Chest " + count;
+            }
+
+            return " Battle " + count;
         }
     }
 }
