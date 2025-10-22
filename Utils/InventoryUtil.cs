@@ -1,6 +1,7 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
 using Newtonsoft.Json.Linq;
 using RnSArchipelago.Data;
+using System.Collections.Generic;
 
 namespace RnSArchipelago.Utils
 {
@@ -21,6 +22,7 @@ namespace RnSArchipelago.Utils
         internal bool isClassSanity;
         internal List<string> checksPerClass = [];
         internal bool shuffleItemsets;
+        private List<long> availableItems = [];
         internal bool checksPerItemInChest;
 
         private InventoryUtil() => Reset();
@@ -33,6 +35,7 @@ namespace RnSArchipelago.Utils
             kingdomOrder = [];
             AvailableClasses = ClassFlags.None;
             checksPerClass = [];
+            availableItems = [];
         }
 
         // Init function to get the kingdom options the user has selected
@@ -70,9 +73,11 @@ namespace RnSArchipelago.Utils
                 AvailableClasses = ClassFlags.All;
             }
 
-            Console.WriteLine("a");
             checksPerClass = data.GetValue<JArray>(DataContext.Options, "checks_per_class")!.ToObject<List<string>>()!;
             Console.WriteLine(string.Join(", ", checksPerClass));
+
+            shuffleItemsets = data.GetValue<long>(DataContext.Options, "shuffle_item_sets") == 1;
+            checksPerItemInChest = data.GetValue<long>(DataContext.Options, "checks_per_item_in_chest") == 1;
         }
 
         [Flags]
@@ -118,6 +123,64 @@ namespace RnSArchipelago.Utils
 
         internal int AvailableClassesCount => CLASSES.Length;
 
+        private static readonly string[] ITEMSETS = [ "Arcane Set", "Night Set","Timespace Set", "Wind Set", "Bloodwolf Set", "Assassin Set", "Rockdragon Set", "Flame Set",
+                                                    "Gem Set", "Lightning Set", "Shrine Set", "Lucky Set", "Life Set", "Poison Set", "Depth Set", "Darkbite Set", "Timegem Set",
+                                                    "Youkai Set", "Haunted Set", "Gladiator Set", "Sparkblade Set", "Swiftflight Set", "Sacredflame Set", "Ruins Set", "Lakeshrine Set"];
+
+        internal List<long> AvailableItems => availableItems;
+
+        #region Itemsets
+        private static readonly long[] ARCANE_SET = [287, 288, 289, 290, 291, 292, 293, 294];
+
+        private static readonly long[] NIGHT_SET = [295, 296, 297, 298, 299, 300, 301, 302];
+
+        private static readonly long[] TIMESPACE_SET = [303, 304, 305, 306, 307, 308, 309, 310];
+
+        private static readonly long[] WIND_SET = [311, 312, 313, 314, 315, 316, 317, 318];
+
+        private static readonly long[] BLOODWOLF_SET = [319, 320, 321, 322, 323, 324, 325, 326];
+
+        private static readonly long[] ASSASSIN_SET = [327, 328, 329, 330, 331, 332, 333, 334];
+
+        private static readonly long[] ROCKDRAGON_SET = [335, 336, 337, 338, 339, 340, 341, 342];
+
+        private static readonly long[] FLAME_SET = [343, 344, 345, 346, 347, 348, 349, 350];
+
+        private static readonly long[] GEM_SET = [351, 352, 353, 354, 355, 356, 357, 358];
+
+        private static readonly long[] LIGHTNING_SET = [359, 360, 361, 362, 363, 364, 365, 366];
+
+        private static readonly long[] SHRINE_SET = [367, 368, 369, 370, 371, 372, 373, 374];
+
+        private static readonly long[] LUCKY_SET = [375, 376, 377, 378, 379, 380, 381, 382];
+
+        private static readonly long[] LIFE_SET = [383, 384, 385, 386, 387, 388, 389, 390];
+
+        private static readonly long[] POISON_SET = [391, 392, 393, 394, 395, 396, 397, 398];
+
+        private static readonly long[] DEPTH_SET = [399, 400, 401, 402, 403, 404, 405, 406];
+
+        private static readonly long[] DARKBITE_SET = [407, 408, 409, 410, 411, 412, 413, 414];
+
+        private static readonly long[] TIMEGEM_SET = [415, 416, 417, 418, 419, 420, 421, 422];
+
+        private static readonly long[] YOUKAI_SET = [423, 424, 425, 426, 427, 428, 429, 430];
+
+        private static readonly long[] HAUNTED_SET = [431, 432, 433, 434, 435, 436, 437, 438];
+
+        private static readonly long[] GLADIATOR_SET = [439, 440, 441, 442, 443, 444, 445, 446];
+
+        private static readonly long[] SPARKBLADE_SET = [447, 448, 449, 450, 451, 452, 453, 454];
+
+        private static readonly long[] SWIFTFLIGHT_SET = [455, 456, 457, 458, 459, 460, 461,462];
+
+        private static readonly long[] SACREDFLAME_SET = [463, 464, 465, 466, 467, 468, 469, 470];
+
+        private static readonly long[] RUINS_SET = [471, 472, 473, 474, 475, 476, 477, 478];
+
+        private static readonly long[] LAKESHRINE_SET = [479, 480, 481, 482, 483, 484, 485, 486];
+        #endregion
+
         // TODO: CREATE A SUBSCRIPTION OF SORTS TO UPDATE HOOKS IN REAL TIME WHEN NEEDED
         // Handle receiving kingdom related items
         internal void ReceiveItem(ReceivedItemsPacket recievedItem, SharedData data)
@@ -139,6 +202,10 @@ namespace RnSArchipelago.Utils
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
                         Console.WriteLine(AvailableClasses);
+                    } else if (ITEMSETS.Contains(itemName))
+                    {
+                        AddItemsFromItemset(itemName);
+                        Console.WriteLine(String.Join(", ", AvailableItems));
                     }
                 }
                 
@@ -283,6 +350,87 @@ namespace RnSArchipelago.Utils
         internal string GetClass(int pos)
         {
             return CLASSES[pos];
+        }
+
+        private void AddItemsFromItemset(string itemset)
+        {
+            switch (itemset) {
+                case "Arcane Set":
+                    availableItems.AddRange(ARCANE_SET);
+                    break;
+                case "Night Set":
+                    availableItems.AddRange(NIGHT_SET);
+                    break;
+                case "Timespace Set":
+                    availableItems.AddRange(TIMESPACE_SET);
+                    break;
+                case "Wind Set":
+                    availableItems.AddRange(WIND_SET);
+                    break;
+                case "Bloodwolf Set":
+                    availableItems.AddRange(BLOODWOLF_SET);
+                    break;
+                case "Assassin Set":
+                    availableItems.AddRange(ASSASSIN_SET);
+                    break;
+                case "Rockdragon Set":
+                    availableItems.AddRange(ROCKDRAGON_SET);
+                    break;
+                case "Flame Set":
+                    availableItems.AddRange(FLAME_SET);
+                    break;
+                case "Gem Set":
+                    availableItems.AddRange(GEM_SET);
+                    break;
+                case "Lightning Set":
+                    availableItems.AddRange(LIGHTNING_SET);
+                    break;
+                case "Shrine Set":
+                    availableItems.AddRange(SHRINE_SET);
+                    break;
+                case "Lucky Set":
+                    availableItems.AddRange(LUCKY_SET);
+                    break;
+                case "Life Set":
+                    availableItems.AddRange(LIFE_SET);
+                    break;
+                case "Poison Set":
+                    availableItems.AddRange(POISON_SET);
+                    break;
+                case "Depth Set":
+                    availableItems.AddRange(DEPTH_SET);
+                    break;
+                case "Darkbite Set":
+                    availableItems.AddRange(DARKBITE_SET);
+                    break;
+                case "Timegem Set":
+                    availableItems.AddRange(TIMEGEM_SET);
+                    break;
+                case "Youkai Set":
+                    availableItems.AddRange(YOUKAI_SET);
+                    break;
+                case "Haunted Set":
+                    availableItems.AddRange(HAUNTED_SET);
+                    break;
+                case "Gladiator Set":
+                    availableItems.AddRange(GLADIATOR_SET);
+                    break;
+                case "Sparkblade Set":
+                    availableItems.AddRange(SPARKBLADE_SET);
+                    break;
+                case "Swiftflight Set":
+                    availableItems.AddRange(SWIFTFLIGHT_SET);
+                    break;
+                case "Sacredflame Set":
+                    availableItems.AddRange(SACREDFLAME_SET);
+                    break;
+                case "Ruins Set":
+                    availableItems.AddRange(RUINS_SET);
+                    break;
+                case "Lakeshrine Set":
+                    availableItems.AddRange(LAKESHRINE_SET);
+                    break;
+            }
         }
     }
 }

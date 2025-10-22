@@ -70,7 +70,7 @@ namespace RnSArchipelago
                 initialSetup = false;
             }
 
-            FindElementInLayer(rnsReloaded, "RunMenu_Options", out var layer, "LOBBY", out var element);
+            FindElementInLayer(rnsReloaded, "RunMenu_Options", out var layer, "name", "LOBBY", out var element);
             if (layer != null)
             {
                 // Attach a layer script to hook into to act as a step hook
@@ -253,7 +253,7 @@ namespace RnSArchipelago
             return returnValue;
         }
 
-        // TODO: MAKE LOBBY SETTINGS NOT CHANGEABLE DURING RUNS
+        // TODO: MAKE LOBBY SETTINGS NOT CHANGEABLE DURING RUNS AND INSTEAD REPLACE IT WITH A SUDO INGAME TRACKER
         // Update lobby settings such that archipelago and normal lobby settings are not coupled
         internal RValue* UpdateLobbySettings(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
@@ -335,7 +335,7 @@ namespace RnSArchipelago
                 if (layer->Elements.Count == 8)
                 {
                     // Update the text on the banner
-                    FindElementInLayer(rnsReloaded, "click to edit", layer, out var lobbyButton);
+                    FindElementInLayer(rnsReloaded, "name", "click to edit", layer, out var lobbyButton);
                     if (lobbyButton != null)
                     {
                         if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)

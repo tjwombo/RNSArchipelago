@@ -1,17 +1,15 @@
 ﻿using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces.Internal;
-using RnSArchipelago.Data;
+using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RnSArchipelago.Game
 {
@@ -21,11 +19,26 @@ namespace RnSArchipelago.Game
         private readonly ILoggerV1 logger;
 
         internal IHook<ScriptDelegate>? notchCompleteHook;
+        internal IHook<ScriptDelegate>? chestOpenHook;
 
-        internal ArchipelagoSession? session;
+        internal IHook<ScriptDelegate>? setupItemsHook;
+        internal IHook<ScriptDelegate>? enableModHook;
+        internal IHook<ScriptDelegate>? itemGetHook;
+        internal IHook<ScriptDelegate>? itemScoutHook;
+        internal IHook<ScriptDelegate>? itemSetHook;
+        internal IHook<ScriptDelegate>? itemSetDescriptionHook;
+        internal IHook<ScriptDelegate>? takeItemHook;
+
+        internal ArchipelagoConnection conn;
+        private long baseItemId;
+
+        private Random rand = new Random();
 
         private static readonly string GAME = "Rabbit and Steel";
         private static readonly string[] STARTING_LOCATIONS = ["Starting Class", "Starting Kingdom", "Starting Primary", "Starting Secondary", "Starting Special", "Starting Defensive"];
+        private static readonly string[] CHEST_POSITIONS = ["Top Left", "Bottom Left", "Middle", "Bottom Right", "Top Right"];
+
+        private Task<Dictionary<long, ScoutedItemInfo>> chestContents; 
 
         internal LocationHandler(IRNSReloaded rnsReloaded, ILoggerV1 logger)
         {
@@ -36,33 +49,240 @@ namespace RnSArchipelago.Game
         // Send the starting locations
         internal void SendStartLocation()
         {
-            long[] locations = STARTING_LOCATIONS.Select(x => session!.Locations.GetLocationIdFromName(GAME, x)).ToArray();
+            long[] locations = STARTING_LOCATIONS.Select(x => conn.session!.Locations.GetLocationIdFromName(GAME, x)).ToArray();
             var locationPacket = new LocationChecksPacket { Locations = locations };
-            session!.Socket.SendPacketAsync(locationPacket);
+            conn.session!.Socket.SendPacketAsync(locationPacket);
         }
 
-        // Send the location for finishing a notch if there is a generic location for it, i.e. battle, chest, or boss (not shop)
+        // Send the location for completing an encounter
         internal RValue* SendNotchComplete(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             returnValue = this.notchCompleteHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            SendNotchLoctaion();
+            return returnValue;
+        }
 
-            HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "currentPos", out var instance);
-            var element = ((CLayerInstanceElement*)instance)->Instance;
+        // Send the location for opening a chest
+        internal RValue* SendChestOpen(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            returnValue = this.chestOpenHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            SendNotchLoctaion();
+            return returnValue;
+        }
+
+        // Update the archipelago items mod data
+        internal RValue* SetupArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            returnValue = this.setupItemsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+            var modInfo = rnsReloaded.utils.GetGlobalVar("modInfo");
+            for (var i = 0; i < rnsReloaded.ArrayGetLength(modInfo)!.Value.Real; i++)
+            {
+                var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
+                if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems") {
+                    var name = new RValue();
+                    rnsReloaded.CreateString(&name, "Archipelago Items");
+                    *rnsReloaded.ArrayGetEntry(entry, 4) = name;
+
+                    var tags = new RValue();
+                    rnsReloaded.CreateString(&tags, "Loot Items,");
+                    *rnsReloaded.ArrayGetEntry(entry, 5) = tags;
+
+                    *rnsReloaded.ArrayGetEntry(entry, 8) = new(1); // Enabled
+                    *rnsReloaded.ArrayGetEntry(entry, 10) = new(0); // 'Workshop'
+
+                    break;
+                }
+            }
+
+            return returnValue;
+        }
+
+        // After applying mod settings in game, ensure the archipelago items mod is enabled
+        internal RValue* EnableArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            returnValue = this.enableModHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+            var modInfo = rnsReloaded.utils.GetGlobalVar("modInfo");
+            for (var i = 0; i < rnsReloaded.ArrayGetLength(modInfo)!.Value.Real; i++)
+            {
+                var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
+                if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
+                {
+                    *rnsReloaded.ArrayGetEntry(entry, 8) = new(1); // Enabled
+
+                    return returnValue;
+                }
+            }
+
+            return returnValue;
+        }
+
+        // Scout the network items in the chest ahead of time so once we need the results the task has finished
+        internal RValue* ScoutItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            GetArchipelagoItemInfo();
+
+            returnValue = this.itemScoutHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
+        }
+
+        // Set the item inside the chest to the proper item
+        internal RValue* SetItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            // TODO: FIGURE OUT HOW TO INSERT A NOTCH INTO A HALLWAY
+            // Doesn't actually change the notch we are visiting, just the icon for it
+            /*HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var temp);
+            var temp2 = ((CLayerInstanceElement*)temp)->Instance;
+            var temp3 = rnsReloaded.FindValue(temp2, "xSubimg");
+            rnsReloaded.ArrayGetEntry(temp3, 4)->Real = 2;*/
+
+            // If the item that is being created is a chest loot item
+            if (argv[2]->Int32 == 1)
+            {
+                // TODO: ADD CONDITION TO CHECK WHICH KIND OF CHEST WE ARE IN ALA xSubimg[currentPos] == 1 set loot to be archipelago loot
+                if (InventoryUtil.Instance.checksPerItemInChest)
+                {
+                    for (var i = 0; i < 5; i++)
+                    {
+                        if (rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 1), i), 1)->Real == -1)
+                        {
+                            var info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos(i))];
+
+                            if (conn.session!.Locations.AllLocationsChecked.Contains(GetChestPositionLocationId(SlotIdToChestPos(i))))
+                            {
+                                *argv[0] = new RValue(baseItemId + 2);
+                            } 
+                            else if (info.Flags.HasFlag(ItemFlags.Advancement))
+                            {
+                                *argv[0] = new RValue(baseItemId + 1);
+                            }
+                            else
+                            {
+                                *argv[0] = new RValue(baseItemId);
+                            }
+                            break;
+                        }
+                    }
+                }
+                else if (InventoryUtil.Instance.shuffleItemsets)
+                {
+                    var index = rand.Next(InventoryUtil.Instance.AvailableItems.Count);
+                    *argv[0] = new RValue(InventoryUtil.Instance.AvailableItems[index]);
+
+                    this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "mod", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                }
+            }
+
+            returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
+        }
+
+        // Get the ingame item id for the first archipelago item
+        internal RValue* GetItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (rnsReloaded.GetString(argv[0]).Contains("ArchipelagoItems"))
+            {
+                baseItemId = (long) rnsReloaded.FindValue(self, "item_data_entry_max")->Real + 1;
+            }
+            returnValue = this.itemGetHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
+        }
+
+        // Set the description for archipelago items to reflect their actual item
+        internal RValue* SetItemsDescription(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            returnValue = this.itemSetDescriptionHook!.OriginalFunction(self, other, returnValue, argc, argv);
             
-            var kingdomName = rnsReloaded.FindValue(element, "stageName")->ToString();
-            kingdomName = kingdomName.Replace(Environment.NewLine, " ");
-            var baseLocation = kingdomName + GetNotchName(element);
+            //if an archipelago item, set the description to the real item
+            if (argv[0]->Real == baseItemId || argv[0]->Real == baseItemId+1 || argv[0]->Real == baseItemId+2)
+            {
 
-            HookUtil.FindElementInLayer(rnsReloaded, "Ally", "allyId", out instance);
-            element = ((CLayerInstanceElement*)instance)->Instance;
+                var info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos((int)rnsReloaded.FindValue(self, "slotId")->Real))];
+                var player = info.Player.Slot == MessageHandler.Instance.slot ? "your" : info.Player.Name + "'s";
+
+                rnsReloaded.CreateString(returnValue, info.ItemDisplayName + " for " + player + " world");
+            }
+
+            return returnValue;
+        }
+
+        // Convert the ingame slotId to the archipelago chest location name suffix
+        private string SlotIdToChestPos(int slotId)
+        {
+            switch (slotId)
+            {
+                case 0: return " Top Left";
+                case 1: return " Bottom Left";
+                case 2: return " Middle";
+                case 3: return " Bottom Right";
+                case 4: return " Top Right";
+            }
+            return "";
+        }
+
+        // Get the archipelago location id for the current chest's item at chestPos
+        private long GetChestPositionLocationId(string chestPos)
+        {
+            return conn.session!.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + chestPos);
+        }
+
+        // Scout all the items in the current chest
+        private void GetArchipelagoItemInfo()
+        {
+            var locations = CHEST_POSITIONS.Select(x => conn.session!.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + x)).ToArray();
+
+            chestContents = conn.session!.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, locations);
+        }
+
+        // Prevent 'fake' items from actually being taken
+        internal RValue* TakeItem(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            var chestPos = argv[2]->Real;
+            HookUtil.FindElementInLayer(rnsReloaded, "LootInfo", "slotId", chestPos + "", out var instance);
+            if (instance != null)
+            {
+                var element = ((CLayerInstanceElement*)instance)->Instance;
+                var itemId = rnsReloaded.FindValue(element, "itemId");
+                if (itemId->Real != baseItemId && itemId->Real != baseItemId+1 && itemId->Real != baseItemId + 2)
+                {
+                    returnValue = this.takeItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                }
+
+                var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos((int)rnsReloaded.FindValue(element, "slotId")->Real))] };
+                conn.session!.Socket.SendPacketAsync(locationPacket);
+            }
+            else
+            {
+                returnValue = this.takeItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+
+            return returnValue;
+        }
+
+        // Send the location for finishing a notch if there is a generic location for it, i.e. battle, chest, or boss (not shop)
+        internal void SendNotchLoctaion()
+        {
+            var baseLocation = GetBaseLocation();
+
+            HookUtil.FindElementInLayer(rnsReloaded, "Ally", "allyId", out var instance);
+            var element = ((CLayerInstanceElement*)instance)->Instance;
             var characterId = (int)rnsReloaded.FindValue(element, "allyId")->Real;
             var character = InventoryUtil.Instance.GetClass(characterId);
 
-            long[] locations = [session!.Locations.GetLocationIdFromName(GAME, baseLocation), session!.Locations.GetLocationIdFromName(GAME, character + " " + baseLocation)];
+            long[] locations = [conn.session!.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session!.Locations.GetLocationIdFromName(GAME, character + " " + baseLocation)];
             var locationPacket = new LocationChecksPacket { Locations = locations };
-            session!.Socket.SendPacketAsync(locationPacket);
+            conn.session!.Socket.SendPacketAsync(locationPacket);
+        }
 
-            return returnValue;
+        private string GetBaseLocation()
+        {
+            HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "currentPos", out var instance);
+            var element = ((CLayerInstanceElement*)instance)->Instance;
+
+            var kingdomName = rnsReloaded.FindValue(element, "stageName")->ToString();
+            kingdomName = kingdomName.Replace(Environment.NewLine, " ");
+            return kingdomName + GetNotchName(element);
         }
 
         // Get the name of the location for the notch based on its image and number of occurence

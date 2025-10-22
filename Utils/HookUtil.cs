@@ -73,7 +73,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Given a layer, find an element
-        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string elementIdentifier, CLayer* layer, out CLayerElementBase* element, string identifierField="name")
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string variableName, string variableValue, CLayer* layer, out CLayerElementBase* element)
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
             element = layer->Elements.First;
@@ -82,7 +82,7 @@ namespace RnSArchipelago.Utils
                 var instance = (CLayerInstanceElement*)element;
                 var instanceValue = new RValue(instance->Instance);
 
-                if (rnsReloaded.GetString(instanceValue.Get(identifierField)) == elementIdentifier)
+                if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
                 {
                     return;
                 }
@@ -92,7 +92,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find an element on a given layer with a specific value
-        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string elementIdentifier, out CLayerElementBase* element, string identifierField)
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string variableName, string variableValue, out CLayerElementBase* element)
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
             FindLayer(rnsReloaded, layerName, out var layer);
@@ -104,7 +104,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     var instanceValue = new RValue(instance->Instance);
 
-                    if (rnsReloaded.GetString(instanceValue.Get(identifierField)) == elementIdentifier)
+                    if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
                     {
                         return;
                     }
@@ -115,7 +115,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find an element on a given layer
-        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string elementName, out CLayerElementBase* element)
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, string variableName, out CLayerElementBase* element)
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
             FindLayer(rnsReloaded, layerName, out var layer);
@@ -127,7 +127,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     var instanceValue = new RValue(instance->Instance);
 
-                    if (instanceValue.Get(elementName) != null && instanceValue.Get(elementName)->ToString() != "unset")
+                    if (instanceValue.Get(variableName) != null && instanceValue.Get(variableName)->ToString() != "unset")
                     {
                         return;
                     }
@@ -138,7 +138,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find a layer and an element
-        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, out CLayer* layer, string elementIdentifier, out CLayerElementBase* element, string identifierField="name")
+        internal static void FindElementInLayer(IRNSReloaded rnsReloaded, string layerName, out CLayer* layer, string variableName, string variableValue, out CLayerElementBase* element)
         {
             // Find the element in the layer that is the lobby type selector, has name lobby
             FindLayer(rnsReloaded, layerName, out layer);
@@ -150,7 +150,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     var instanceValue = new RValue(instance->Instance);
 
-                    if (rnsReloaded.GetString(instanceValue.Get(identifierField)) == elementIdentifier)
+                    if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
                     {
                         return;
                     }

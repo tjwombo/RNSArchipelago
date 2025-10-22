@@ -26,6 +26,7 @@ namespace RnSArchipelago.Connection
         internal SharedData? data;
 
         private static readonly string GAME = "Rabbit and Steel";
+        internal int slot = 0;
 
 
         internal unsafe void OnMessageReceived(LogMessage message)
@@ -97,6 +98,7 @@ namespace RnSArchipelago.Connection
                     break;
                 case ArchipelagoPacketType.Connected: // Get the options the user selected
                     var connected = (ConnectedPacket)packet;
+                    slot = connected.Slot;
                     foreach (var option in connected.SlotData)
                     {
                         Console.WriteLine(option.Key + " " + option.Value);

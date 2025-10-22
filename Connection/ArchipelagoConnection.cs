@@ -64,13 +64,14 @@ namespace RnSArchipelago.Connection
                 {
                     var roomInfo = await session.ConnectAsync();
                     JoinRoom(roomInfo!);
-                    locationHandler.session = session;
+                    locationHandler.conn = this;
                     locationHandler.SendStartLocation();
 
                     return;
                 }
                 catch (Exception e)
                 {
+                    // TODO: gracefully handle bad connection, currently crashes
                     LoginFailure failure = new LoginFailure(e.GetBaseException().Message);
                     string errorMessage = $"Failed to Connect to {address}:";
                     foreach (string error in failure.Errors)

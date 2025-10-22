@@ -10,8 +10,6 @@ using System.Drawing;
 using RnSArchipelago.Connection;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
-using System.Runtime.InteropServices;
-using static RnSArchipelago.Connection.ArchipelagoConnection;
 
 namespace RnSArchipelago
 {
@@ -62,6 +60,8 @@ namespace RnSArchipelago
             this.hooksRef = loader.GetController<IReloadedHooks>();
 
             this.logger = loader.GetLogger();
+
+            CopyItemModToRnSMod();
 
             if (this.IsReady(out var rnsReloaded))
             {
@@ -122,14 +122,15 @@ namespace RnSArchipelago
 
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
 
-                SetupSendLocations();
+                SetupSendBattleAndChestLocations(); // Creates the hook to send locations on encounter win and chest open
+                SetupArchipelagoItems(); // Creates the archipelago items and puts them in the correct chest
 
-                SetupKingdomSanity();
+                SetupKingdomSanity(); // Modifies the route based on current items
+
+                SetupClassSanity(); // Limits the classes you can play based on current items
+
+                // TODO: REMOVE ONCE DONE TESTING
                 oneShot();
-
-                SetupClassSanity();
-
-
 
                 RandomizePlayerAbilities(); // randomize the player abilities
 
@@ -250,7 +251,7 @@ namespace RnSArchipelago
                 lobby.archipelagoOptionsReturnHook.Activate();
                 lobby.archipelagoOptionsReturnHook.Enable();
 
-                // TODO: PROBABLY DOESN'T FIRE IF GAME CRASHES AND THAT CAUSES
+                // TODO: PROBABLY DOESN'T FIRE IF GAME CRASHES AND THAT CAUSES ARCHIPELAGO SETTINGS TO PERSIST IN REGULAR
                 // Restore settings to original when returned to the main menu
                 var titleId = rnsReloaded.ScriptFindId("scr_runmenu_char_return");
                 var titleScript = rnsReloaded.GetScriptData(titleId - 100000);
@@ -300,15 +301,71 @@ namespace RnSArchipelago
         }
 
         // Set up the hooks to send locations through the websocket
-        private void SetupSendLocations()
+        private void SetupSendBattleAndChestLocations()
         {
             if (this.IsReady(out var rnsReloaded, out var hooks))
             {
+                // Send out locations on encounter win
                 var battleWonScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_notchexbattle_victory_transfer") - 100000);
                 locationHandler.notchCompleteHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SendNotchComplete, battleWonScript->Functions->Function);
                 locationHandler.notchCompleteHook.Activate();
                 locationHandler.notchCompleteHook.Enable();
-                
+
+                // Send out locations on chest open
+                var chestOpenScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_npc_treasure_explode") - 100000);
+                locationHandler.chestOpenHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SendChestOpen, chestOpenScript->Functions->Function);
+                locationHandler.chestOpenHook.Activate();
+                locationHandler.chestOpenHook.Enable();
+            }
+        }
+
+        private void SetupArchipelagoItems()
+        {
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                //scr_itemsys_loot_amount use to set amouint in chest later
+
+                // Setup the mod items that corresponds to the items in CopyItemModToRnSMod()
+                var setupItemsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_init_mods") - 100000);
+                locationHandler.setupItemsHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetupArchipelagoItems, setupItemsScript->Functions->Function);
+                locationHandler.setupItemsHook.Activate();
+                locationHandler.setupItemsHook.Enable();
+
+                // Make it so that the archipelago items mod cannot be disabled
+                var modApplyScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_runmenu_mods_apply") - 100000);
+                locationHandler.enableModHook = hooks.CreateHook<ScriptDelegate>(locationHandler.EnableArchipelagoItems, modApplyScript->Functions->Function);
+                locationHandler.enableModHook.Activate();
+                locationHandler.enableModHook.Enable();
+
+                // Get the id of the archipelago item 
+                var itemGetScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_readsheet_items") - 100000);
+                locationHandler.itemGetHook = hooks.CreateHook<ScriptDelegate>(locationHandler.GetItems, itemGetScript->Functions->Function);
+                locationHandler.itemGetHook.Activate();
+                locationHandler.itemGetHook.Enable();
+
+                // Scout the archipelago item to display values in game
+                var itemScoutScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_populate_loot") - 100000);
+                locationHandler.itemScoutHook = hooks.CreateHook<ScriptDelegate>(locationHandler.ScoutItems, itemScoutScript->Functions->Function);
+                locationHandler.itemScoutHook.Activate();
+                locationHandler.itemScoutHook.Enable();
+
+                // Set the item to be an archipelago item
+                var itemSetScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_create_item") - 100000);
+                locationHandler.itemSetHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetItems, itemSetScript->Functions->Function);
+                locationHandler.itemSetHook.Activate();
+                locationHandler.itemSetHook.Enable();
+
+                // Set the description of an item to match its archipelago item
+                var itemSetDescriptionScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_infodraw_get_item_desc") - 100000);
+                locationHandler.itemSetDescriptionHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetItemsDescription, itemSetDescriptionScript->Functions->Function);
+                locationHandler.itemSetDescriptionHook.Activate();
+                locationHandler.itemSetDescriptionHook.Enable();
+
+                // Prevents you from actually taking an item, and sends out the corresponding location
+                var takeItemScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_pickup_loot") - 100000);
+                locationHandler.takeItemHook = hooks.CreateHook<ScriptDelegate>(locationHandler.TakeItem, takeItemScript->Functions->Function);
+                locationHandler.takeItemHook.Activate();
+                locationHandler.takeItemHook.Enable();
             }
         }
 
@@ -454,6 +511,96 @@ namespace RnSArchipelago
             return returnValue;
         }
 
+        // Credit to fuzzything44, shamelessly took this from their Fullmoon Arsenal mod
+        // Copies a directory to another location
+        static void CopyDirectory(string sourceDir, string destinationDir, bool recursive)
+        {
+            // Get information about the source directory
+            var dir = new DirectoryInfo(sourceDir);
+
+            // Check if the source directory exists
+            if (!dir.Exists)
+                throw new DirectoryNotFoundException($"Source directory not found: {dir.FullName}");
+
+            // Cache directories before we start copying
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            // Create the destination directory
+            Directory.CreateDirectory(destinationDir);
+
+            // Get the files in the source directory and copy to the destination directory
+            foreach (FileInfo file in dir.GetFiles())
+            {
+                string targetFilePath = Path.Combine(destinationDir, file.Name);
+                file.CopyTo(targetFilePath, true);
+            }
+
+            // If recursive and copying subdirectories, recursively call this method
+            if (recursive)
+            {
+                foreach (DirectoryInfo subDir in dirs)
+                {
+                    string newDestinationDir = Path.Combine(destinationDir, subDir.Name);
+                    CopyDirectory(subDir.FullName, newDestinationDir, true);
+                }
+            }
+        }
+
+        // Copy the Items folder to the RnS mod folder
+        private static void CopyItemModToRnSMod()
+        {
+            // Copy over item mod to game folder
+            // We assume that this environment variable is actually correct
+            DirectoryInfo sourceDir = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%"));
+            string path = Path.Combine(sourceDir.FullName, @"RnSArchipelago\Items");
+            CopyDirectory(path, @".\Mods\ArchipelagoItems", true);
+
+            /*
+            // Enable the item mod in save file
+            string modSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"RabbitSteel\SaveFileNonSynced\modconfig.ini");
+            
+            string[] enabledMods = File.ReadLines(modSavePath).ToArray();
+            bool modInFile = false;
+            bool modActive = false;
+            for (int i = 0; i < enabledMods.Count(); i++)
+            {
+                string line = enabledMods[i];
+                // If there's already an entry in save for this mod, replace it with the enabled version
+                if (line.StartsWith("ArchipelagoItems="))
+                {
+                    enabledMods[i] = "ArchipelagoItems=\"1.000000\"";
+                    modActive = true;
+                }
+                if (line.Equals("[ArchipelagoItems]"))
+                {
+                    modInFile = true;
+                }
+            }
+            // If no entry, add it
+            if (!modInFile)
+            {
+                enabledMods = enabledMods.Concat(["[ArchipelagoItems]", "Name=\"Archipelago Items\"", "TagStr=\"Loot Items\"", "ChangeLog=\"\"", "ugcId=\"ArchipelagoItems\"", "InfoRefresh=\"0\""]).ToArray();
+            }
+            if (!modActive)
+            {
+                var newEnabledMods = new string[enabledMods.Length + 1];
+                var offset = 0;
+                for (int i = 0; i < enabledMods.Count(); i++)
+                {
+                    string line = enabledMods[i];
+                    newEnabledMods[i + offset] = enabledMods[i];
+                    if (line.Equals("[Enable]"))
+                    {
+                        newEnabledMods[i + 1] = "ArchipelagoItems=\"1.000000\"";
+                        offset = 1;
+                    }
+                }
+                enabledMods = newEnabledMods;
+            }
+            File.WriteAllLines(modSavePath, enabledMods);
+            this.logger.PrintMessage("finished write", Color.Red);*/
+        }
+
 
         // Changes the outskirts routing to only have shots and chests besides the boss
         private RValue* OutskirtsDetour(
@@ -552,7 +699,7 @@ namespace RnSArchipelago
                 if (argv[2]->Int32 == 1)
                 {
                     
-                    *argv[0] = new(324);
+                    //*argv[0] = new(324);
                 }
             }
 
