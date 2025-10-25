@@ -10,6 +10,7 @@ using System.Drawing;
 using RnSArchipelago.Connection;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
+using System.Net;
 
 namespace RnSArchipelago
 {
@@ -32,6 +33,7 @@ namespace RnSArchipelago
         private IHook<ScriptDelegate>? roomChangeHook;
 
         private IHook<ScriptDelegate>? outskirtsHook;
+        private IHook<ScriptDelegate>? outskirtsNHook;
 
         private IHook<ScriptDelegate>? setItemHook;
 
@@ -95,6 +97,18 @@ namespace RnSArchipelago
                 kingdom = new KingdomHandler(rnsReloaded, logger);
                 classHandler = new ClassHandler(rnsReloaded, logger);
 
+                // TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
+                var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
+                this.outskirtsHook =
+                    hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
+                this.outskirtsHook.Activate();
+                this.outskirtsHook.Enable();
+
+                var outskirtsScriptN = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts_n") - 100000);
+                this.outskirtsNHook =
+                    hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
+                this.outskirtsNHook.Activate();
+                this.outskirtsNHook.Enable();
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
@@ -608,6 +622,7 @@ namespace RnSArchipelago
         )
         {
             returnValue = this.outskirtsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            var a = new RValue(self);
             if (this.IsReady(out var rnsReloaded))
             {
                 rnsReloaded.utils.setHallway(new List<Notch> {
@@ -620,6 +635,8 @@ namespace RnSArchipelago
                 new Notch(NotchType.Chest, "", 0, Notch.BOSS_FLAG),
                 new Notch(NotchType.Boss, "enc_wolf_bluepaw0", 0, Notch.BOSS_FLAG)
             }, self, rnsReloaded);
+                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "outskirts", self, returnValue, argc, argv), Color.Red);
+                this.logger.PrintMessage(a.ToString(), Color.Red);
             }
             return returnValue;
         }

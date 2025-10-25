@@ -130,29 +130,31 @@ namespace RnSArchipelago.Game
         // Set the item inside the chest to the proper item
         internal RValue* SetItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            // TODO: FIGURE OUT HOW TO INSERT A NOTCH INTO A HALLWAY
-            // Doesn't actually change the notch we are visiting, just the icon for it
-            /*HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var temp);
-            var temp2 = ((CLayerInstanceElement*)temp)->Instance;
-            var temp3 = rnsReloaded.FindValue(temp2, "xSubimg");
-            rnsReloaded.ArrayGetEntry(temp3, 4)->Real = 2;*/
-
             // If the item that is being created is a chest loot item
             if (argv[2]->Int32 == 1)
             {
-                // TODO: ADD CONDITION TO CHECK WHICH KIND OF CHEST WE ARE IN ALA xSubimg[currentPos] == 1 set loot to be archipelago loot
-                if (InventoryUtil.Instance.checksPerItemInChest)
+                // Determine if the chest is an archipelago chest or not
+                HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var element);
+                var instance = ((CLayerInstanceElement*)element)->Instance;
+                var currentPos = rnsReloaded.FindValue(instance, "currentPos")->Real;
+                var currentXImg = rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "xSubimg"), (int)currentPos);
+
+                // Set the item to the archipelago item
+                if (InventoryUtil.Instance.checksPerItemInChest && (currentXImg->Real == 1 || currentXImg->Int32 == 1))
                 {
                     for (var i = 0; i < 5; i++)
                     {
+                        // Determine which slot item we are at, which should be the first -1
                         if (rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 1), i), 1)->Real == -1)
                         {
                             var info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos(i))];
 
+                            // If the location is checked
                             if (conn.session!.Locations.AllLocationsChecked.Contains(GetChestPositionLocationId(SlotIdToChestPos(i))))
                             {
                                 *argv[0] = new RValue(baseItemId + 2);
                             } 
+                            // If the item is progression
                             else if (info.Flags.HasFlag(ItemFlags.Advancement))
                             {
                                 *argv[0] = new RValue(baseItemId + 1);
@@ -197,7 +199,6 @@ namespace RnSArchipelago.Game
             //if an archipelago item, set the description to the real item
             if (argv[0]->Real == baseItemId || argv[0]->Real == baseItemId+1 || argv[0]->Real == baseItemId+2)
             {
-
                 var info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos((int)rnsReloaded.FindValue(self, "slotId")->Real))];
                 var player = info.Player.Slot == MessageHandler.Instance.slot ? "your" : info.Player.Name + "'s";
 
@@ -251,6 +252,7 @@ namespace RnSArchipelago.Game
 
                 var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos((int)rnsReloaded.FindValue(element, "slotId")->Real))] };
                 conn.session!.Socket.SendPacketAsync(locationPacket);
+
             }
             else
             {
@@ -275,6 +277,7 @@ namespace RnSArchipelago.Game
             conn.session!.Socket.SendPacketAsync(locationPacket);
         }
 
+        // Get the base location name, ex. Kingdom Outskirts Chest 1
         private string GetBaseLocation()
         {
             HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "currentPos", out var instance);
@@ -314,7 +317,37 @@ namespace RnSArchipelago.Game
                 return " Chest " + count;
             }
 
-            return " Battle " + count;
+            if (notchType == 0)
+            {
+                return " Battle " + count;
+            }
+
+            return "NAN";
+        }
+
+        // Make the next notch be an ingame only chest
+        private void AddChestToNotch()
+        {
+            HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var element);
+            var instance = ((CLayerInstanceElement*)element)->Instance;
+
+            var currentPos = rnsReloaded.FindValue(instance, "currentPos")->Real;
+            var notches = rnsReloaded.FindValue(instance, "notches");
+            var emptyString = new RValue();
+            rnsReloaded.CreateString(&emptyString, "");
+
+            var notch = rnsReloaded.ExecuteCodeFunction("array_create", null, null, [new(4)])!.Value;
+            *notch[0] = new(5);
+            *notch[1] = emptyString;
+            *notch[2] = new(0);
+            *notch[3] = new(0);
+
+            // Actually increase things
+            rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*notches, new RValue(currentPos+1), notch]);
+            rnsReloaded.FindValue(instance, "notchNumber")->Real = rnsReloaded.FindValue(instance, "notchNumber")->Real + 1;
+            rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
+
+
         }
     }
 }
