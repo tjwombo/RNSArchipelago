@@ -25,6 +25,12 @@ namespace RnSArchipelago.Utils
         private List<long> availableItems = [];
         internal bool checksPerItemInChest;
 
+        internal delegate void UpdateKingdomRouteDelegate(bool currentHallwayPosAware = true);
+        internal event UpdateKingdomRouteDelegate UpdateKingdomRoute;
+
+        internal delegate void AddChestDelegate();
+        internal event AddChestDelegate AddChest;
+
         private InventoryUtil() => Reset();
 
         internal void Reset()
@@ -194,10 +200,12 @@ namespace RnSArchipelago.Utils
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
                         Console.WriteLine(AvailableKingdoms);
+                        UpdateKingdomRoute.Invoke();
                     } else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
                         Console.WriteLine(ProgressiveRegions);
+                        UpdateKingdomRoute.Invoke();
                     } else if (CLASSES.Contains(itemName))
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
@@ -206,6 +214,9 @@ namespace RnSArchipelago.Utils
                     {
                         AddItemsFromItemset(itemName);
                         Console.WriteLine(String.Join(", ", AvailableItems));
+                    } else if (itemName == "Treasuresphere")
+                    {
+                        AddChest.Invoke();
                     }
                 }
                 
@@ -254,6 +265,10 @@ namespace RnSArchipelago.Utils
         // Get the kingdoms that are of order n
         internal List<string> GetNthOrderKingdoms(int n)
         {
+            if (n <= 0)
+            {
+                return [];
+            }
             var kingdoms = new List<string>();
             foreach (var kingdom in kingdomOrder[n-1])
             {

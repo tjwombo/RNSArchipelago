@@ -194,20 +194,11 @@ namespace RnSArchipelago.Connection
                     // TODO: Look into getting rid of this, as we can get the info from the session
                     TextReader textReader = File.OpenText(modConfig.Cache + "\\datapackage\\Rabbit and Steel\\" + checksum + ".json");
                     var cache = JsonSerializer.Deserialize<JsonElement>(textReader.ReadToEnd());
-                    if (cache.TryGetProperty("location_name_to_id", out var locations))
-                    {
-                        var locationId = locations.Deserialize<Dictionary<string, long>>()!;
-                        foreach (var location in locationId) {
-                            this.data.SetValue<long>(DataContext.LocationToId, location.Key, location.Value);
-                            this.data.SetValue<string>(DataContext.IdToLocation, location.Value, location.Key);
-                        }
-                    }
                     if (cache.TryGetProperty("item_name_to_id", out var items))
                     {
                         var itemId = items.Deserialize<Dictionary<string, long>>()!;
                         foreach (var item in itemId)
                         {
-                            this.data.SetValue<long>(DataContext.ItemToId, item.Key, item.Value);
                             this.data.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
                         }
                     }

@@ -98,7 +98,7 @@ namespace RnSArchipelago
                 classHandler = new ClassHandler(rnsReloaded, logger);
 
                 // TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
-                var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
+                /*var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
                 this.outskirtsHook =
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
                 this.outskirtsHook.Activate();
@@ -108,7 +108,7 @@ namespace RnSArchipelago
                 this.outskirtsNHook =
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
                 this.outskirtsNHook.Activate();
-                this.outskirtsNHook.Enable();
+                this.outskirtsNHook.Enable();*/
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);

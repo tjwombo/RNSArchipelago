@@ -21,6 +21,8 @@ namespace RnSArchipelago.Game
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
+
+            InventoryUtil.Instance.UpdateKingdomRoute += UpdateRoute;
         }
 
         // Calcuate the number of kingdoms your currently allowed to visit in a run
@@ -425,45 +427,75 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
-        // TODO: HANDLE HAVING 0 KINGDOMS
         // Modify the route to take a route that corresponds to the kingdom order
-        internal void ModifyRoute(CInstance* self, int maxCanRun, InventoryUtil.KingdomFlags visitableKingdoms)
+        internal void ModifyRoute(int maxCanRun, InventoryUtil.KingdomFlags visitableKingdoms, bool currentHallwayPosAware)
         {
-            var kingdoms = InventoryUtil.Instance.GetKingdomsAvailableAtNthOrder(maxCanRun);
-            this.logger.PrintMessage(string.Join(", ", kingdoms), System.Drawing.Color.Red);
+            HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "stageNameKey", out var element);
 
-            var hallkey = rnsReloaded.FindValue(self, "hallkey");
+            var instance = ((CLayerInstanceElement*)element)->Instance;
+
+            var kingdoms = InventoryUtil.Instance.GetKingdomsAvailableAtNthOrder(maxCanRun);
+
+            var hallkey = rnsReloaded.FindValue(instance, "hallkey");
             var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
 
-            rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
+            var currentHallwayPos = (int)rnsReloaded.FindValue(instance, "hallwayPos")->Real;
 
-            var rand = new Random((int)(InventoryUtil.Instance.seed));
-            //var rand = new Random();
+            // Handle the 0th position
+            if (!currentHallwayPosAware || currentHallwayPos < 0)
+            {
+                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
+            }
 
-            var unplacedKingdoms = InventoryUtil.Instance.GetNthOrderKingdoms(1);
+            if (maxCanRun == 0)
+            {
+                return;
+            }
 
-            // TODO: LOOK INTO REMOVING THIS, AS I NOW RESTRICT THE ICONS TO ONLY SHOW VISITIBLE KINGDOMS
-            // Update the first kingdom if its not visitable
-            if (!unplacedKingdoms.Contains(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1)))) {
+            //var rand = new Random((int)(InventoryUtil.Instance.seed));
+            var rand = new Random();
+
+            var unplacedKingdoms = InventoryUtil.Instance.GetKingdomsAvailableAtNthOrder(maxCanRun);
+
+            // Handle the 1st position, trying to encorporate their request
+            if (!unplacedKingdoms.Contains(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1))))
+            {
                 int randomIndex = rand.Next(unplacedKingdoms.Count());
                 rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 1), unplacedKingdoms[randomIndex]);
                 unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
+            } else
+            {
+                unplacedKingdoms.Remove(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1)));
             }
 
-            // Place the remaining kingdoms, prioritizing ones in the correct order
-            for (var i = 1; i < maxCanRun; i++)
+            // Perform initial limiting
+            if (currentHallwayPosAware)
             {
-                var nthKingdoms = InventoryUtil.Instance.GetNthOrderKingdoms(i + 1);
-                if (nthKingdoms.Count != 0)
+                // Remove kingdoms that are already placed for the list of possible kingdoms
+                for (var i = 2; i <= currentHallwayPos; i++)
                 {
-                    int randomIndex = rand.Next(nthKingdoms.Count());
-                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i + 1), nthKingdoms[randomIndex]);
-                    nthKingdoms.Remove(nthKingdoms[randomIndex]);
-                    unplacedKingdoms = [.. unplacedKingdoms, .. nthKingdoms];
-                } else
+                    unplacedKingdoms.Remove(rnsReloaded.ArrayGetEntry(hallkey, i)->ToString());
+                }
+
+                // We've already handled pos 0 and 1, so we need to start at least at 2
+                currentHallwayPos = Math.Max(currentHallwayPos + 1, 2);
+            }
+
+            for (var i = currentHallwayPosAware ? currentHallwayPos : 2; i <= maxCanRun; i++)
+            {
+                var availibleNthKingdoms = InventoryUtil.Instance.GetNthOrderKingdoms(i).Intersect(unplacedKingdoms).ToList();
+
+                // Prioritize the kingdom of the correct order
+                if (availibleNthKingdoms.Count != 0)
+                {
+                    int randomIndex = rand.Next(availibleNthKingdoms.Count());
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), availibleNthKingdoms[randomIndex]);
+                    unplacedKingdoms.Remove(availibleNthKingdoms[randomIndex]);
+                }
+                else
                 {
                     int randomIndex = rand.Next(unplacedKingdoms.Count());
-                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i + 1), unplacedKingdoms[randomIndex]);
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), unplacedKingdoms[randomIndex]);
                     unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
                 }
             }
@@ -494,6 +526,20 @@ namespace RnSArchipelago.Game
 
         }
 
+        // Update the route from the start or from the current position + 1
+        internal void UpdateRoute(bool currentHallwayPosAware = true)
+        {
+            this.logger.PrintMessage("updating route", System.Drawing.Color.Red);
+            var visitableKingdoms = InventoryUtil.Instance.AvailableKingdoms;
+
+            var maxCanRun = CalculateMaxRun();
+            this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.Red);
+
+            ModifyHallSeedAndIcons(maxCanRun);
+
+            ModifyRoute(maxCanRun, visitableKingdoms, currentHallwayPosAware);
+        }
+
         // Create the route such that you only visit kingdoms you are allowed to with your settings and items combo
         internal RValue* CreateRoute(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
@@ -502,23 +548,14 @@ namespace RnSArchipelago.Game
             if (InventoryUtil.Instance.isActive)
             {
                 var isKingdomSanity = InventoryUtil.Instance.isKingdomSanity;
-                if (isKingdomSanity)
+                var isProgressive = InventoryUtil.Instance.isProgressive;
+                if (isKingdomSanity || isProgressive)
                 {
-                    var isProgressive = InventoryUtil.Instance.isProgressive;
-                    var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
-                    var regionCount = InventoryUtil.Instance.ProgressiveRegions;
-                    var visitableKingdoms = InventoryUtil.Instance.AvailableKingdoms;
+                    returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                    this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "create route", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                    UpdateRoute(false);
 
-                    //returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
-
-                    var maxCanRun = CalculateMaxRun();
-                    this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.Red);
-
-                    ModifyHallSeedAndIcons(maxCanRun);
-
-                    ModifyRoute(self, maxCanRun, visitableKingdoms);
-
-                    //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "halls", self, returnValue, argc, argv), System.Drawing.Color.Gray);
+                    //TODO: Add the chests we have accumulated
 
                     return returnValue;
                 }

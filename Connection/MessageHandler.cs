@@ -119,17 +119,10 @@ namespace RnSArchipelago.Connection
                 case ArchipelagoPacketType.DataPackage: // Happens when we request it becuase we dont have it in the cache
                     if (((DataPackagePacket)packet).DataPackage.Games.TryGetValue(GAME, out var gameData))
                     {
-                        var locationId = gameData.LocationLookup;
-                        foreach (var location in locationId)
-                        {
-                            this.data!.SetValue<long>(DataContext.LocationToId, location.Key, location.Value);
-                            this.data.SetValue<string>(DataContext.IdToLocation, location.Value, location.Key);
-                        }
                         var itemId = gameData.ItemLookup;
                         foreach (var item in itemId)
                         {
-                            this.data!.SetValue<long>(DataContext.ItemToId, item.Key, item.Value);
-                            this.data.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
+                            this.data!.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
                         }
                     }
                     break;

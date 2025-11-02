@@ -10,9 +10,6 @@ namespace RnSArchipelago.Data
     {
         Connection,
         Options,
-        ItemToId,
         IdToItem,
-        LocationToId,
-        IdToLocation
     }
 }

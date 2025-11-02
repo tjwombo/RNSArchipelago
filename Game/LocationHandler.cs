@@ -38,12 +38,14 @@ namespace RnSArchipelago.Game
         private static readonly string[] STARTING_LOCATIONS = ["Starting Class", "Starting Kingdom", "Starting Primary", "Starting Secondary", "Starting Special", "Starting Defensive"];
         private static readonly string[] CHEST_POSITIONS = ["Top Left", "Bottom Left", "Middle", "Bottom Right", "Top Right"];
 
-        private Task<Dictionary<long, ScoutedItemInfo>> chestContents; 
+        private Task<Dictionary<long, ScoutedItemInfo>> chestContents;
 
         internal LocationHandler(IRNSReloaded rnsReloaded, ILoggerV1 logger)
         {
             this.rnsReloaded = rnsReloaded;
             this.logger = logger;
+
+            InventoryUtil.Instance.AddChest += AddChestToNotch;
         }
 
         // Send the starting locations
@@ -172,6 +174,10 @@ namespace RnSArchipelago.Game
                     var index = rand.Next(InventoryUtil.Instance.AvailableItems.Count);
                     *argv[0] = new RValue(InventoryUtil.Instance.AvailableItems[index]);
 
+                    // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working
+                    /*rnsReloaded.FindValue(instance, "yScale")->Real = 1;
+                    rnsReloaded.FindValue(instance, "yScale")->Real = 1;*/
+
                     this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "mod", self, returnValue, argc, argv), System.Drawing.Color.Red);
                 }
             }
@@ -285,7 +291,13 @@ namespace RnSArchipelago.Game
 
             var kingdomName = rnsReloaded.FindValue(element, "stageName")->ToString();
             kingdomName = kingdomName.Replace(Environment.NewLine, " ");
-            return kingdomName + GetNotchName(element);
+
+            var notchName = GetNotchName(element);
+            if(notchName.Contains("Chest") && !kingdomName.Equals("Kingdom Outskirts"))
+            {
+                notchName = " Chest";
+            }
+            return kingdomName + notchName;
         }
 
         // Get the name of the location for the notch based on its image and number of occurence
@@ -332,6 +344,10 @@ namespace RnSArchipelago.Game
             var instance = ((CLayerInstanceElement*)element)->Instance;
 
             var currentPos = rnsReloaded.FindValue(instance, "currentPos")->Real;
+            if (currentPos == -1)
+            {
+                currentPos = 0;
+            }
             var notches = rnsReloaded.FindValue(instance, "notches");
             var emptyString = new RValue();
             rnsReloaded.CreateString(&emptyString, "");
