@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using RnSArchipelago.Data;
 using System.Collections.Generic;
+using static RnSArchipelago.Utils.InventoryUtil;
 
 namespace RnSArchipelago.Utils
 {
@@ -24,12 +25,46 @@ namespace RnSArchipelago.Utils
         internal bool shuffleItemsets;
         private List<long> availableItems = [];
         internal bool checksPerItemInChest;
+        private List<string> availablePotions = [];
+        private GoalSetting goal = GoalSetting.Shira;
+        internal long shiraKills;
+        private HashSet<string> victories = [];
 
         internal delegate void UpdateKingdomRouteDelegate(bool currentHallwayPosAware = true);
         internal event UpdateKingdomRouteDelegate UpdateKingdomRoute;
 
         internal delegate void AddChestDelegate();
         internal event AddChestDelegate AddChest;
+
+        internal delegate void SendGoalDelegate();
+        internal event SendGoalDelegate SendGoal;
+
+        internal enum UpgradeSetting
+        {
+            None = 0,
+            Simple = 1,
+            Full = 2
+        }
+
+        internal UpgradeSetting UpgradeSanity { get; set; }
+
+        internal enum PotionSetting
+        {
+            None = 0,
+            Locked = 1,
+            Roulette = 2
+        }
+
+        internal PotionSetting PotionSanity { get; set; }
+
+        internal enum GoalSetting
+        {
+            Shira = 1
+        }
+
+        internal GoalSetting Goal => goal;
+
+
 
         private InventoryUtil() => Reset();
 
@@ -42,6 +77,13 @@ namespace RnSArchipelago.Utils
             AvailableClasses = ClassFlags.None;
             checksPerClass = [];
             availableItems = [];
+            AvailableTreasurespheres = 0;
+            UpgradeSanity = UpgradeSetting.None;
+            PotionSanity = PotionSetting.None;
+            availablePotions = [];
+            goal = GoalSetting.Shira;
+            shiraKills = 0;
+            victories = [];
         }
 
         // Init function to get the kingdom options the user has selected
@@ -84,6 +126,17 @@ namespace RnSArchipelago.Utils
 
             shuffleItemsets = data.GetValue<long>(DataContext.Options, "shuffle_item_sets") == 1;
             checksPerItemInChest = data.GetValue<long>(DataContext.Options, "checks_per_item_in_chest") == 1;
+
+            UpgradeSanity = (UpgradeSetting)data.GetValue<long>(DataContext.Options, "upgrade_sanity");
+            Console.WriteLine(UpgradeSanity);
+
+            PotionSanity = (PotionSetting)data.GetValue<long>(DataContext.Options, "potion_sanity");
+            Console.WriteLine(PotionSanity);
+
+            goal = (GoalSetting)data.GetValue<long>(DataContext.Options, "goal_condition");
+            Console.WriteLine(goal);
+
+            shiraKills = data.GetValue<long>(DataContext.Options, "shira_defeats")!;
         }
 
         [Flags]
@@ -187,7 +240,70 @@ namespace RnSArchipelago.Utils
         private static readonly long[] LAKESHRINE_SET = [479, 480, 481, 482, 483, 484, 485, 486];
         #endregion
 
-        // TODO: CREATE A SUBSCRIPTION OF SORTS TO UPDATE HOOKS IN REAL TIME WHEN NEEDED
+        internal int AvailableTreasurespheres;
+
+        internal static readonly string[] UPGRADES = ["Emerald Gem", "Garnet Gem", "Ruby Gem", "Sapphire Gem", "Opal Gem",
+            "Primary Emerald Gem", "Primary Garnet Gem", "Primary Ruby Gem", "Primary Sapphire Gem", "Primary Opal Gem",
+            "Secondary Emerald Gem", "Secondary Garnet Gem", "Secondary Ruby Gem", "Secondary Sapphire Gem", "Secondary Opal Gem",
+            "Special Emerald Gem", "Special Garnet Gem", "Special Ruby Gem", "Special Sapphire Gem", "Special Opal Gem",
+            "Defensive Emerald Gem", "Defensive Garnet Gem", "Defensive Ruby Gem", "Defensive Sapphire Gem", "Defensive Opal Gem"];
+
+        [Flags]
+        internal enum PrimaryUpgradeFlags
+        {
+            None = 0,
+            PrimaryEmeraldGem = 0x00001,
+            PrimaryGarnetGem = 0x00010,
+            PrimaryRubyGem = 0x00100,
+            PrimarySapphireGem = 0x01000,
+            PrimaryOpalGem = 0x10000,
+        }
+
+        internal PrimaryUpgradeFlags AvailablePrimaryUpgrades { get; set; }
+
+        [Flags]
+        internal enum SecondaryUpgradeFlags {
+            None = 0,
+            SecondaryEmeraldGem = 0x00001,
+            SecondaryGarnetGem = 0x00010,
+            SecondaryRubyGem = 0x00100,
+            SecondarySapphireGem = 0x01000,
+            SecondaryOpalGem = 0x10000,
+        }
+
+        internal SecondaryUpgradeFlags AvailableSecondaryUpgrades { get; set; }
+
+        [Flags]
+        internal enum SpecialUpgradeFlags {
+            None = 0,
+            SpecialEmeraldGem = 0x00001,
+            SpecialGarnetGem = 0x00010,
+            SpecialRubyGem = 0x00100,
+            SpecialSapphireGem = 0x01000,
+            SpecialOpalGem = 0x10000,
+        }
+
+        internal SpecialUpgradeFlags AvailableSpecialUpgrades { get; set; }
+
+        [Flags]
+        internal enum DefensiveUpgradeFlags { 
+            None = 0,
+            DefensiveEmeraldGem = 0x00001,
+            DefensiveGarnetGem = 0x00010,
+            DefensiveRubyGem = 0x00100,
+            DefensiveSapphireGem = 0x01000,
+            DefensiveOpalGem = 0x10000,
+        }
+
+        internal DefensiveUpgradeFlags AvailableDefensiveUpgrades { get; set; }
+
+        internal static readonly string[] POTIONS = ["Full Heal Potion", "Level Up Potion", "Regen Potion", "Essence of Spell", "Darkness Potion", "Quickening Potion", "Winged Potion",
+            "Essence of Wit", "Swifthand Potion", "Fire Potion", "Strength Potion", "Gold Potion", "Luck Potion", "Essence of Steel", "Evasion Potion", "Longarm Potion", "Vitality Potion"];
+
+        internal List<string> AvailablePotions => availablePotions;
+
+        internal HashSet<string> Victories => victories;
+
         // Handle receiving kingdom related items
         internal void ReceiveItem(ReceivedItemsPacket recievedItem, SharedData data)
         {
@@ -201,26 +317,110 @@ namespace RnSArchipelago.Utils
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
                         Console.WriteLine(AvailableKingdoms);
                         UpdateKingdomRoute.Invoke();
-                    } else if (itemName == "Progressive Region")
+                    } 
+                    else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
                         Console.WriteLine(ProgressiveRegions);
                         UpdateKingdomRoute.Invoke();
-                    } else if (CLASSES.Contains(itemName))
+                    } 
+                    else if (CLASSES.Contains(itemName))
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
                         Console.WriteLine(AvailableClasses);
-                    } else if (ITEMSETS.Contains(itemName))
+                    } 
+                    else if (ITEMSETS.Contains(itemName))
                     {
                         AddItemsFromItemset(itemName);
                         Console.WriteLine(String.Join(", ", AvailableItems));
-                    } else if (itemName == "Treasuresphere")
+                    } 
+                    else if (itemName == "Treasuresphere")
                     {
                         AddChest.Invoke();
+                        AvailableTreasurespheres++;
+                    } 
+                    else if (UPGRADES.Contains(itemName))
+                    {
+                        var enumName = itemName.Replace(" ", "");
+                        if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.Simple)
+                        {
+                            if (enumName.Contains("Emerald"))
+                            {
+                                AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimaryEmeraldGem;
+                                AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryEmeraldGem;
+                                AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialEmeraldGem;
+                                AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveEmeraldGem;
+                            } else if (enumName.Contains("Garnet"))
+                            {
+                                AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimaryGarnetGem;
+                                AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryGarnetGem;
+                                AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialGarnetGem;
+                                AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveGarnetGem;
+                            } else if (enumName.Contains("Ruby"))
+                            {
+                                AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimaryRubyGem;
+                                AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryRubyGem;
+                                AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialRubyGem;
+                                AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveRubyGem;
+                            } else if (enumName.Contains("Sapphire"))
+                            {
+                                AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimarySapphireGem;
+                                AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondarySapphireGem;
+                                AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialSapphireGem;
+                                AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveSapphireGem;
+                            } else if (enumName.Contains("Opal"))
+                            {
+                                AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimaryOpalGem;
+                                AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryOpalGem;
+                                AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialOpalGem;
+                                AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveOpalGem;
+                            }
+                        } else if (enumName.Contains("Primary"))
+                        {
+                            AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | (PrimaryUpgradeFlags)Enum.Parse(typeof(PrimaryUpgradeFlags), enumName);
+                            Console.WriteLine(AvailablePrimaryUpgrades);
+                        } else if (enumName.Contains("Secondary"))
+                        {
+                            AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | (SecondaryUpgradeFlags)Enum.Parse(typeof(SecondaryUpgradeFlags), enumName);
+                            Console.WriteLine(AvailableSecondaryUpgrades);
+                        } else if (enumName.Contains("Special"))
+                        {
+                            AvailableSpecialUpgrades = AvailableSpecialUpgrades | (SpecialUpgradeFlags)Enum.Parse(typeof(SpecialUpgradeFlags), enumName);
+                            Console.WriteLine(AvailableSpecialUpgrades);
+                        } else if (enumName.Contains("Defensive"))
+                        {
+                            AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | (DefensiveUpgradeFlags)Enum.Parse(typeof(DefensiveUpgradeFlags), enumName);
+                            Console.WriteLine(AvailableDefensiveUpgrades);
+                        }
+                    } 
+                    else if (POTIONS.Contains(itemName))
+                    {
+                        AvailablePotions.Add(itemName);
+                        Console.WriteLine(String.Join(", ", AvailablePotions));
+                    } else if (itemName.Contains("Victory"))
+                    {
+                        victories.Add(itemName);
+                        Console.WriteLine(String.Join(", ", victories));
+                        if (CheckGoal())
+                        {
+                            SendGoal.Invoke();
+                        }
                     }
                 }
                 
             }
+        }
+
+        internal bool CheckGoal()
+        {
+            if (goal == GoalSetting.Shira)
+            {
+                if (victories.Count >= shiraKills)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Get the notchname from a kingdoms full name

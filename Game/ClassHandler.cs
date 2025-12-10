@@ -21,6 +21,11 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? lockVisualClassHook;
         internal IHook<ScriptDelegate>? stopColorHook;
 
+        internal static long AbilityIdToBaseId(long abilityId)
+        {
+            return (long)(Math.Floor((abilityId + 1.0) / 7) * 7) - 1;
+        }
+
         internal ClassHandler(IRNSReloaded rnsReloaded, ILoggerV1 logger)
         {
             this.rnsReloaded = rnsReloaded;

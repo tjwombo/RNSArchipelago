@@ -11,6 +11,7 @@ using RnSArchipelago.Connection;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
 using System.Net;
+using RNSReloaded;
 
 namespace RnSArchipelago
 {
@@ -97,7 +98,7 @@ namespace RnSArchipelago
                 kingdom = new KingdomHandler(rnsReloaded, logger);
                 classHandler = new ClassHandler(rnsReloaded, logger);
 
-                // TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
+                //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
                 /*var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
                 this.outskirtsHook =
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
@@ -109,6 +110,14 @@ namespace RnSArchipelago
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
                 this.outskirtsNHook.Activate();
                 this.outskirtsNHook.Enable();*/
+
+                // Test temp hook
+                /*var testId = rnsReloaded.ScriptFindId("tpat_player_set_gold");
+                var testScript = rnsReloaded.GetScriptData(testId - 100000);
+                this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
+                this.setItemHook.Activate();
+                this.setItemHook.Enable();*/
+
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
                 var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
@@ -290,13 +299,11 @@ namespace RnSArchipelago
                 this.archipelagoWebsocketHook.Enable();
 
                 // TEMP FUNCTION (PROBABLY STOLEN FROM THE ACTUAL SEND MESSAGE FUNCTION BUT IDK ANYMORE)
-                var messageId = rnsReloaded.ScriptFindId("scr_lobbyhost_check_adventureready");
+                /*var messageId = rnsReloaded.ScriptFindId("scr_itemsys_update_uipos");
                 var messageScript = rnsReloaded.GetScriptData(messageId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, messageScript->Functions->Function);
                 this.setItemHook.Activate();
-                this.setItemHook.Enable();
-
-                // TODO: RESTARTING LOBBY BUTTON CRASHES
+                this.setItemHook.Enable();*/
 
                 // Close the connection after returning to lobby settings
                 var resetId = rnsReloaded.ScriptFindId("scr_runmenu_disband_disband");
@@ -333,11 +340,11 @@ namespace RnSArchipelago
             }
         }
 
+        // Set up the hooks to manipulate chest items
         private void SetupArchipelagoItems()
         {
             if (this.IsReady(out var rnsReloaded, out var hooks))
             {
-                //scr_itemsys_loot_amount use to set amouint in chest later
 
                 // Setup the mod items that corresponds to the items in CopyItemModToRnSMod()
                 var setupItemsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_init_mods") - 100000);
@@ -351,17 +358,29 @@ namespace RnSArchipelago
                 locationHandler.enableModHook.Activate();
                 locationHandler.enableModHook.Enable();
 
+                // Set amount of items in chest, 5 for archipelago, normal for chest # for normal
+                var itemAmtScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_loot_amount") - 100000);
+                locationHandler.itemAmtHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetAmountOfItems, itemAmtScript->Functions->Function);
+                locationHandler.itemAmtHook.Activate();
+                locationHandler.itemAmtHook.Enable();
+
                 // Get the id of the archipelago item 
                 var itemGetScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_readsheet_items") - 100000);
                 locationHandler.itemGetHook = hooks.CreateHook<ScriptDelegate>(locationHandler.GetItems, itemGetScript->Functions->Function);
                 locationHandler.itemGetHook.Activate();
                 locationHandler.itemGetHook.Enable();
 
-                // Scout the archipelago item to display values in game
-                var itemScoutScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_populate_loot") - 100000);
-                locationHandler.itemScoutHook = hooks.CreateHook<ScriptDelegate>(locationHandler.ScoutItems, itemScoutScript->Functions->Function);
-                locationHandler.itemScoutHook.Activate();
-                locationHandler.itemScoutHook.Enable();
+                // Scout the archipelago item to display values in a chest
+                var itemScoutChestScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_populate_loot") - 100000);
+                locationHandler.itemScoutChestHook = hooks.CreateHook<ScriptDelegate>(locationHandler.ScoutChestItems, itemScoutChestScript->Functions->Function);
+                locationHandler.itemScoutChestHook.Activate();
+                locationHandler.itemScoutChestHook.Enable();
+
+                // Scout the archipelago item to display values in a shop
+                var itemScoutShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_populate_store") - 100000);
+                locationHandler.itemScoutShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.ScoutShopItems, itemScoutShopScript->Functions->Function);
+                locationHandler.itemScoutShopHook.Activate();
+                locationHandler.itemScoutShopHook.Enable();
 
                 // Set the item to be an archipelago item
                 var itemSetScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_create_item") - 100000);
@@ -375,11 +394,31 @@ namespace RnSArchipelago
                 locationHandler.itemSetDescriptionHook.Activate();
                 locationHandler.itemSetDescriptionHook.Enable();
 
+                //TODO: FINISH GETTING IT WORKING
+                // Set the shop upgrade description to match the class that ability is from
+                /*var itemSetUpgradeDescriptionId = rnsReloaded.ScriptFindId("scr_infodraw_get_item_desc");
+                var itemSetUpgradeDescriptionScript = rnsReloaded.GetScriptData(itemSetUpgradeDescriptionId - 100000);
+                locationHandler.itemSetUpgradeDescriptionHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetUpgradeDescription, itemSetUpgradeDescriptionScript->Functions->Function);
+                locationHandler.itemSetUpgradeDescriptionHook.Activate();
+                locationHandler.itemSetUpgradeDescriptionHook.Enable();*/
+
                 // Prevents you from actually taking an item, and sends out the corresponding location
                 var takeItemScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_pickup_loot") - 100000);
                 locationHandler.takeItemHook = hooks.CreateHook<ScriptDelegate>(locationHandler.TakeItem, takeItemScript->Functions->Function);
                 locationHandler.takeItemHook.Activate();
                 locationHandler.takeItemHook.Enable();
+
+                //TODO: UNCOMMENT ONCE DONE WITH MERCHANT TESTING
+                // Give treasurespheres that have accumulated 
+                var treasuresphereOnStartNScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
+                locationHandler.spawnTreasuresphereOnStartNHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartNScript->Functions->Function);
+                locationHandler.spawnTreasuresphereOnStartNHook.Activate();
+                locationHandler.spawnTreasuresphereOnStartNHook.Enable();
+
+                /*var treasuresphereOnStartScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
+                locationHandler.spawnTreasuresphereOnStartHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartScript->Functions->Function);
+                locationHandler.spawnTreasuresphereOnStartHook.Activate();
+                locationHandler.spawnTreasuresphereOnStartHook.Enable();*/
             }
         }
 
@@ -418,7 +457,9 @@ namespace RnSArchipelago
             )
             {
                 returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "message", self, returnValue, argc, argv), Color.Gray);
+                //this.logger.PrintMessage(new RValue(self).ToString(), Color.Red);
+                //this.logger.PrintMessage(HookUtil.FindLayerWithField(rnsReloaded, "displayStr"), Color.Red);
+                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "test", self, returnValue, argc, argv), Color.Gray);
                 return returnValue;
             }
             returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
@@ -564,57 +605,11 @@ namespace RnSArchipelago
         private static void CopyItemModToRnSMod()
         {
             // Copy over item mod to game folder
-            // We assume that this environment variable is actually correct
+            // Assumes that this environment variable is actually correct
             DirectoryInfo sourceDir = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%"));
             string path = Path.Combine(sourceDir.FullName, @"RnSArchipelago\Items");
             CopyDirectory(path, @".\Mods\ArchipelagoItems", true);
-
-            /*
-            // Enable the item mod in save file
-            string modSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"RabbitSteel\SaveFileNonSynced\modconfig.ini");
-            
-            string[] enabledMods = File.ReadLines(modSavePath).ToArray();
-            bool modInFile = false;
-            bool modActive = false;
-            for (int i = 0; i < enabledMods.Count(); i++)
-            {
-                string line = enabledMods[i];
-                // If there's already an entry in save for this mod, replace it with the enabled version
-                if (line.StartsWith("ArchipelagoItems="))
-                {
-                    enabledMods[i] = "ArchipelagoItems=\"1.000000\"";
-                    modActive = true;
-                }
-                if (line.Equals("[ArchipelagoItems]"))
-                {
-                    modInFile = true;
-                }
-            }
-            // If no entry, add it
-            if (!modInFile)
-            {
-                enabledMods = enabledMods.Concat(["[ArchipelagoItems]", "Name=\"Archipelago Items\"", "TagStr=\"Loot Items\"", "ChangeLog=\"\"", "ugcId=\"ArchipelagoItems\"", "InfoRefresh=\"0\""]).ToArray();
-            }
-            if (!modActive)
-            {
-                var newEnabledMods = new string[enabledMods.Length + 1];
-                var offset = 0;
-                for (int i = 0; i < enabledMods.Count(); i++)
-                {
-                    string line = enabledMods[i];
-                    newEnabledMods[i + offset] = enabledMods[i];
-                    if (line.Equals("[Enable]"))
-                    {
-                        newEnabledMods[i + 1] = "ArchipelagoItems=\"1.000000\"";
-                        offset = 1;
-                    }
-                }
-                enabledMods = newEnabledMods;
-            }
-            File.WriteAllLines(modSavePath, enabledMods);
-            this.logger.PrintMessage("finished write", Color.Red);*/
         }
-
 
         // Changes the outskirts routing to only have shots and chests besides the boss
         private RValue* OutskirtsDetour(

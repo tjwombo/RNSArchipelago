@@ -446,6 +446,9 @@ namespace RnSArchipelago
                     ModifyElementVariable(rnsReloaded, element, "maxPlayers", ModificationType.ModifyLiteral, new RValue(ArchipelagoNum));
 
                     ModifyElementVariable(rnsReloaded, element, "passwordLocked", ModificationType.ModifyLiteral, new RValue(archipelagoPassSet && ArchipelagoPassword != ""));
+
+                    // Set starting gold
+                    *rnsReloaded.utils.GetGlobalVar("startingGold") = new RValue(99);
                 }
                 else
                 {
@@ -460,6 +463,9 @@ namespace RnSArchipelago
                     ModifyElementVariable(rnsReloaded, element, "maxPlayers", ModificationType.ModifyLiteral, new RValue(originalNum));
 
                     ModifyElementVariable(rnsReloaded, element, "passwordLocked", ModificationType.ModifyLiteral, new RValue(originalPassSet && originalPass != ""));
+
+                    // Set starting gold
+                    *rnsReloaded.utils.GetGlobalVar("startingGold") = new RValue(10);
                 }
                 return true;
             }

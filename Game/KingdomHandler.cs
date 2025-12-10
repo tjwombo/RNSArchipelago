@@ -555,8 +555,6 @@ namespace RnSArchipelago.Game
                     this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "create route", self, returnValue, argc, argv), System.Drawing.Color.Red);
                     UpdateRoute(false);
 
-                    //TODO: Add the chests we have accumulated
-
                     return returnValue;
                 }
                 else
