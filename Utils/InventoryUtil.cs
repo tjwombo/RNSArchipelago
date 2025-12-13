@@ -29,6 +29,7 @@ namespace RnSArchipelago.Utils
         private GoalSetting goal = GoalSetting.Shira;
         internal long shiraKills;
         private HashSet<string> victories = [];
+        private ShopSetting shop_sanity = ShopSetting.None;
 
         internal delegate void UpdateKingdomRouteDelegate(bool currentHallwayPosAware = true);
         internal event UpdateKingdomRouteDelegate UpdateKingdomRoute;
@@ -64,6 +65,15 @@ namespace RnSArchipelago.Utils
 
         internal GoalSetting Goal => goal;
 
+        internal enum ShopSetting
+        {
+            None = 0,
+            Global = 1,
+            Regional = 2
+        }
+
+        internal ShopSetting ShopSanity => shop_sanity;
+
 
 
         private InventoryUtil() => Reset();
@@ -84,6 +94,7 @@ namespace RnSArchipelago.Utils
             goal = GoalSetting.Shira;
             shiraKills = 0;
             victories = [];
+            shop_sanity = ShopSetting.None;
         }
 
         // Init function to get the kingdom options the user has selected
@@ -137,6 +148,9 @@ namespace RnSArchipelago.Utils
             Console.WriteLine(goal);
 
             shiraKills = data.GetValue<long>(DataContext.Options, "shira_defeats")!;
+
+            shop_sanity = (ShopSetting)data.GetValue<long>(DataContext.Options, "shop_sanity");
+            Console.WriteLine(ShopSanity);
         }
 
         [Flags]

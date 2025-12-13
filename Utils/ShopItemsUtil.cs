@@ -1,4 +1,5 @@
-﻿using RNSReloaded.Interfaces.Structs;
+﻿using RnSArchipelago.Connection;
+using RNSReloaded.Interfaces.Structs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,11 @@ namespace RnSArchipelago.Utils
     {
 
         static Random rand = new Random();
+
+        private static readonly string GAME = "Rabbit and Steel";
+
+        private static readonly string[] SHOP_LOCATIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
+                  "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
         private static long PotionNameToId(string potion)
         {
@@ -71,11 +77,11 @@ namespace RnSArchipelago.Utils
             }
         }
 
-        internal static void SetHpPotion(RValue** argv, long baseArchipelagoItemId)
+        internal static void SetHpPotion(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {
-            if (false) // TODO: If archipelago shop and we have checks per item in shop
+            if (useArchipelago)
             {
-                *argv[0] = new RValue(baseArchipelagoItemId);
+                *argv[0] = new RValue(archipelagoItemId);
             } else if (InventoryUtil.Instance.PotionSanity == InventoryUtil.PotionSetting.None) {
                 return;
             } else if (InventoryUtil.Instance.PotionSanity == InventoryUtil.PotionSetting.Locked) {
@@ -93,11 +99,11 @@ namespace RnSArchipelago.Utils
             }
         }
 
-        internal static void SetLevelPotion(RValue** argv, long baseArchipelagoItemId)
+        internal static void SetLevelPotion(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {
-            if (false) // TODO: If archipelago shop and we have checks per item in shop
+            if (useArchipelago)
             {
-                *argv[0] = new RValue(baseArchipelagoItemId);
+                *argv[0] = new RValue(archipelagoItemId);
             }
             else if (InventoryUtil.Instance.PotionSanity == InventoryUtil.PotionSetting.None)
             {
@@ -121,11 +127,11 @@ namespace RnSArchipelago.Utils
             }
         }
 
-        internal static void SetPotion(RValue** argv, long baseArchipelagoItemId)
+        internal static void SetPotion(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {
-            if (false) // TODO: If archipelago shop and we have checks per item in shop
+            if (useArchipelago)
             {
-                *argv[0] = new RValue(baseArchipelagoItemId);
+                *argv[0] = new RValue(archipelagoItemId);
             }
             else if (InventoryUtil.Instance.PotionSanity == InventoryUtil.PotionSetting.None)
             {
@@ -144,12 +150,13 @@ namespace RnSArchipelago.Utils
             }
         }
 
-        internal static void SetPrimaryUpgrade(RValue** argv, long baseArchipelagoItemId)
+        internal static void SetPrimaryUpgrade(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {
-            if (false) // TODO: If archipelago shop and we have checks per item in shop
+            if (useArchipelago)
             {
-                *argv[0] = new RValue(baseArchipelagoItemId);
-            } else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+                *argv[0] = new RValue(archipelagoItemId);
+            }
+            else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
                 return;
             } else {
 
@@ -187,12 +194,13 @@ namespace RnSArchipelago.Utils
             
         }
 
-        internal static void SetSecondaryUpgrade(RValue** argv, long baseArchipelagoItemId)
+        internal static void SetSecondaryUpgrade(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {
-            if (false) // TODO: If archipelago shop and we have checks per item in shop
+            if (useArchipelago)
             {
-                *argv[0] = new RValue(baseArchipelagoItemId);
-            } else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+                *argv[0] = new RValue(archipelagoItemId);
+            }
+            else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
                 return;
             } else {
                 if (InventoryUtil.Instance.AvailableSecondaryUpgrades == InventoryUtil.SecondaryUpgradeFlags.None)
@@ -233,12 +241,13 @@ namespace RnSArchipelago.Utils
 
         }
 
-        internal static void SetSpecialUpgrade(RValue** argv, long baseArchipelagoItemId)
+        internal static void SetSpecialUpgrade(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {
-            if (false) // TODO: If archipelago shop and we have checks per item in shop
+            if (useArchipelago)
             {
-                *argv[0] = new RValue(baseArchipelagoItemId);
-            } else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+                *argv[0] = new RValue(archipelagoItemId);
+            }
+            else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
                 return;
             } else {
                 if (InventoryUtil.Instance.AvailableSpecialUpgrades == InventoryUtil.SpecialUpgradeFlags.None)
@@ -279,12 +288,15 @@ namespace RnSArchipelago.Utils
 
         }
 
-        internal static void SetDefensiveUpgrade(RValue** argv, long baseArchipelagoItemId)
+        // TODO: REGIONAL SHOP SANITY HAS AN ERROR
+
+        internal static void SetDefensiveUpgrade(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {
-            if (false) // TODO: If archipelago shop and we have checks per item in shop
+            if (useArchipelago)
             {
-                *argv[0] = new RValue(baseArchipelagoItemId);
-            } else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+                *argv[0] = new RValue(archipelagoItemId);
+            }
+            else if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
                 return;
             } else {
                 if (InventoryUtil.Instance.AvailableDefensiveUpgrades == InventoryUtil.DefensiveUpgradeFlags.None)

@@ -54,6 +54,16 @@ namespace RnSArchipelago.Utils
             }
         }
 
+        internal static bool IsEqualToNumeric(RValue* value, long testValue)
+        {
+            return value->Real == testValue || value->Int32 == testValue;
+        }
+
+        internal static long GetNumeric(RValue* value)
+        {
+            return (int)value->Real | value->Int32;
+        }
+
         // Find a given layer in the room
         internal static void FindLayer(IRNSReloaded rnsReloaded, string layerName, out CLayer* layer)
         {

@@ -4,6 +4,7 @@ using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using static RnSArchipelago.Utils.HookUtil;
 using RnSArchipelago.Data;
+using RnSArchipelago.Utils;
 
 namespace RnSArchipelago
 {
@@ -65,7 +66,7 @@ namespace RnSArchipelago
                 originalName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(0));
                 originalDesc = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(1));
                 originalPass = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));
-                originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(4)->Real;
+                originalNum = (int)HookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(4));
 
                 initialSetup = false;
             }
@@ -107,7 +108,7 @@ namespace RnSArchipelago
 
                     ModifyElementVariable(rnsReloaded, element, "selectionWidth", ModificationType.ModifyLiteral, new RValue(250));
 
-                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                    if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                     {
                         ModifyElementVariable(rnsReloaded, element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
                     }
@@ -141,7 +142,7 @@ namespace RnSArchipelago
                     switch (rnsReloaded.GetString(instanceValue.Get("text")))
                     {
                         case "LOBBY SETTINGS":
-                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                             {
                                 RValue lobbyVar = new RValue(0);
                                 rnsReloaded.CreateString(&lobbyVar, "ARCHIPELAGO SETTINGS");
@@ -151,7 +152,7 @@ namespace RnSArchipelago
                             break;
                         case "name":
                             RValue nameValue = new RValue(0);
-                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                             {
                                 RValue nameVar = new RValue(0);
                                 rnsReloaded.CreateString(&nameVar, "Archipelago name");
@@ -170,7 +171,7 @@ namespace RnSArchipelago
                             break;
                         case "description":
                             RValue descValue = new RValue(0);
-                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                             {
                                 RValue descVar = new RValue(0);
                                 rnsReloaded.CreateString(&descVar, "Archipelago address");
@@ -188,7 +189,7 @@ namespace RnSArchipelago
                             break;
                         case "set password:":
                             RValue passValue = new RValue(0);
-                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                             {
                                 RValue passVar = new RValue(0);
                                 rnsReloaded.CreateString(&passVar, "enter password:");
@@ -205,7 +206,7 @@ namespace RnSArchipelago
                             break;
                         case "[ \"no password\",\"password locked\" ]":
                             RValue passVal = new RValue(0);
-                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                             {
                                 if (ArchipelagoPassword != "")
                                 {
@@ -230,7 +231,7 @@ namespace RnSArchipelago
 
                             break;
                         case "[ \"single player\",\"two players\",\"three players\",\"four players\" ]":
-                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                             {
                                 ModifyElementVariable(rnsReloaded, element, "cursorPos", ModificationType.ModifyLiteral, new RValue(ArchipelagoNum - 1));
                                 rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = ArchipelagoNum;
@@ -261,13 +262,13 @@ namespace RnSArchipelago
         {
             returnValue = this.archipelagoOptionsReturnHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
-            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
             {
                 ArchipelagoName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0));
 
                 ArchipelagoAddress = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
 
-                if (rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1)
+                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1))
                 {
                     ArchipelagoPassword = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(3));
                 } else
@@ -275,7 +276,7 @@ namespace RnSArchipelago
                     ArchipelagoPassword = "";
                 }
 
-                ArchipelagoNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
+                ArchipelagoNum = (int)HookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
             }
             else
             {
@@ -283,7 +284,7 @@ namespace RnSArchipelago
 
                 originalDesc = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
 
-                if (rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1)
+                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1))
                 {
                     originalPass = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(3));
                 }
@@ -292,7 +293,7 @@ namespace RnSArchipelago
                     originalPass = "";
                 }
 
-                originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
+                originalNum = (int)HookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
             }
             return returnValue;
         }
@@ -338,16 +339,14 @@ namespace RnSArchipelago
                     FindElementInLayer(rnsReloaded, "name", "click to edit", layer, out var lobbyButton);
                     if (lobbyButton != null)
                     {
-                        if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                        if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                         {
                             RValue nameVar = new RValue(0);
                             rnsReloaded.CreateString(&nameVar, "click to edit archipelago settings");
                             ModifyElementVariable(rnsReloaded, lobbyButton, "name", ModificationType.ModifyLiteral, nameVar);
 
                         }
-                        else if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 1 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 1 ||
-                                rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 2 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 2
-                        )
+                        else if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"),1 ) || HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"),2 ))
                         {
                             RValue lobbyVar = new RValue(0);
                             rnsReloaded.CreateString(&lobbyVar, "click to edit lobby settings");
@@ -391,15 +390,15 @@ namespace RnSArchipelago
                         var instanceValue = new RValue(instance->Instance);
 
                         // Update the text on the banner
-                        if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                        if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                         {
-                            archipelagoPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1;
-                            ArchipelagoNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
+                            archipelagoPassSet = HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1);
+                            ArchipelagoNum = (int)HookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
                         }
                         else
                         {
-                            originalPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->Real == 1;
-                            originalNum = (int)rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real;
+                            originalPassSet = HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1);
+                            originalNum = (int)HookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
                         }
 
                         // Update the info in the banner
@@ -433,7 +432,7 @@ namespace RnSArchipelago
             if (instanceValue.Get("diffTxt") != null &&
                 rnsReloaded.GetString(instanceValue.Get("diffTxt")) == "[ \"CUTE\",\"NORMAL\",\"HARD\",\"LUNAR\" ]")
             {
-                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
                     RValue nameVar = new RValue(0);
                     rnsReloaded.CreateString(&nameVar, ArchipelagoName);
@@ -478,7 +477,7 @@ namespace RnSArchipelago
         )
         {
             this.setNameHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
             {
 
                 ArchipelagoName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0));
@@ -497,7 +496,7 @@ namespace RnSArchipelago
         )
         {
             this.setDescHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
             {
 
                 ArchipelagoAddress = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
@@ -516,7 +515,7 @@ namespace RnSArchipelago
         )
         {
             this.setPassHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
             {
 
                 ArchipelagoPassword = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));

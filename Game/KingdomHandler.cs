@@ -144,48 +144,48 @@ namespace RnSArchipelago.Game
         // TODO: CANT SEEM TO ACTUALLY MODIFY THE END SCREEN KINGDOM POSITIONS
         internal RValue* ModifyEndScreenIcons(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            
-            var a = new RValue(self);
-            //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.Red);
-            
-            //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end", self, returnValue, argc, argv), System.Drawing.Color.Red);
-            //this.fixEndIconsHook.Disable();
-            HookUtil.FindLayer(rnsReloaded, "RunMenu_Squares", out var layer);
-            //this.logger.PrintMessage(layer->Elements.Count + "", System.Drawing.Color.Red);
-
-            CLayerElementBase* hallway = layer->Elements.First;
-            if (layer != null)
+            if (InventoryUtil.Instance.isActive)
             {
-                //this.logger.PrintMessage("not null: " + layer->Elements.Count, System.Drawing.Color.Red);
-                //var a = new RValue(self);
+                var a = new RValue(self);
                 //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.Red);
-                hallway = layer->Elements.First;
-                while (hallway != null)
-                {
-                    var instance = (CLayerInstanceElement*)hallway;
-                    var instanceValue = new RValue(instance->Instance);
-                    
 
-                    var seed = rnsReloaded.FindValue((&instanceValue)->Object, "potY");
-                    if (seed != null && seed->ToString() != "unset")
+                //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                //this.fixEndIconsHook.Disable();
+                HookUtil.FindLayer(rnsReloaded, "RunMenu_Squares", out var layer);
+                //this.logger.PrintMessage(layer->Elements.Count + "", System.Drawing.Color.Red);
+
+                CLayerElementBase* hallway = layer->Elements.First;
+                if (layer != null)
+                {
+                    //this.logger.PrintMessage("not null: " + layer->Elements.Count, System.Drawing.Color.Red);
+                    //var a = new RValue(self);
+                    //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.Red);
+                    hallway = layer->Elements.First;
+                    while (hallway != null)
                     {
-                        //Console.WriteLine("uhhh");
-                        //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
-                        //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [new(0), new(400)]);
-                        //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
-                        //var b = new RValue(self);
-                        //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.Red);
-                        returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                        break;
+                        var instance = (CLayerInstanceElement*)hallway;
+                        var instanceValue = new RValue(instance->Instance);
+
+
+                        var seed = rnsReloaded.FindValue((&instanceValue)->Object, "potY");
+                        if (seed != null && seed->ToString() != "unset")
+                        {
+                            //Console.WriteLine("uhhh");
+                            //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
+                            //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [new(0), new(400)]);
+                            //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
+                            //var b = new RValue(self);
+                            //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.Red);
+                            returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                            return returnValue;
+                        }
+                        //break;
+                        //}
+                        hallway = hallway->Next;
                     }
-                    //break;
-                    //}
-                    hallway = hallway->Next;
                 }
-            } else
-            {
-                returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
             }
+            returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
             return returnValue;
         }
@@ -214,14 +214,14 @@ namespace RnSArchipelago.Game
                     var notchNumber = instanceValue.Get("notchNumber");
                     if (currentPos != null && notchNumber != null)
                     {
-                        if (currentPos->Real == notchNumber->Real - 1)
+                        if (HookUtil.IsEqualToNumeric(currentPos, HookUtil.GetNumeric(notchNumber) - 1))
                         {
 
-                            if (rnsReloaded.utils.GetGlobalVar("hallwayCurrent")->Real == maxVisitableKingdoms)
+                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms))
                             {
                                 var hallkey = rnsReloaded.FindValue(self, "hallkey");
                                 return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_keep";
-                            } else if (rnsReloaded.utils.GetGlobalVar("hallwayCurrent")->Real == maxVisitableKingdoms + 1)
+                            } else if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms + 1))
                             {
                                 var hallkey = rnsReloaded.FindValue(self, "hallkey");
                                 return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_pinnacle";
@@ -290,7 +290,7 @@ namespace RnSArchipelago.Game
                     var instanceValue = new RValue(instance->Instance);
 
                     if (instanceValue.Get("currentPos") != null &&
-                        (instanceValue.Get("currentPos")->Real == 0))
+                        (HookUtil.IsEqualToNumeric(instanceValue.Get("currentPos"), 0)))
                     {
                         // Modify the seed
                         var seed = instanceValue.Get("hallseed");
@@ -395,7 +395,7 @@ namespace RnSArchipelago.Game
             if (InventoryUtil.Instance.isActive)
             {
                 // Called continously on kingdoms 0-5, so just modify on the last one
-                if (argc == 1 && argv[0]->Real == 5)
+                if (argc == 1 && HookUtil.IsEqualToNumeric(argv[0], 5))
                 {
                     FindLayer(rnsReloaded, "ItemExtra", out var layer);
                     if (layer != null)
@@ -439,7 +439,7 @@ namespace RnSArchipelago.Game
             var hallkey = rnsReloaded.FindValue(instance, "hallkey");
             var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
 
-            var currentHallwayPos = (int)rnsReloaded.FindValue(instance, "hallwayPos")->Real;
+            var currentHallwayPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "hallwayPos"));
 
             // Handle the 0th position
             if (!currentHallwayPosAware || currentHallwayPos < 0)
@@ -555,11 +555,6 @@ namespace RnSArchipelago.Game
                     this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "create route", self, returnValue, argc, argv), System.Drawing.Color.Red);
                     UpdateRoute(false);
 
-                    return returnValue;
-                }
-                else
-                {
-                    returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
                     return returnValue;
                 }
             }

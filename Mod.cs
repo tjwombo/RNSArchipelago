@@ -112,11 +112,11 @@ namespace RnSArchipelago
                 this.outskirtsNHook.Enable();*/
 
                 // Test temp hook
-                /*var testId = rnsReloaded.ScriptFindId("tpat_player_set_gold");
+                var testId = rnsReloaded.ScriptFindId("scr_itemlootroll_set_slot");
                 var testScript = rnsReloaded.GetScriptData(testId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
                 this.setItemHook.Activate();
-                this.setItemHook.Enable();*/
+                this.setItemHook.Enable();
 
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
@@ -141,8 +141,6 @@ namespace RnSArchipelago
                 AddArchipelagoButtonToMenu(); // Adds archipelago as a lobbyType
                 AddArchipelagoOptionsToMenu(); // Adds the options for archipelago
 
-
-
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
 
                 SetupSendBattleAndChestLocations(); // Creates the hook to send locations on encounter win and chest open
@@ -152,10 +150,13 @@ namespace RnSArchipelago
 
                 SetupClassSanity(); // Limits the classes you can play based on current items
 
-                // TODO: REMOVE ONCE DONE TESTING
-                oneShot();
+                SetupShopSanity(); // Modifies shop inventory
 
-                RandomizePlayerAbilities(); // randomize the player abilities
+                // TODO: REMOVE ONCE DONE TESTING
+                //oneShot();
+
+                // TODO: IMPLEMENT RANDOMIZATION OPTION AND GET THE UPGRADES WORKING FOR BASE RANDOM ABILITY
+                //RandomizePlayerAbilities(); // randomize the player abilities
 
 
                 //TODO: GET DATA FROM ARCHIPELAGO
@@ -410,15 +411,10 @@ namespace RnSArchipelago
 
                 //TODO: UNCOMMENT ONCE DONE WITH MERCHANT TESTING
                 // Give treasurespheres that have accumulated 
-                var treasuresphereOnStartNScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
+                /*var treasuresphereOnStartNScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
                 locationHandler.spawnTreasuresphereOnStartNHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartNScript->Functions->Function);
                 locationHandler.spawnTreasuresphereOnStartNHook.Activate();
-                locationHandler.spawnTreasuresphereOnStartNHook.Enable();
-
-                /*var treasuresphereOnStartScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
-                locationHandler.spawnTreasuresphereOnStartHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartScript->Functions->Function);
-                locationHandler.spawnTreasuresphereOnStartHook.Activate();
-                locationHandler.spawnTreasuresphereOnStartHook.Enable();*/
+                locationHandler.spawnTreasuresphereOnStartNHook.Enable();*/
             }
         }
 
@@ -444,6 +440,15 @@ namespace RnSArchipelago
                 classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockClass, lockClassScript->Functions->Function);
                 classHandler.lockClassHook.Activate();
                 classHandler.lockClassHook.Enable();
+            }
+        }
+
+        // Set up the hooks for shop sanity handling
+        private void SetupShopSanity()
+        {
+            if (this.IsReady(out var rnsReloaded, out var hooks))
+            {
+                
             }
         }
 
@@ -474,7 +479,7 @@ namespace RnSArchipelago
             if (this.IsReady(out var rnsReloaded))
             {
                 // If the lobby type is archipelago set up the websocket
-                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->Int32 == 3 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->Real == 3)
+                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
                     // Validate archipelago options / connection
                     this.data.SetValue<string>(DataContext.Connection, "name", lobby!.ArchipelagoName);
@@ -708,7 +713,7 @@ namespace RnSArchipelago
                     //*argv[0] = new RValue(availableDefensive[random.Next(availableDefensive.Count)]);
                 }
 
-                if (argv[2]->Int32 == 1)
+                if (HookUtil.IsEqualToNumeric(argv[2], 1))
                 {
                     
                     //*argv[0] = new(324);
