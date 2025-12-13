@@ -142,7 +142,11 @@ namespace RnSArchipelago.Connection
             logger.PrintMessage("Error: " + message, System.Drawing.Color.Red);
             if (session != null)
             {
-                await session.Socket.DisconnectAsync();
+                try
+                {
+                    await session.Socket.DisconnectAsync();
+                }
+                catch (Exception _) { }
             }
         }
 

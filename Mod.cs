@@ -1,17 +1,15 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
-using RnSArchipelago.Utils;
-using RnSArchipelago.Config;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using RnSArchipelago.Utils;
+using RnSArchipelago.Config;
 using RnSArchipelago.Connection;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
-using System.Net;
-using RNSReloaded;
 
 namespace RnSArchipelago
 {
@@ -153,10 +151,10 @@ namespace RnSArchipelago
                 SetupShopSanity(); // Modifies shop inventory
 
                 // TODO: REMOVE ONCE DONE TESTING
-                //oneShot();
+                oneShot();
 
                 // TODO: IMPLEMENT RANDOMIZATION OPTION AND GET THE UPGRADES WORKING FOR BASE RANDOM ABILITY
-                //RandomizePlayerAbilities(); // randomize the player abilities
+                RandomizePlayerAbilities(); // randomize the player abilities
 
 
                 //TODO: GET DATA FROM ARCHIPELAGO
@@ -411,10 +409,10 @@ namespace RnSArchipelago
 
                 //TODO: UNCOMMENT ONCE DONE WITH MERCHANT TESTING
                 // Give treasurespheres that have accumulated 
-                /*var treasuresphereOnStartNScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
+                var treasuresphereOnStartNScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
                 locationHandler.spawnTreasuresphereOnStartNHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartNScript->Functions->Function);
                 locationHandler.spawnTreasuresphereOnStartNHook.Activate();
-                locationHandler.spawnTreasuresphereOnStartNHook.Enable();*/
+                locationHandler.spawnTreasuresphereOnStartNHook.Enable();
             }
         }
 
@@ -489,7 +487,7 @@ namespace RnSArchipelago
                     conn!.StartConnection();
 
                     // Tell the inventory utils that we are in archipelago mode
-                    InventoryUtil.Instance.isActive = true;
+                    //InventoryUtil.Instance.isActive = true;
 
                     // TODO: Show error and return if connection problem
 
@@ -510,7 +508,7 @@ namespace RnSArchipelago
                 } else
                 {
                     // Tell the inventory utils that we are in normal mode
-                    InventoryUtil.Instance.isActive = false;
+                    //InventoryUtil.Instance.isActive = false;
 
                     // Otherwise continue normally
                     returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);

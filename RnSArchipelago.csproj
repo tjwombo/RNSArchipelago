@@ -38,28 +38,25 @@
     <Content Include="ModConfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+	<Content Include="Preview.png">
+		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	</Content>
 	<Content Include="Items\**">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
-    <None Update="Preview.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.6.1" />
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="8.0.8" />
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.1" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.4.0" ExcludeAssets="runtime" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="RNSReloaded">
-      <HintPath>RNSReloaded.dll</HintPath>
-    </Reference>
-    <Reference Include="RNSReloaded.Interfaces">
-      <HintPath>RNSReloaded.Interfaces.dll</HintPath>
-    </Reference>
+	<Reference Include="RNSReloaded.Interfaces">
+	    <HintPath>RNSReloaded.Interfaces.dll</HintPath>
+	</Reference>
   </ItemGroup>
-
+	
 </Project>

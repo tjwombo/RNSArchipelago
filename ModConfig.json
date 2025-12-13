@@ -1,9 +1,9 @@
 {
 	"ModId": "Rabit_and_Steel_Archipelago",
-	"ModName": "RnSArchipelago",
+	"ModName": "RnS Archipelago",
 	"ModAuthor": "Tjwombo",
-	"ModVersion": "1.0.0",
-	"ModDescription": "Description",
+	"ModVersion": "0.1.0",
+	"ModDescription": "Randomizer mod for Archipelago",
 	"ModDll": "RnSArchipelago.dll",
 	"ModIcon": "Preview.png",
 	"ModR2RManagedDll32": "x86/RnSArchipelago.dll",
@@ -20,5 +20,5 @@
 	],
 	"OptionalDependencies": [],
 	"SupportedAppId": [ "rabbitsteel.exe" ],
-	"ProjectUrl": ""
+	"ProjectUrl": "https://archipelago.gg/"
 }

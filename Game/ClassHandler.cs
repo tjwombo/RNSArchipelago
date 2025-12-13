@@ -80,11 +80,9 @@ namespace RnSArchipelago.Game
         {
             if (InventoryUtil.Instance.isActive)
             {
-                if (InventoryUtil.Instance.isClassSanity && InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                if (InventoryUtil.Instance.isClassSanity && !InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                 {
-                    returnValue = this.stopColorHook!.OriginalFunction(self, other, returnValue, argc, argv);
                     return returnValue;
-                    
                 }
             }
             returnValue = this.stopColorHook!.OriginalFunction(self, other, returnValue, argc, argv);

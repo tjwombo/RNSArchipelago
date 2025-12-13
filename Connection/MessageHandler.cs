@@ -104,7 +104,7 @@ namespace RnSArchipelago.Connection
                         Console.WriteLine(option.Key + " " + option.Value);
                         this.data!.SetValue<object>(DataContext.Options, option.Key, option.Value);
                     }
-                    InventoryUtil.Instance.GetKingdomOptions(data!);
+                    InventoryUtil.Instance.GetOptions(data!);
                     break;
                 case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageRecieved, but actual mod use of items will be handled here
                     var itemPacket = (ReceivedItemsPacket)packet;

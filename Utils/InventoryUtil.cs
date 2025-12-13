@@ -97,9 +97,11 @@ namespace RnSArchipelago.Utils
             shop_sanity = ShopSetting.None;
         }
 
-        // Init function to get the kingdom options the user has selected
-        internal void GetKingdomOptions(SharedData data)
+        // Init function to get the options the user has selected
+        internal void GetOptions(SharedData data)
         {
+            isActive = true;
+
             isKingdomSanity = data.GetValue<long>(DataContext.Options, "kingdom_sanity") == 1;
             isProgressive = data.GetValue<long>(DataContext.Options, "progressive_regions") == 1;
             maxKingdoms = data.GetValue<long>(DataContext.Options, "max_kingdoms_per_run")!;
