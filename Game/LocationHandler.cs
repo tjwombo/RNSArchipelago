@@ -1,5 +1,4 @@
-﻿using Archipelago.MultiClient.Net;
-using Archipelago.MultiClient.Net.Enums;
+﻿using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Reloaded.Hooks.Definitions;
@@ -8,11 +7,6 @@ using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
 
 namespace RnSArchipelago.Game
 {
@@ -196,6 +190,21 @@ namespace RnSArchipelago.Game
                 GetArchipelagoShopItemInfo();
             }
             returnValue = this.itemScoutShopHook!.OriginalFunction(self, other, returnValue, argc, argv);
+
+            var instance = new RValue(self);
+            long id = -1;
+            for (var j = 0; j < 9; j++)
+            {
+                id = conn.session!.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[j]);
+
+                // if the item is an archipelago item, disable the purchase condition, mainly applies to hp and upgrades
+                if (!conn.session!.Locations.AllLocationsChecked.Contains(id))
+                {
+                    *rnsReloaded.ArrayGetEntry(instance["storeSlotHeal"], j) = new RValue(0);
+                    *rnsReloaded.ArrayGetEntry(instance["storeSlotUpgrade"], j) = new RValue(0);
+                }
+            }
+
             return returnValue;
         }
 
@@ -206,7 +215,6 @@ namespace RnSArchipelago.Game
             returnValue = this.itemAmtHook!.OriginalFunction(self, other, returnValue, argc, argv);
             if (InventoryUtil.Instance.isActive)
             {
-                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "amt", self, returnValue, argc, argv), System.Drawing.Color.Red);
                 returnValue->Real = 5;
             }
             return returnValue;
@@ -318,40 +326,42 @@ namespace RnSArchipelago.Game
                         if (HookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 2), i), 1), -1))
                         {
                             GetUnclaimedShopItems(i, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem);
+                            
                             switch (i)
                             {
                                 case 0:
                                     ShopItemsUtil.SetHpPotion(argv, archipelagoItem, useArchipelagoItem);
                                     returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                                    return returnValue;
+                                    break;
                                 case 1:
                                     ShopItemsUtil.SetLevelPotion(argv, archipelagoItem, useArchipelagoItem);
                                     returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                                    return returnValue;
+                                    break;
                                 case 2:
                                 case 3:
                                 case 4:
                                     ShopItemsUtil.SetPotion(argv, archipelagoItem, useArchipelagoItem);
                                     returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                                    return returnValue;
+                                    break;
                                 case 5:
                                     ShopItemsUtil.SetPrimaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                     returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                                    return returnValue;
+                                    break;
                                 case 6:
                                     ShopItemsUtil.SetSecondaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                     returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                                    return returnValue;
+                                    break;
                                 case 7:
                                     ShopItemsUtil.SetSpecialUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                     returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                                    return returnValue;
+                                    break;
                                 case 8:
                                     ShopItemsUtil.SetDefensiveUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                     returnValue = this.itemSetHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                                    return returnValue;
-
+                                    break;
                             }
+
+                            return returnValue;
                         }
                     }
                 }
@@ -539,15 +549,15 @@ namespace RnSArchipelago.Game
                 {
                     var element = ((CLayerInstanceElement*)instance)->Instance;
                     var itemId = rnsReloaded.FindValue(element, "itemId");
+
                     if (!HookUtil.IsEqualToNumeric(itemId, baseItemId) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 1) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 2))
                     {
-                        this.logger.PrintMessage(HookUtil.GetNumeric(itemId) + " " + baseItemId, System.Drawing.Color.Red);
                         returnValue = this.takeItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
                         return returnValue;
                     }
+
                     this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "take", self, returnValue, argc, argv), System.Drawing.Color.Red);
 
-                    this.logger.PrintMessage(HookUtil.GetNumeric(argv[1]) + " " + (int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "slotId")), System.Drawing.Color.Red);
                     if (InventoryUtil.Instance.checksPerItemInChest && GetLocationType() == LocationType.Chest)
                     {
                         var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos((int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "slotId"))))] };
@@ -565,6 +575,15 @@ namespace RnSArchipelago.Game
                             var locationPacket = new LocationChecksPacket { Locations = [conn.session!.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
                             conn.session!.Socket.SendPacketAsync(locationPacket);
                         }
+
+                        var slots = new RValue(self);
+
+                        // Set the item cache to -1, so we repopulate it
+                        *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(slots["slots"], 2), (int)HookUtil.GetNumeric(argv[2])), 1) = new RValue(-1);
+
+                        rnsReloaded.ExecuteScript("scr_itemsys_populate_store", self, other, [new RValue(0)]);
+
+                        // TODO: Width stuff
                     }
 
                 }

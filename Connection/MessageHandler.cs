@@ -38,6 +38,14 @@ namespace RnSArchipelago.Connection
                     var hintSender = hintLogMessage.Sender;
                     var hintNetworkItem = hintLogMessage.Item;
                     var hintFound = hintLogMessage.IsFound;
+
+                    var hintMessage = new RValue();
+                    if (modConfig!.SystemLog)
+                    {
+                        rnsReloaded!.CreateString(&hintMessage, message.ToString());
+                        rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), hintMessage, new(0)]);
+                    }
+                    logger!.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
                     break;
                 case ItemSendLogMessage itemSendLogMessage:
                     var receiver = itemSendLogMessage.Receiver;
@@ -53,14 +61,24 @@ namespace RnSArchipelago.Connection
                     }
 
                     var itemMessage = new RValue();
-                    rnsReloaded!.CreateString(&itemMessage, messageToSend);
-                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(sourceId), new(), new(0), itemMessage, new(0)]);
+                    if ((modConfig!.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
+                        ((modConfig!.ProgressionLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
+                        (modConfig!.UsefulLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
+                        (modConfig!.FillerLog && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
+                        (modConfig!.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap))))
+                    {
+                        rnsReloaded!.CreateString(&itemMessage, messageToSend);
+                        rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(sourceId), new(), new(0), itemMessage, new(0)]);
+                    }
                     logger!.PrintMessage(message.ToString(), System.Drawing.Color.Cyan);
                     break;
                 case PlayerSpecificLogMessage playerLogMessage:
                     var playerMessage = new RValue();
-                    rnsReloaded!.CreateString(&playerMessage, message.ToString());
-                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), playerMessage, new(0)]);
+                    if (modConfig!.SystemLog)
+                    {
+                        rnsReloaded!.CreateString(&playerMessage, message.ToString());
+                        rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), playerMessage, new(0)]);
+                    }
                     logger!.PrintMessage(message.ToString(), System.Drawing.Color.White);
                     break;
                 case AdminCommandResultLogMessage:

@@ -1,10 +1,4 @@
-﻿using RnSArchipelago.Connection;
-using RNSReloaded.Interfaces.Structs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Utils
 {
@@ -287,8 +281,6 @@ namespace RnSArchipelago.Utils
             }
 
         }
-
-        // TODO: REGIONAL SHOP SANITY HAS AN ERROR
 
         internal static void SetDefensiveUpgrade(RValue** argv, long archipelagoItemId, bool useArchipelago)
         {

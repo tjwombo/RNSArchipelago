@@ -1,8 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
 using Newtonsoft.Json.Linq;
 using RnSArchipelago.Data;
-using System.Collections.Generic;
-using static RnSArchipelago.Utils.InventoryUtil;
 
 namespace RnSArchipelago.Utils
 {
@@ -318,8 +316,6 @@ namespace RnSArchipelago.Utils
 
         internal List<string> AvailablePotions => availablePotions;
 
-        internal HashSet<string> Victories => victories;
-
         // Handle receiving kingdom related items
         internal void ReceiveItem(ReceivedItemsPacket recievedItem, SharedData data)
         {
@@ -537,17 +533,6 @@ namespace RnSArchipelago.Utils
                 count++;
             }
             return count;
-        }
-
-        // TODO: LOOK INTO THE POSSIBILITY OF REMOVING THESE
-        internal bool isPaleKeepAccessible()
-        {
-            return ((AvailableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep)) != 0;// &&
-        }
-
-        internal bool isMoonlitPinnacleAccessible()
-        {
-            return ((AvailableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle)) != 0;// &&
         }
 
         internal bool isClassAvailable(int pos)

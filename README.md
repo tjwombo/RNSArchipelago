@@ -25,6 +25,15 @@ Alternatively, it can be downloaded manually by
 
 This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded which should be installed automatically regardless of which instalation method you choose.
 
+## Configuration
+
+If you right click the mod in R2Reloaded, there is a Configure button.
+That is mainly in charge of controlling the in game messages that mimica text client.
+Sending commands to the server is not currently supported.
+
+The other part of the configuration is the location to the archipelago cache, which should be set automatically, but if its not in AppData/Local you will need to set it
+I believe I can remove this, but for now there is still some code that needs this.
+
 ## Credits
 
 - Everyone who helped make RNSReloaded

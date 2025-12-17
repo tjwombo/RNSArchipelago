@@ -97,7 +97,7 @@ namespace RnSArchipelago
                 classHandler = new ClassHandler(rnsReloaded, logger);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
-                /*var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
+                var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
                 this.outskirtsHook =
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
                 this.outskirtsHook.Activate();
@@ -107,14 +107,14 @@ namespace RnSArchipelago
                 this.outskirtsNHook =
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
                 this.outskirtsNHook.Activate();
-                this.outskirtsNHook.Enable();*/
+                this.outskirtsNHook.Enable();
 
                 // Test temp hook
-                var testId = rnsReloaded.ScriptFindId("scr_itemlootroll_set_slot");
+                /*var testId = rnsReloaded.ScriptFindId("scr_itemsys_draw_item");
                 var testScript = rnsReloaded.GetScriptData(testId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
                 this.setItemHook.Activate();
-                this.setItemHook.Enable();
+                this.setItemHook.Enable();*/
 
 
                 /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
