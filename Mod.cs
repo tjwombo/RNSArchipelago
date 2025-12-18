@@ -97,7 +97,7 @@ namespace RnSArchipelago
                 classHandler = new ClassHandler(rnsReloaded, logger);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
-                var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
+                /*var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
                 this.outskirtsHook =
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScript->Functions->Function);
                 this.outskirtsHook.Activate();
@@ -107,7 +107,7 @@ namespace RnSArchipelago
                 this.outskirtsNHook =
                     hooks.CreateHook<ScriptDelegate>(this.OutskirtsDetour, outskirtsScriptN->Functions->Function);
                 this.outskirtsNHook.Activate();
-                this.outskirtsNHook.Enable();
+                this.outskirtsNHook.Enable();*/
 
                 // Test temp hook
                 /*var testId = rnsReloaded.ScriptFindId("scr_itemsys_draw_item");
@@ -148,13 +148,11 @@ namespace RnSArchipelago
 
                 SetupClassSanity(); // Limits the classes you can play based on current items
 
-                SetupShopSanity(); // Modifies shop inventory
-
                 // TODO: REMOVE ONCE DONE TESTING
-                oneShot();
+                //oneShot();
 
                 // TODO: IMPLEMENT RANDOMIZATION OPTION AND GET THE UPGRADES WORKING FOR BASE RANDOM ABILITY
-                RandomizePlayerAbilities(); // randomize the player abilities
+                //RandomizePlayerAbilities(); // randomize the player abilities
 
 
                 //TODO: GET DATA FROM ARCHIPELAGO
@@ -407,7 +405,6 @@ namespace RnSArchipelago
                 locationHandler.takeItemHook.Activate();
                 locationHandler.takeItemHook.Enable();
 
-                //TODO: UNCOMMENT ONCE DONE WITH MERCHANT TESTING
                 // Give treasurespheres that have accumulated 
                 var treasuresphereOnStartNScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
                 locationHandler.spawnTreasuresphereOnStartNHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartNScript->Functions->Function);
@@ -438,15 +435,6 @@ namespace RnSArchipelago
                 classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockClass, lockClassScript->Functions->Function);
                 classHandler.lockClassHook.Activate();
                 classHandler.lockClassHook.Enable();
-            }
-        }
-
-        // Set up the hooks for shop sanity handling
-        private void SetupShopSanity()
-        {
-            if (this.IsReady(out var rnsReloaded, out var hooks))
-            {
-                
             }
         }
 
@@ -636,37 +624,6 @@ namespace RnSArchipelago
                 this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "outskirts", self, returnValue, argc, argv), Color.Red);
                 this.logger.PrintMessage(a.ToString(), Color.Red);
             }
-            return returnValue;
-        }
-
-        
-
-        private RValue* CreateTestItem(
-            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
-        )
-        {
-            returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            //this.logger.PrintMessage(this.PrintHook("item", returnValue, argc, argv), Color.Gray);
-            return returnValue;
-        }
-
-        
-        private RValue* CharTest(
-            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
-        )
-        {
-            // Original function seems to attach the character abilities
-            returnValue = this.setCharHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            //this.logger.PrintMessage(this.PrintHook("char", returnValue, argc, argv), Color.Gray);
-            return returnValue;
-        }
-
-        private RValue* InventoryTest(
-            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
-        )
-        {
-            returnValue = this.inventoryHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            //this.logger.PrintMessage(this.PrintHook("inventory", returnValue, argc, argv), Color.Gray);
             return returnValue;
         }
 
