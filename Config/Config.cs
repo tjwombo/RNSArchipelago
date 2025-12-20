@@ -8,6 +8,14 @@ public class Config : Configurable<Config>
     //[DefaultValue(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Archipelago\\Cache")]
     public string Cache { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Archipelago\\Cache";
 
+    [DisplayName("Reloaded-II Mods Location")]
+    //[DefaultValue(new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%")).FullName]
+    public string Mods { get; set; } = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%")).FullName;
+
+    [DisplayName("Skip Item Creation")]
+    [DefaultValue(false)]
+    public bool SkipItemCreation { get; set; } = false;
+
     [DisplayName("Show System Message In Game")]
     [DefaultValue(false)]
     public bool SystemLog { get; set; } = false;

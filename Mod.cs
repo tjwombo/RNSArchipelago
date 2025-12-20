@@ -62,16 +62,19 @@ namespace RnSArchipelago
 
             this.logger = loader.GetLogger();
 
-            CopyItemModToRnSMod();
+            this.configurator = new Configurator(((IModLoader)loader).GetModConfigDirectory(modConfig.ModId));
+            this.config = this.configurator.GetConfiguration<Config.Config>(0);
+            this.config.ConfigurationUpdated += this.ConfigurationUpdated;
+
+            if (!this.config.SkipItemCreation)
+            {
+                CopyItemModToRnSMod();
+            }
 
             if (this.IsReady(out var rnsReloaded))
             {
                 rnsReloaded.OnReady += this.Ready;
             }
-
-            this.configurator = new Configurator(((IModLoader)loader).GetModConfigDirectory(modConfig.ModId));
-            this.config = this.configurator.GetConfiguration<Config.Config>(0);
-            this.config.ConfigurationUpdated += this.ConfigurationUpdated;
         }
 
         private void ConfigurationUpdated(IUpdatableConfigurable newConfig)
@@ -595,12 +598,11 @@ namespace RnSArchipelago
         }
 
         // Copy the Items folder to the RnS mod folder
-        private static void CopyItemModToRnSMod()
+        private void CopyItemModToRnSMod()
         {
             // Copy over item mod to game folder
             // Assumes that this environment variable is actually correct
-            DirectoryInfo sourceDir = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%"));
-            string path = Path.Combine(sourceDir.FullName, @"RnSArchipelago\Items");
+            string path = Path.Combine(this.config.Mods, @"RnSArchipelago\Items");
             CopyDirectory(path, @".\Mods\ArchipelagoItems", true);
         }
 
