@@ -1,8 +1,8 @@
 {
-	"ModId": "Rabit_and_Steel_Archipelago",
+	"ModId": "RnSArchipelago",
 	"ModName": "RnS Archipelago",
 	"ModAuthor": "Tjwombo",
-	"ModVersion": "0.1.0",
+	"ModVersion": "0.1.1",
 	"ModDescription": "Randomizer mod for Archipelago",
 	"ModDll": "RnSArchipelago.dll",
 	"ModIcon": "Preview.png",

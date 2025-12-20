@@ -446,8 +446,10 @@ namespace RnSArchipelago
 
                     ModifyElementVariable(rnsReloaded, element, "passwordLocked", ModificationType.ModifyLiteral, new RValue(archipelagoPassSet && ArchipelagoPassword != ""));
 
+                    // TODO: SET STARTING GOLD BASED OFF OF AMOUNT OF GOLD ITEMS, AND INCREASE CURRENT RUN GOLD WHEN RECIEVING GOLD ITEM
+                    // TODO: LOOK INTO A BETTER PLACE FOR THIS TO LIVE
                     // Set starting gold
-                    *rnsReloaded.utils.GetGlobalVar("startingGold") = new RValue(99);
+                    *rnsReloaded.utils.GetGlobalVar("startingGold") = new RValue(10);
                 }
                 else
                 {

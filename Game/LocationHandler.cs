@@ -7,6 +7,7 @@ using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using System.Xml.Linq;
 
 namespace RnSArchipelago.Game
 {
@@ -31,7 +32,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartNHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
 
-        internal ArchipelagoConnection conn;
+        internal ArchipelagoConnection conn = null!;
         private long baseItemId;
 
         private Random rand = new Random();
@@ -42,8 +43,8 @@ namespace RnSArchipelago.Game
         private static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
-        private Task<Dictionary<long, ScoutedItemInfo>> chestContents;
-        private Task<Dictionary<long, ScoutedItemInfo>> shopContents;
+        private Task<Dictionary<long, ScoutedItemInfo>> chestContents = null!;
+        private Task<Dictionary<long, ScoutedItemInfo>> shopContents = null!;
 
         internal LocationHandler(IRNSReloaded rnsReloaded, ILoggerV1 logger)
         {
@@ -583,7 +584,8 @@ namespace RnSArchipelago.Game
 
                         rnsReloaded.ExecuteScript("scr_itemsys_populate_store", self, other, [new RValue(0)]);
 
-                        // TODO: Width stuff
+                        // TODO: Fix the width of item names
+                        // TODO: Subtract user gold, and set price of AP items
                     }
 
                 }
@@ -711,12 +713,15 @@ namespace RnSArchipelago.Game
         {
             returnValue = this.spawnTreasuresphereOnStartNHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
-            //TODO: Potentially unsafe as itll run for each kingdom, but tested once, and it didnt happen so
-            //this.logger.PrintMessage(rnsReloaded.FindValue(self, "stageName")->ToString(), System.Drawing.Color.Red);
+            var kingdomName = rnsReloaded.FindValue(self, "stageName")->ToString();
+            kingdomName = kingdomName.Replace(Environment.NewLine, " ");
 
-            for (int i = 0; i < InventoryUtil.Instance.AvailableTreasurespheres; i++)
+            if (kingdomName.Equals("Kingdom Outskirts"))
             {
-                AddChestToNotch();
+                for (int i = 0; i < InventoryUtil.Instance.AvailableTreasurespheres; i++)
+                {
+                    AddChestToNotch();
+                }
             }
             
             return returnValue;

@@ -487,7 +487,9 @@ namespace RnSArchipelago
                         *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
                     } else
                     {
-                        *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(0);
+                        // TODO: Fix this as there was errors stopping a single player lobby
+                        //*rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(0);
+                        *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
                     }
                     returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
