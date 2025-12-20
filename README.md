@@ -20,8 +20,8 @@ This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II) and 
 3. Search "RnS Reloaded" and install it
 
 Alternatively, it can be downloaded manually by 
-1. Opening the folder where your R2Reloaded mods are usually somewhere like C:\Reloaded-II\Mods
-2. Unzip the mod that is found in the releases tab and put it into that folder
+1. Downloading the .7z file in releases
+2. Dragging it (while still zipped) onto the Reloaded 2 "Configure Mods" screen
 
 This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded which should be installed automatically regardless of which instalation method you choose.
 
