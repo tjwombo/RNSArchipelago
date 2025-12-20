@@ -2,7 +2,6 @@
 # by Sewer56
 
 # Produces: 
-#   - Build to Upload to GameBanana
 #   - Build to Upload to GitHub
 #   - Build to Upload to NuGet
 #   - Changelog
@@ -25,7 +24,6 @@ on:
 env: 
   PUBLISH_COMMON_PATH: ./Publish/ToUpload/
 
-  PUBLISH_GAMEBANANA_PATH: ./Publish/ToUpload/GameBanana
   PUBLISH_GITHUB_PATH: ./Publish/ToUpload/Generic
   PUBLISH_NUGET_PATH: ./Publish/ToUpload/NuGet
   
@@ -92,15 +90,6 @@ jobs:
         # A file, directory or wildcard pattern that describes what to upload
         path: |
           ${{ env.PUBLISH_GITHUB_PATH }}/*
-          
-    - name: Upload GameBanana Release Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        # Artifact name
-        name: GameBanana Release
-        # A file, directory or wildcard pattern that describes what to upload
-        path: |
-          ${{ env.PUBLISH_GAMEBANANA_PATH }}/*
         
     - name: Upload NuGet Release Artifact
       uses: actions/upload-artifact@v4
