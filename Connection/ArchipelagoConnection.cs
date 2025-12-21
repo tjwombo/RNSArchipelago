@@ -64,7 +64,9 @@ namespace RnSArchipelago.Connection
                 {
                     var roomInfo = await session.ConnectAsync();
                     JoinRoom(roomInfo!);
+
                     locationHandler.conn = this;
+                    Thread.Sleep(100); // Try to remove race condition
                     locationHandler.SendStartLocation();
 
                     return;
