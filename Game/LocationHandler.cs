@@ -536,15 +536,15 @@ namespace RnSArchipelago.Game
         {
             if (InventoryUtil.Instance.isActive)
             {
-                var chestPos = HookUtil.GetNumeric(argv[2]);
+                var itemPos = HookUtil.GetNumeric(argv[2]);
                 CLayerElementBase* instance = null;
                 if (GetLocationType() == LocationType.Chest)
                 {
-                    HookUtil.FindElementInLayer(rnsReloaded, "LootInfo", "slotId", chestPos + "", out instance);
+                    HookUtil.FindElementInLayer(rnsReloaded, "LootInfo", "slotId", itemPos + "", out instance);
                 }
                 else if (GetLocationType() == LocationType.Shop)
                 {
-                    HookUtil.FindElementInLayer(rnsReloaded, "InventoryInfo", "slotId", chestPos + "", out instance);
+                    HookUtil.FindElementInLayer(rnsReloaded, "InventoryInfo", "slotId", itemPos + "", out instance);
                 }
                 if (instance != null)
                 {

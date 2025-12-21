@@ -135,12 +135,26 @@ namespace RnSArchipelago.Utils
             {
                 List<string> actualPotions = InventoryUtil.Instance.AvailablePotions.Where(potion => (potion != "Full Heal Potion" && potion != "Level Up Potion")).ToList();
                 Console.WriteLine(String.Join(" ", actualPotions));
-                string randomPotion = actualPotions[rand.Next(actualPotions.Count)];
-                *argv[0] = new RValue(PotionNameToId(randomPotion));
+                if (actualPotions.Count == 0)
+                {
+                    *argv[0] = new RValue(0);
+                }
+                else
+                {
+                    string randomPotion = actualPotions[rand.Next(actualPotions.Count)];
+                    *argv[0] = new RValue(PotionNameToId(randomPotion));
+                }
             } else
             {
-                string randomPotion = InventoryUtil.Instance.AvailablePotions[rand.Next(InventoryUtil.Instance.AvailablePotions.Count)];
-                *argv[0] = new RValue(PotionNameToId(randomPotion));
+                if (InventoryUtil.Instance.AvailablePotions.Count == 0)
+                {
+                    *argv[0] = new RValue(0);
+                }
+                else
+                {
+                    string randomPotion = InventoryUtil.Instance.AvailablePotions[rand.Next(InventoryUtil.Instance.AvailablePotions.Count)];
+                    *argv[0] = new RValue(PotionNameToId(randomPotion));
+                }
             }
         }
 
