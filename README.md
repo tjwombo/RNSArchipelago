@@ -35,6 +35,7 @@ Another part of the configuration is the location to the archipelago cache, whic
 I believe I can remove this, but for now there is still some code that needs this.
 
 The last part is for the location of Reloaded-II for the purposes of creating the item mods. You will need to set this if the automatically set Mods folder doesn't match.
+The correct directory should be where Reloaded-II is installed + \Mods. For example, mine is C:\Reloaded-II\Mods
 If setting this directory doesn't work, then turn on the Skip Item Creation config and you will need to manually install the items mod.
 To do so, download the ArchipelagoItems.zip file in the releases tab and extract it into your Rabbit and Steel mods folder like so steamapps\common\Rabbit and Steel\mods\ArchipelagoItems
 
