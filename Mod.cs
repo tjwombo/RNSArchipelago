@@ -90,9 +90,6 @@ namespace RnSArchipelago
                 && this.hooksRef.TryGetTarget(out var hooks)
             )
             {
-                //var encounterId = rnsReloaded.ScriptFindId("scr_enemy_add_pattern"); // unsure what this was for, probably just to have for later use
-                //var encounterScript = rnsReloaded.GetScriptData(encounterId - 100000);
-
                 locationHandler = new LocationHandler(rnsReloaded, logger);
                 conn = new ArchipelagoConnection(rnsReloaded, logger, this.config, data, locationHandler);
                 lobby = new LobbySettings(rnsReloaded, logger, hooks, data);
@@ -118,25 +115,6 @@ namespace RnSArchipelago
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
                 this.setItemHook.Activate();
                 this.setItemHook.Enable();*/
-
-
-                /*var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item"); // unsure what this was for, probably just to see item names and their ids
-                var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
-                this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.CreateTestItem, createItemScript->Functions->Function);
-                this.setItemHook.Activate();
-                this.setItemHook.Enable();*/
-
-                //var charId = rnsReloaded.ScriptFindId("scr_runmenu_charinfo_return"); // unsure what this was for, probably just to see player abiliies and their ids
-                //var charScript = rnsReloaded.GetScriptData(createItemId - 100000);
-                //this.setCharHook = hooks.CreateHook<ScriptDelegate>(this.CharTest, charScript->Functions->Function);
-                //this.setCharHook.Activate();
-                //this.setCharHook.Enable();
-
-                /*var inventoryId = rnsReloaded.ScriptFindId("scr_itemsys_populate_loot"); // unsure what this was for, probably to force items in chests
-                var inventoryScript = rnsReloaded.GetScriptData(createItemId - 100000);
-                this.inventoryHook = hooks.CreateHook<ScriptDelegate>(this.InventoryTest, inventoryScript->Functions->Function);
-                this.inventoryHook.Activate();
-                this.inventoryHook.Enable();*/
 
 
                 AddArchipelagoButtonToMenu(); // Adds archipelago as a lobbyType
@@ -297,13 +275,6 @@ namespace RnSArchipelago
                 this.archipelagoWebsocketHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoWebsocket, menuScript->Functions->Function);
                 this.archipelagoWebsocketHook.Activate();
                 this.archipelagoWebsocketHook.Enable();
-
-                // TEMP FUNCTION (PROBABLY STOLEN FROM THE ACTUAL SEND MESSAGE FUNCTION BUT IDK ANYMORE)
-                /*var messageId = rnsReloaded.ScriptFindId("scr_itemsys_update_uipos");
-                var messageScript = rnsReloaded.GetScriptData(messageId - 100000);
-                this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, messageScript->Functions->Function);
-                this.setItemHook.Activate();
-                this.setItemHook.Enable();*/
 
                 // Close the connection after returning to lobby settings
                 var resetId = rnsReloaded.ScriptFindId("scr_runmenu_disband_disband");
