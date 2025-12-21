@@ -7,6 +7,7 @@ using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using System;
 using System.Xml.Linq;
 
 namespace RnSArchipelago.Game
@@ -62,6 +63,7 @@ namespace RnSArchipelago.Game
             Battle,
             Boss,
             Chest,
+            SpecialChest,
             Shop
         }
 
@@ -86,6 +88,9 @@ namespace RnSArchipelago.Game
             else if (HookUtil.IsEqualToNumeric(currentXImg, 4))
             {
                 return LocationType.Boss;
+            } else if (HookUtil.IsEqualToNumeric(currentXImg, 5))
+            {
+                return LocationType.SpecialChest;
             }
             else if (HookUtil.IsEqualToNumeric(currentXImg, 0))
             {
@@ -273,8 +278,9 @@ namespace RnSArchipelago.Game
         {
             if (InventoryUtil.Instance.isActive)
             {
+                var location = GetLocationType();
                 // If the item that is being created is a chest loot item
-                if (GetLocationType() == LocationType.Chest)
+                if (location == LocationType.Chest)
                 {
                     // Set the item to the archipelago item
                     if (InventoryUtil.Instance.checksPerItemInChest)
@@ -300,26 +306,24 @@ namespace RnSArchipelago.Game
                                 {
                                     *argv[0] = new RValue(baseItemId);
                                 }
-                                break;
                             }
                         }
                     }
                     else if (InventoryUtil.Instance.shuffleItemsets)
                     {
-                        var index = rand.Next(InventoryUtil.Instance.AvailableItems.Count);
-                        *argv[0] = new RValue(InventoryUtil.Instance.AvailableItems[index]);
-
-                        // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working
-                        //HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var element);
-                        //var instance = ((CLayerInstanceElement*)element)->Instance;
-                        /*rnsReloaded.FindValue(instance, "yScale")->Real = 1;
-                        rnsReloaded.FindValue(instance, "yScale")->Real = 1;*/
-
-                        this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "mod", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                        if (InventoryUtil.Instance.AvailableItems.Count == 0)
+                        {
+                            *argv[0] = new RValue(0);
+                        }
+                        else
+                        {
+                            var index = rand.Next(InventoryUtil.Instance.AvailableItems.Count);
+                            *argv[0] = new RValue(InventoryUtil.Instance.AvailableItems[index]);
+                        }
                     }
                 }
                 // If the item that is being created is a shop loot item
-                else if (GetLocationType() == LocationType.Shop)
+                else if (location == LocationType.Shop)
                 {
                     // Determine which slot item we are at, which should be the first -1
                     for (var i = 0; i < 9; i++)
@@ -364,6 +368,28 @@ namespace RnSArchipelago.Game
 
                             return returnValue;
                         }
+                    }
+                } else if (location == LocationType.SpecialChest)
+                {
+                    if (InventoryUtil.Instance.shuffleItemsets)
+                    {
+                        if (InventoryUtil.Instance.AvailableItems.Count == 0)
+                        {
+                            *argv[0] = new RValue(0);
+                        }
+                        else
+                        {
+                            var index = rand.Next(InventoryUtil.Instance.AvailableItems.Count);
+                            *argv[0] = new RValue(InventoryUtil.Instance.AvailableItems[index]);
+                        }
+
+                        // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working
+                        //HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var element);
+                        //var instance = ((CLayerInstanceElement*)element)->Instance;
+                        /*rnsReloaded.FindValue(instance, "yScale")->Real = 1;
+                        rnsReloaded.FindValue(instance, "yScale")->Real = 1;*/
+
+                        this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "mod", self, returnValue, argc, argv), System.Drawing.Color.Red);
                     }
                 }
             }
