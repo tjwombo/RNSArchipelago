@@ -44,4 +44,4 @@ To do so, download the ArchipelagoItems.zip file in the releases tab and extract
 
 - Everyone who helped make RNSReloaded
 - Everyone in the Archipelago discord for all the amazing work they do
-- RavingMagicMan for helping me organize my mess of notes
+- RavingMagicMan and Straybard for helping me organize my mess of notes and testing
