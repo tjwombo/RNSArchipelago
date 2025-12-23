@@ -54,6 +54,8 @@ namespace RnSArchipelago.Game
 
             InventoryUtil.Instance.AddChest += AddChestToNotch;
             InventoryUtil.Instance.SendGoal += SendGoal;
+
+            ShopItemsUtil.logger = logger;
         }
 
         private enum LocationType
@@ -211,6 +213,7 @@ namespace RnSArchipelago.Game
             {
                 id = conn.session!.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[j]);
 
+                // TODO: RE-TURN THIS ON WHEN THE AP ITEM HAS BEEN BOUGHT
                 // if the item is an archipelago item, disable the purchase condition, mainly applies to hp and upgrades
                 if (!conn.session!.Locations.AllLocationsChecked.Contains(id))
                 {

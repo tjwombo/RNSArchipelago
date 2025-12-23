@@ -1,5 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
 using Newtonsoft.Json.Linq;
+using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Data;
 
 namespace RnSArchipelago.Utils
@@ -9,6 +10,8 @@ namespace RnSArchipelago.Utils
         private static readonly InventoryUtil _instance = new InventoryUtil();
 
         internal static InventoryUtil Instance => _instance;
+
+        internal ILoggerV1? logger;
 
         internal bool isActive;
         internal bool isKingdomSanity;
@@ -133,24 +136,24 @@ namespace RnSArchipelago.Utils
             }
 
             checksPerClass = data.GetValue<JArray>(DataContext.Options, "checks_per_class")!.ToObject<List<string>>()!;
-            Console.WriteLine(string.Join(", ", checksPerClass));
+            this.logger!.PrintMessage(String.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
 
             shuffleItemsets = data.GetValue<long>(DataContext.Options, "shuffle_item_sets") == 1;
             checksPerItemInChest = data.GetValue<long>(DataContext.Options, "checks_per_item_in_chest") == 1;
 
             UpgradeSanity = (UpgradeSetting)data.GetValue<long>(DataContext.Options, "upgrade_sanity");
-            Console.WriteLine(UpgradeSanity);
+            this.logger!.PrintMessage(UpgradeSanity.ToString(), System.Drawing.Color.DarkOrange);
 
             PotionSanity = (PotionSetting)data.GetValue<long>(DataContext.Options, "potion_sanity");
-            Console.WriteLine(PotionSanity);
+            this.logger!.PrintMessage(PotionSanity.ToString(), System.Drawing.Color.DarkOrange);
 
             goal = (GoalSetting)data.GetValue<long>(DataContext.Options, "goal_condition");
-            Console.WriteLine(goal);
+            this.logger!.PrintMessage(goal.ToString(), System.Drawing.Color.DarkOrange);
 
             shiraKills = data.GetValue<long>(DataContext.Options, "shira_defeats")!;
 
             shop_sanity = (ShopSetting)data.GetValue<long>(DataContext.Options, "shop_sanity");
-            Console.WriteLine(ShopSanity);
+            this.logger!.PrintMessage(shop_sanity.ToString(), System.Drawing.Color.DarkOrange);
         }
 
         [Flags]
@@ -327,24 +330,24 @@ namespace RnSArchipelago.Utils
                     if (KINGDOMS.Contains(itemName))
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
-                        Console.WriteLine(AvailableKingdoms);
+                        this.logger!.PrintMessage(AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
                         UpdateKingdomRoute.Invoke();
                     } 
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
-                        Console.WriteLine(ProgressiveRegions);
+                        this.logger!.PrintMessage(ProgressiveRegions + "", System.Drawing.Color.DarkOrange);
                         UpdateKingdomRoute.Invoke();
                     } 
                     else if (CLASSES.Contains(itemName))
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
-                        Console.WriteLine(AvailableClasses);
+                        this.logger!.PrintMessage(AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
                     } 
                     else if (ITEMSETS.Contains(itemName))
                     {
                         AddItemsFromItemset(itemName);
-                        Console.WriteLine(String.Join(", ", AvailableItems));
+                        this.logger!.PrintMessage(String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     } 
                     else if (itemName == "Treasuresphere")
                     {
@@ -390,29 +393,29 @@ namespace RnSArchipelago.Utils
                         } else if (enumName.Contains("Primary"))
                         {
                             AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | (PrimaryUpgradeFlags)Enum.Parse(typeof(PrimaryUpgradeFlags), enumName);
-                            Console.WriteLine(AvailablePrimaryUpgrades);
+                            this.logger!.PrintMessage(AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         } else if (enumName.Contains("Secondary"))
                         {
                             AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | (SecondaryUpgradeFlags)Enum.Parse(typeof(SecondaryUpgradeFlags), enumName);
-                            Console.WriteLine(AvailableSecondaryUpgrades);
+                            this.logger!.PrintMessage(AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         } else if (enumName.Contains("Special"))
                         {
                             AvailableSpecialUpgrades = AvailableSpecialUpgrades | (SpecialUpgradeFlags)Enum.Parse(typeof(SpecialUpgradeFlags), enumName);
-                            Console.WriteLine(AvailableSpecialUpgrades);
+                            this.logger!.PrintMessage(AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         } else if (enumName.Contains("Defensive"))
                         {
                             AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | (DefensiveUpgradeFlags)Enum.Parse(typeof(DefensiveUpgradeFlags), enumName);
-                            Console.WriteLine(AvailableDefensiveUpgrades);
+                            this.logger!.PrintMessage(AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
                     } 
                     else if (POTIONS.Contains(itemName))
                     {
                         AvailablePotions.Add(itemName);
-                        Console.WriteLine(String.Join(", ", AvailablePotions));
+                        this.logger!.PrintMessage(String.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
                     } else if (itemName.Contains("Victory"))
                     {
                         victories.Add(itemName);
-                        Console.WriteLine(String.Join(", ", victories));
+                        this.logger!.PrintMessage(String.Join(", ", victories), System.Drawing.Color.DarkOrange);
                         if (CheckGoal())
                         {
                             SendGoal.Invoke();

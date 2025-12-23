@@ -170,7 +170,6 @@ namespace RnSArchipelago.Game
                         var seed = rnsReloaded.FindValue((&instanceValue)->Object, "potY");
                         if (seed != null && seed->ToString() != "unset")
                         {
-                            //Console.WriteLine("uhhh");
                             //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
                             //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [new(0), new(400)]);
                             //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
@@ -216,7 +215,8 @@ namespace RnSArchipelago.Game
                     {
                         if (HookUtil.IsEqualToNumeric(currentPos, HookUtil.GetNumeric(notchNumber) - 1))
                         {
-
+                            // TODO: FIX - ENSURE ORDER 1-MAXKINGDOM IS CORRECT, I THINK A MAX KINGDOM OF 3 AND HAVING KINGDOM ORDER 1, 1, AND 2 COULD PASS THE CHECK
+                            // TODO: CONT - ALSO PRETTY SURE WE DONT HAVE A CHECK ON HAVING THE KINGDOM ITEM AND/OR PROGRESSIVE REGION
                             if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms))
                             {
                                 var hallkey = rnsReloaded.FindValue(self, "hallkey");
@@ -508,6 +508,7 @@ namespace RnSArchipelago.Game
                 rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
             }
 
+            //TODO: REVISIT THIS, I DON'T THINK MAXCANRUN CURRENTLY ENCORPORATES KEEP AND PINNACLE
             // Place the last 2 where they need to be, if they are visitable 
             if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && maxCanRun >= maxKingdoms)
             {

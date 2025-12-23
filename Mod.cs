@@ -219,7 +219,6 @@ namespace RnSArchipelago
                 {
                     // Update the info banner
                     var osScript = rnsReloaded.GetScriptData(osId.Value);
-                    this.logger.PrintMessage("" + (osScript != null), Color.Red);
                     lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, osScript->Functions->Function);
                     lobby.lobbySettingsDisplayStepHook.Activate();
                 }
@@ -455,7 +454,7 @@ namespace RnSArchipelago
 
 
                     // Setup as if a friends only lobby or solo lobby based on the number of players
-                    this.logger.PrintMessage("" + lobby.ArchipelagoNum, Color.Red);
+                    this.logger.PrintMessage("" + lobby.ArchipelagoNum, Color.DarkOrange);
                     if (lobby.ArchipelagoNum > 1)
                     {
                         *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);

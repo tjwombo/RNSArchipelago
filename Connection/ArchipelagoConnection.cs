@@ -127,7 +127,7 @@ namespace RnSArchipelago.Connection
 
         internal void ConnectionOpened()
         {
-            Console.WriteLine("connection opened");
+            this.logger.PrintMessage("connection opened", System.Drawing.Color.DarkOrange);
         }
 
         internal void ConnectionClosed(string reason)
@@ -192,12 +192,12 @@ namespace RnSArchipelago.Connection
                 }
                 else
                 {
-                    Console.WriteLine("Uuid cannot be found");
+                    this.logger.PrintMessage("Uuid cannot be found", System.Drawing.Color.Red);
                 }
             }
             else
             {
-                Console.WriteLine("cache cannot be found");
+                this.logger.PrintMessage("cache cannot be found", System.Drawing.Color.Red);
             }
             connect.Version = VERSION;
 
