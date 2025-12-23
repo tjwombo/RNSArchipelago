@@ -28,6 +28,12 @@ namespace RnSArchipelago.Connection
         private static readonly string GAME = "Rabbit and Steel";
         internal int slot = 0;
 
+        internal unsafe void SendDisconnectedMessage()
+        {
+            var message = new RValue();
+            rnsReloaded!.CreateString(&message, "Disconnected from the multiworld");
+            rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), message, new(0)]);
+        }
 
         internal unsafe void OnMessageReceived(LogMessage message)
         {
@@ -39,9 +45,9 @@ namespace RnSArchipelago.Connection
                     var hintNetworkItem = hintLogMessage.Item;
                     var hintFound = hintLogMessage.IsFound;
 
-                    var hintMessage = new RValue();
                     if (modConfig!.SystemLog)
                     {
+                        var hintMessage = new RValue();
                         rnsReloaded!.CreateString(&hintMessage, message.ToString());
                         rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), hintMessage, new(0)]);
                     }

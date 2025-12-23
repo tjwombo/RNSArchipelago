@@ -10,6 +10,8 @@ using Archipelago.MultiClient.Net.Models;
 using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
 using RnSArchipelago.Game;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace RnSArchipelago.Connection
 {
@@ -131,6 +133,7 @@ namespace RnSArchipelago.Connection
         internal void ConnectionClosed(string reason)
         {
             logger.PrintMessage("Connection closed: " + reason, System.Drawing.Color.Red);
+            MessageHandler.Instance.SendDisconnectedMessage();
             if (session != null && session.Socket != null)
             {
                 session.MessageLog.OnMessageReceived -= MessageHandler.Instance.OnMessageReceived;
@@ -142,13 +145,25 @@ namespace RnSArchipelago.Connection
         internal async void ErrorReceived(Exception e, string message)
         {
             logger.PrintMessage("Error: " + message, System.Drawing.Color.Red);
+            logger.PrintMessage(e + "", System.Drawing.Color.Red);
+
+            if (message == "The remote party closed the WebSocket connection without completing the close handshake." ||
+                message.Contains("Unable to connect to the remote server"))
+            {
+                MessageHandler.Instance.SendDisconnectedMessage();
+            }
+
             if (session != null)
             {
                 try
                 {
                     await session.Socket.DisconnectAsync();
+
                 }
-                catch (Exception _) { }
+                catch (Exception err) {
+                    logger.PrintMessage("Error in disconnecting: " + err, System.Drawing.Color.Red);
+                    session = null;
+                }
             }
         }
 

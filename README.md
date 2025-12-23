@@ -15,16 +15,22 @@ But if you insist you did, please report it in the Archipelago discord server [h
 ## Installation
 
 This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II) and can be installed by
-1. Adding Rabbit and Steel as an application by clicking the + button
-2. Download the mod by clicking the ⚙+ button
-3. Filter All Sources to RabbitSteel.exe
-4. Search "RnS Reloaded" and install it
+Adding Rabbit and Steel as an application by clicking the + button
+
+And then
+1. Download the mod by clicking the ⚙+ button
+2. Filter All Sources to RabbitSteel.exe
+3. Search "RnS Reloaded" and install it
 
 Alternatively, it can be downloaded manually by 
 1. Downloading the .7z file in releases
-2. Dragging it (while still zipped) onto the Reloaded 2 "Configure Mods" screen
+2. Dragging it (while still zipped) onto the Reloaded 2 "Configure Mods" screen, which is reached by clicking on the Rabbit and Steel Icon
 
-This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded which should be installed automatically regardless of which instalation method you choose.
+Then on the "Configure Mods" screen make sure the mod is active, box should be red and have a + instead of -
+- RNSReloaded should have a filled in red box
+And then hit "Launch Application"
+
+This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded (along with their dependencies) which should be installed automatically regardless of which instalation method you choose.
 
 ## Configuration
 
@@ -40,8 +46,9 @@ The correct directory should be where Reloaded-II is installed + \Mods. For exam
 If setting this directory doesn't work, then turn on the Skip Item Creation config and you will need to manually install the items mod.
 To do so, download the ArchipelagoItems.zip file in the releases tab and extract it into your Rabbit and Steel mods folder like so steamapps\common\Rabbit and Steel\mods\ArchipelagoItems
 
-## Credits
+## Kudos
 
 - Everyone who helped make RNSReloaded
 - Everyone in the Archipelago discord for all the amazing work they do
+- Everyone who helped in testing and bugfixing
 - RavingMagicMan and Straybard for helping me organize my mess of notes and testing
