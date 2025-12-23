@@ -34,7 +34,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
 
         internal ArchipelagoConnection conn = null!;
-        private long baseItemId;
+        private long baseItemId = -1;
 
         private Random rand = new Random();
 
@@ -135,6 +135,7 @@ namespace RnSArchipelago.Game
             returnValue = this.setupItemsHook!.OriginalFunction(self, other, returnValue, argc, argv);
 
             var modInfo = rnsReloaded.utils.GetGlobalVar("modInfo");
+            var foundMod = false;
             for (var i = 0; i < rnsReloaded.ArrayGetLength(modInfo)!.Value.Real; i++)
             {
                 var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
@@ -150,8 +151,15 @@ namespace RnSArchipelago.Game
                     *rnsReloaded.ArrayGetEntry(entry, 8) = new(1); // Enabled
                     *rnsReloaded.ArrayGetEntry(entry, 10) = new(0); // 'Workshop'
 
+                    foundMod = true;
+
                     break;
                 }
+            }
+
+            if (!foundMod)
+            {
+                this.logger.PrintMessage("Unable to find archipelago items mod", System.Drawing.Color.Red);
             }
 
             return returnValue;
@@ -306,6 +314,7 @@ namespace RnSArchipelago.Game
                                 {
                                     *argv[0] = new RValue(baseItemId);
                                 }
+                                break;
                             }
                         }
                     }
@@ -389,7 +398,7 @@ namespace RnSArchipelago.Game
                         /*rnsReloaded.FindValue(instance, "yScale")->Real = 1;
                         rnsReloaded.FindValue(instance, "yScale")->Real = 1;*/
 
-                        this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "mod", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                        this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "mod", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
                     }
                 }
             }
@@ -405,6 +414,7 @@ namespace RnSArchipelago.Game
             {
                 baseItemId = HookUtil.GetNumeric(rnsReloaded.FindValue(self, "item_data_entry_max")) + 1;
             }
+
             returnValue = this.itemGetHook!.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
         }
@@ -466,7 +476,7 @@ namespace RnSArchipelago.Game
 
             if (notchType == LocationType.Shop)
             {
-                //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "shop", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "shop", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
 
                 /*HookUtil.FindElementInLayer(rnsReloaded, "InventoryInfo", "itemId", out var layer);
                 if (layer != null)
@@ -478,8 +488,8 @@ namespace RnSArchipelago.Game
                         var instance = (CInstance*)element;
                         var shopSlot = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "slotId"));
                         var a = new RValue(instance);
-                        this.logger.PrintMessage(shopSlot + "", System.Drawing.Color.Red);
-                        //this.logger.PrintMessage(shopSlot + " " + HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "slotId")) + " " + Marshal.PtrToStringAnsi((nint)element->Layer->Name), System.Drawing.Color.Red);
+                        this.logger.PrintMessage(shopSlot + "", System.Drawing.Color.DarkOrange);
+                        //this.logger.PrintMessage(shopSlot + " " + HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "slotId")) + " " + Marshal.PtrToStringAnsi((nint)element->Layer->Name), System.Drawing.Color.DarkOrange);
                         if (shopSlot >= 5 && shopSlot <= 8)
                         {
                             rnsReloaded.FindValue(instance, "itemId")->Real = 94;
@@ -495,8 +505,8 @@ namespace RnSArchipelago.Game
                     }
                 }*/
                 //var a = new RValue(self);
-                //this.logger.PrintMessage(a.ToString(), System.Drawing.Color.Red);
-                /*this.logger.PrintMessage(HookUtil.GetNumeric(rnsReloaded.FindValue(self, "slotId")) + "", System.Drawing.Color.Red);
+                //this.logger.PrintMessage(a.ToString(), System.Drawing.Color.DarkOrange);
+                /*this.logger.PrintMessage(HookUtil.GetNumeric(rnsReloaded.FindValue(self, "slotId")) + "", System.Drawing.Color.DarkOrange);
                 var shopSlot = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "slotId"));
                 if (shopSlot >= 5 && shopSlot <= 8)
                 {
@@ -504,9 +514,9 @@ namespace RnSArchipelago.Game
 
                 }*/
             }
-            //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "uh", self, returnValue, argc, argv), System.Drawing.Color.Red);
+            //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "uh", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
             var a = new RValue(self);
-            this.logger.PrintMessage(a.ToString(), System.Drawing.Color.Red);
+            this.logger.PrintMessage(a.ToString(), System.Drawing.Color.DarkOrange);
             //returnValue = this.itemSetUpgradeDescriptionHook!.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
         }
@@ -554,7 +564,7 @@ namespace RnSArchipelago.Game
             }
 
             shopContents = conn.session!.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, locations);
-            this.logger.PrintMessage("shop pos id: " + string.Join(", ", shopContents.Result.Select(pair => $"{pair.Key} => {pair.Value.ItemName}\n")), System.Drawing.Color.Red);
+            this.logger.PrintMessage("shop pos id: " + string.Join(", ", shopContents.Result.Select(pair => $"{pair.Key} => {pair.Value.ItemName}\n")), System.Drawing.Color.DarkOrange);
         }
 
         // Prevent 'fake' items from actually being taken
@@ -583,7 +593,7 @@ namespace RnSArchipelago.Game
                         return returnValue;
                     }
 
-                    this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "take", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                    this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "take", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
 
                     if (InventoryUtil.Instance.checksPerItemInChest && GetLocationType() == LocationType.Chest)
                     {

@@ -41,7 +41,7 @@
 	<Content Include="Preview.png">
 		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
-	<Content Include="Items\**">
+	<Content Include="ArchipelagoItems\**">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
   </ItemGroup>

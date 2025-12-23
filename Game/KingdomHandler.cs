@@ -147,19 +147,19 @@ namespace RnSArchipelago.Game
             if (InventoryUtil.Instance.isActive)
             {
                 var a = new RValue(self);
-                //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.Red);
+                //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
 
-                //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
                 //this.fixEndIconsHook.Disable();
                 HookUtil.FindLayer(rnsReloaded, "RunMenu_Squares", out var layer);
-                //this.logger.PrintMessage(layer->Elements.Count + "", System.Drawing.Color.Red);
+                //this.logger.PrintMessage(layer->Elements.Count + "", System.Drawing.Color.DarkOrange);
 
                 CLayerElementBase* hallway = layer->Elements.First;
                 if (layer != null)
                 {
-                    //this.logger.PrintMessage("not null: " + layer->Elements.Count, System.Drawing.Color.Red);
+                    //this.logger.PrintMessage("not null: " + layer->Elements.Count, System.Drawing.Color.DarkOrange);
                     //var a = new RValue(self);
-                    //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.Red);
+                    //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
                     hallway = layer->Elements.First;
                     while (hallway != null)
                     {
@@ -175,7 +175,7 @@ namespace RnSArchipelago.Game
                             //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [new(0), new(400)]);
                             //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
                             //var b = new RValue(self);
-                            //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.Red);
+                            //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
                             returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
                             return returnValue;
                         }
@@ -529,11 +529,11 @@ namespace RnSArchipelago.Game
         // Update the route from the start or from the current position + 1
         internal void UpdateRoute(bool currentHallwayPosAware = true)
         {
-            this.logger.PrintMessage("updating route", System.Drawing.Color.Red);
+            this.logger.PrintMessage("updating route", System.Drawing.Color.DarkOrange);
             var visitableKingdoms = InventoryUtil.Instance.AvailableKingdoms;
 
             var maxCanRun = CalculateMaxRun();
-            this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.Red);
+            this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.DarkOrange);
 
             ModifyHallSeedAndIcons(maxCanRun);
 
@@ -552,7 +552,7 @@ namespace RnSArchipelago.Game
                 if (isKingdomSanity || isProgressive)
                 {
                     returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                    this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "create route", self, returnValue, argc, argv), System.Drawing.Color.Red);
+                    this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "create route", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
                     UpdateRoute(false);
 
                     return returnValue;

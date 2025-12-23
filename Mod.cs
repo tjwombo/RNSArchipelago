@@ -573,7 +573,7 @@ namespace RnSArchipelago
         {
             // Copy over item mod to game folder
             // Assumes that this environment variable is actually correct
-            string path = Path.Combine(this.config.Mods, @"RnSArchipelago\Items");
+            string path = Path.Combine(this.config.Mods, @"RnSArchipelago\ArchipelagoItems");
             CopyDirectory(path, @".\Mods\ArchipelagoItems", true);
         }
 
