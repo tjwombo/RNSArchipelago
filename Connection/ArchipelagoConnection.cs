@@ -12,12 +12,13 @@ using RnSArchipelago.Utils;
 using RnSArchipelago.Game;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RnSArchipelago.Connection
 {
     internal class ArchipelagoConnection
     {
-        private readonly IRNSReloaded rnsReloaded;
+        private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
         private readonly ILoggerV1 logger;
         private readonly Config.Config modConfig;
         private readonly SharedData data;
@@ -31,9 +32,22 @@ namespace RnSArchipelago.Connection
         private static readonly NetworkVersion VERSION = new(0, 6, 3);
         private static readonly string GAME = "Rabbit and Steel";
 
-        internal ArchipelagoConnection(IRNSReloaded rnsReloaded, ILoggerV1 logger, Config.Config config, SharedData data, LocationHandler locationHandler)
+        private bool IsReady(
+            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
+        )
         {
-            this.rnsReloaded = rnsReloaded;
+            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
+            {
+                return rnsReloaded != null;
+            }
+            this.logger.PrintMessage("Unable to find rnsReloaded in ArchipelagoConnection", System.Drawing.Color.Red);
+            rnsReloaded = null;
+            return false;
+        }
+
+        internal ArchipelagoConnection(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, Config.Config config, SharedData data, LocationHandler locationHandler)
+        {
+            this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.modConfig = config;
             this.data = data;
@@ -50,17 +64,21 @@ namespace RnSArchipelago.Connection
             {
 
                 session = ArchipelagoSessionFactory.CreateSession(address);
-                var message = MessageHandler.Instance;
-                message.rnsReloaded = rnsReloaded;
-                message.logger = logger;
-                message.modConfig = modConfig;
-                message.data = data;
 
-                session.Socket.PacketReceived += message.OnPacketReceived;
-                session.MessageLog.OnMessageReceived += message.OnMessageReceived;
-                session.Socket.SocketOpened += ConnectionOpened;
-                session.Socket.ErrorReceived += ErrorReceived;
-                session.Socket.SocketClosed += ConnectionClosed;
+                if (IsReady(out var rnsReloaded))
+                {
+                    var message = MessageHandler.Instance;
+                    message.rnsReloadedRef = rnsReloadedRef;
+                    message.logger = logger;
+                    message.modConfig = modConfig;
+                    message.data = data;
+
+                    session.Socket.PacketReceived += message.OnPacketReceived;
+                    session.MessageLog.OnMessageReceived += message.OnMessageReceived;
+                    session.Socket.SocketOpened += ConnectionOpened;
+                    session.Socket.ErrorReceived += ErrorReceived;
+                    session.Socket.SocketClosed += ConnectionClosed;
+                }
 
                 try
                 {

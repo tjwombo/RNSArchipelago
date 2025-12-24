@@ -2,7 +2,7 @@
 	"ModId": "RnSArchipelago",
 	"ModName": "RnS Archipelago",
 	"ModAuthor": "Tjwombo",
-	"ModVersion": "0.1.4",
+	"ModVersion": "0.2.0",
 	"ModDescription": "Randomizer mod for Archipelago",
 	"ModDll": "RnSArchipelago.dll",
 	"ModIcon": "Preview.png",

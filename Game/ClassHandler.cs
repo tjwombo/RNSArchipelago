@@ -3,12 +3,13 @@ using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using RnSArchipelago.Utils;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RnSArchipelago.Game
 {
     internal unsafe class ClassHandler
     {
-        private readonly IRNSReloaded rnsReloaded;
+        private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
         private readonly ILoggerV1 logger;
 
         internal IHook<ScriptDelegate>? lockClassHook;
@@ -20,9 +21,22 @@ namespace RnSArchipelago.Game
             return (long)(Math.Floor((abilityId + 1.0) / 7) * 7) - 1;
         }
 
-        internal ClassHandler(IRNSReloaded rnsReloaded, ILoggerV1 logger)
+        private bool IsReady(
+            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
+        )
         {
-            this.rnsReloaded = rnsReloaded;
+            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
+            {
+                return rnsReloaded != null;
+            }
+            this.logger.PrintMessage("Unable to find rnsReloaded in ClassHandler", System.Drawing.Color.Red);
+            rnsReloaded = null;
+            return false;
+        }
+
+        internal ClassHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger)
+        {
+            this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
         }
 
@@ -30,18 +44,21 @@ namespace RnSArchipelago.Game
         internal RValue* LockVisualClass(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             returnValue = this.lockVisualClassHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            if (InventoryUtil.Instance.isActive)
+            if (IsReady(out var rnsReloaded))
             {
-                if (InventoryUtil.Instance.isClassSanity && HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
+                if (InventoryUtil.Instance.isActive)
                 {
-                    for (var i = 0; i < InventoryUtil.Instance.AvailableClassesCount; i++)
+                    if (InventoryUtil.Instance.isClassSanity && HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
                     {
-                        if (!InventoryUtil.Instance.isClassAvailable(i))
+                        for (var i = 0; i < InventoryUtil.Instance.AvailableClassesCount; i++)
                         {
-                            var chars = rnsReloaded.FindValue(self, "menuAvailable");
-                            *chars->Get(i) = new(0);
-                            var preview = rnsReloaded.FindValue(self, "menuPreview");
-                            *preview->Get(i) = new(0);
+                            if (!InventoryUtil.Instance.isClassAvailable(i))
+                            {
+                                var chars = rnsReloaded.FindValue(self, "menuAvailable");
+                                *chars->Get(i) = new(0);
+                                var preview = rnsReloaded.FindValue(self, "menuPreview");
+                                *preview->Get(i) = new(0);
+                            }
                         }
                     }
                 }
@@ -54,16 +71,19 @@ namespace RnSArchipelago.Game
         internal RValue* LockClass(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             returnValue = this.lockClassHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            if (InventoryUtil.Instance.isActive)
+            if (IsReady(out var rnsReloaded))
             {
-                if (InventoryUtil.Instance.isClassSanity && !InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                if (InventoryUtil.Instance.isActive)
                 {
-                    var chars = rnsReloaded.FindValue(self, "step");
-                    *chars = new(1);
-                    var previous = rnsReloaded.FindValue(self, "previousStep");
-                    *previous = new(1);
+                    if (InventoryUtil.Instance.isClassSanity && !InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    {
+                        var chars = rnsReloaded.FindValue(self, "step");
+                        *chars = new(1);
+                        var previous = rnsReloaded.FindValue(self, "previousStep");
+                        *previous = new(1);
 
-                    //rnsReloaded.ExecuteScript("scr_charselect2_update_chooseclass", self, other, []);
+                        //rnsReloaded.ExecuteScript("scr_charselect2_update_chooseclass", self, other, []);
+                    }
                 }
             }
             return returnValue;
@@ -72,11 +92,14 @@ namespace RnSArchipelago.Game
         // Make it so that the palettes are not drawn if we are going to loop back to the same state
         internal RValue* StopColorDraw(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (InventoryUtil.Instance.isActive)
+            if (IsReady(out var rnsReloaded))
             {
-                if (InventoryUtil.Instance.isClassSanity && !InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                if (InventoryUtil.Instance.isActive)
                 {
-                    return returnValue;
+                    if (InventoryUtil.Instance.isClassSanity && !InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    {
+                        return returnValue;
+                    }
                 }
             }
             returnValue = this.stopColorHook!.OriginalFunction(self, other, returnValue, argc, argv);

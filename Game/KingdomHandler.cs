@@ -3,13 +3,14 @@ using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using System.Diagnostics.CodeAnalysis;
 using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
 {
     internal unsafe class KingdomHandler
     {
-        private readonly IRNSReloaded rnsReloaded;
+        private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
         private readonly ILoggerV1 logger;
 
         internal IHook<ScriptDelegate>? chooseHallsHook;
@@ -17,9 +18,22 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? fixChooseIconsHook;
         internal IHook<ScriptDelegate>? fixEndIconsHook;
 
-        internal KingdomHandler(IRNSReloaded rnsReloaded, ILoggerV1 logger)
+        private bool IsReady(
+            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
+        )
         {
-            this.rnsReloaded = rnsReloaded;
+            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
+            {
+                return rnsReloaded != null;
+            }
+            this.logger.PrintMessage("Unable to find rnsReloaded in KingdomHandler", System.Drawing.Color.Red);
+            rnsReloaded = null;
+            return false;
+        }
+
+        internal KingdomHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger)
+        {
+            this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
 
             InventoryUtil.Instance.UpdateKingdomRoute += UpdateRoute;
@@ -144,43 +158,46 @@ namespace RnSArchipelago.Game
         // TODO: CANT SEEM TO ACTUALLY MODIFY THE END SCREEN KINGDOM POSITIONS
         internal RValue* ModifyEndScreenIcons(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (InventoryUtil.Instance.isActive)
+            if (IsReady(out var rnsReloaded))
             {
-                var a = new RValue(self);
-                //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
-
-                //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
-                //this.fixEndIconsHook.Disable();
-                HookUtil.FindLayer(rnsReloaded, "RunMenu_Squares", out var layer);
-                //this.logger.PrintMessage(layer->Elements.Count + "", System.Drawing.Color.DarkOrange);
-
-                CLayerElementBase* hallway = layer->Elements.First;
-                if (layer != null)
+                if (InventoryUtil.Instance.isActive)
                 {
-                    //this.logger.PrintMessage("not null: " + layer->Elements.Count, System.Drawing.Color.DarkOrange);
-                    //var a = new RValue(self);
+                    var a = new RValue(self);
                     //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
-                    hallway = layer->Elements.First;
-                    while (hallway != null)
+
+                    //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
+                    //this.fixEndIconsHook.Disable();
+                    HookUtil.FindLayer("RunMenu_Squares", out var layer);
+                    //this.logger.PrintMessage(layer->Elements.Count + "", System.Drawing.Color.DarkOrange);
+
+                    CLayerElementBase* hallway = layer->Elements.First;
+                    if (layer != null)
                     {
-                        var instance = (CLayerInstanceElement*)hallway;
-                        var instanceValue = new RValue(instance->Instance);
-
-
-                        var seed = rnsReloaded.FindValue((&instanceValue)->Object, "potY");
-                        if (seed != null && seed->ToString() != "unset")
+                        //this.logger.PrintMessage("not null: " + layer->Elements.Count, System.Drawing.Color.DarkOrange);
+                        //var a = new RValue(self);
+                        //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
+                        hallway = layer->Elements.First;
+                        while (hallway != null)
                         {
-                            //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
-                            //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [new(0), new(400)]);
-                            //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
-                            //var b = new RValue(self);
-                            //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
-                            returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                            return returnValue;
+                            var instance = (CLayerInstanceElement*)hallway;
+                            var instanceValue = new RValue(instance->Instance);
+
+
+                            var seed = rnsReloaded.FindValue((&instanceValue)->Object, "potY");
+                            if (seed != null && seed->ToString() != "unset")
+                            {
+                                //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
+                                //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [new(0), new(400)]);
+                                //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
+                                //var b = new RValue(self);
+                                //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
+                                returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                                return returnValue;
+                            }
+                            //break;
+                            //}
+                            hallway = hallway->Next;
                         }
-                        //break;
-                        //}
-                        hallway = hallway->Next;
                     }
                 }
             }
@@ -192,43 +209,47 @@ namespace RnSArchipelago.Game
         // End the route early if we arent allowed to continue
         private bool EndRouteEarly(CInstance* self)
         {
-            var isKingdomSanity = InventoryUtil.Instance.isKingdomSanity;
-            var isProgressive = InventoryUtil.Instance.isProgressive;
-            var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
-            var regionCount = InventoryUtil.Instance.ProgressiveRegions;
-            var visitiableKingdomsCount = InventoryUtil.Instance.AvailableKingdomsCount();
-
-            var maxVisitableKingdoms = CalculateMaxRun();
-
-            FindLayer(rnsReloaded, "RunMenu_Blocker", out var layer);
-            if (layer != null)
+            if (IsReady(out var rnsReloaded))
             {
-                var hallway = layer->Elements.First;
-                while (hallway != null)
-                {
-                    var instance = (CLayerInstanceElement*)hallway;
-                    var instanceValue = new RValue(instance->Instance);
+                var isKingdomSanity = InventoryUtil.Instance.isKingdomSanity;
+                var isProgressive = InventoryUtil.Instance.isProgressive;
+                var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
+                var regionCount = InventoryUtil.Instance.ProgressiveRegions;
+                var visitiableKingdomsCount = InventoryUtil.Instance.AvailableKingdomsCount();
 
-                    var currentPos = instanceValue.Get("currentPos");
-                    var notchNumber = instanceValue.Get("notchNumber");
-                    if (currentPos != null && notchNumber != null)
+                var maxVisitableKingdoms = CalculateMaxRun();
+
+                FindLayer("RunMenu_Blocker", out var layer);
+                if (layer != null)
+                {
+                    var hallway = layer->Elements.First;
+                    while (hallway != null)
                     {
-                        if (HookUtil.IsEqualToNumeric(currentPos, HookUtil.GetNumeric(notchNumber) - 1))
+                        var instance = (CLayerInstanceElement*)hallway;
+                        var instanceValue = new RValue(instance->Instance);
+
+                        var currentPos = instanceValue.Get("currentPos");
+                        var notchNumber = instanceValue.Get("notchNumber");
+                        if (currentPos != null && notchNumber != null)
                         {
-                            // TODO: FIX - ENSURE ORDER 1-MAXKINGDOM IS CORRECT, I THINK A MAX KINGDOM OF 3 AND HAVING KINGDOM ORDER 1, 1, AND 2 COULD PASS THE CHECK
-                            // TODO: CONT - ALSO PRETTY SURE WE DONT HAVE A CHECK ON HAVING THE KINGDOM ITEM AND/OR PROGRESSIVE REGION
-                            if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms))
+                            if (HookUtil.IsEqualToNumeric(currentPos, HookUtil.GetNumeric(notchNumber) - 1))
                             {
-                                var hallkey = rnsReloaded.FindValue(self, "hallkey");
-                                return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_keep";
-                            } else if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms + 1))
-                            {
-                                var hallkey = rnsReloaded.FindValue(self, "hallkey");
-                                return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_pinnacle";
+                                // TODO: FIX - ENSURE ORDER 1-MAXKINGDOM IS CORRECT, I THINK A MAX KINGDOM OF 3 AND HAVING KINGDOM ORDER 1, 1, AND 2 COULD PASS THE CHECK
+                                // TODO: CONT - ALSO PRETTY SURE WE DONT HAVE A CHECK ON HAVING THE KINGDOM ITEM AND/OR PROGRESSIVE REGION
+                                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms))
+                                {
+                                    var hallkey = rnsReloaded.FindValue(self, "hallkey");
+                                    return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_keep";
+                                }
+                                else if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms + 1))
+                                {
+                                    var hallkey = rnsReloaded.FindValue(self, "hallkey");
+                                    return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_pinnacle";
+                                }
                             }
                         }
+                        hallway = hallway->Next;
                     }
-                    hallway = hallway->Next;
                 }
             }
             return false;
@@ -237,23 +258,26 @@ namespace RnSArchipelago.Game
         // Increase the route length to the maximum value value
         private void IncreaseRouteLength()
         {
-            FindLayer(rnsReloaded, "RunMenu_Blocker", out var layer);
-            if (layer != null)
+            if (IsReady(out var rnsReloaded))
             {
-                var hallway = layer->Elements.First;
-                while (hallway != null)
+                FindLayer("RunMenu_Blocker", out var layer);
+                if (layer != null)
                 {
-                    var instance = (CLayerInstanceElement*)hallway;
-                    var instanceValue = new RValue(instance->Instance);
-
-                    
-                    if (instanceValue.Get("hallkey") != null && instanceValue.Get("hallkey")->ToString() != "unset")
+                    var hallway = layer->Elements.First;
+                    while (hallway != null)
                     {
-                        // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
-                        HookUtil.ModifyElementVariable(rnsReloaded, hallway, "hallwayNumber", ModificationType.ModifyLiteral, [new(CalculateMaxRun()+3)]);
-                        return;
+                        var instance = (CLayerInstanceElement*)hallway;
+                        var instanceValue = new RValue(instance->Instance);
+
+
+                        if (instanceValue.Get("hallkey") != null && instanceValue.Get("hallkey")->ToString() != "unset")
+                        {
+                            // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
+                            HookUtil.ModifyElementVariable(hallway, "hallwayNumber", ModificationType.ModifyLiteral, [new(CalculateMaxRun() + 3)]);
+                            return;
+                        }
+                        hallway = hallway->Next;
                     }
-                    hallway = hallway->Next;
                 }
             }
         }
@@ -263,14 +287,17 @@ namespace RnSArchipelago.Game
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            if (InventoryUtil.Instance.isActive)
+            if (IsReady(out var rnsReloaded))
             {
-                IncreaseRouteLength();
-
-                if (EndRouteEarly(self))
+                if (InventoryUtil.Instance.isActive)
                 {
-                    rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
-                    return returnValue;
+                    IncreaseRouteLength();
+
+                    if (EndRouteEarly(self))
+                    {
+                        rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
+                        return returnValue;
+                    }
                 }
             }
             returnValue = endHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
@@ -280,54 +307,57 @@ namespace RnSArchipelago.Game
         // Modify the hallseed and hallway icons for extra visitable kingdoms
         private void ModifyHallSeedAndIcons(int maxCanRun)
         {
-            HookUtil.FindLayer(rnsReloaded, "RunMenu_Blocker", out var layer);
-            if (layer != null)
+            if (IsReady(out var rnsReloaded))
             {
-                var hallway = layer->Elements.First;
-                while (hallway != null)
+                HookUtil.FindLayer("RunMenu_Blocker", out var layer);
+                if (layer != null)
                 {
-                    var instance = (CLayerInstanceElement*)hallway;
-                    var instanceValue = new RValue(instance->Instance);
-
-                    if (instanceValue.Get("currentPos") != null &&
-                        (HookUtil.IsEqualToNumeric(instanceValue.Get("currentPos"), 0)))
+                    var hallway = layer->Elements.First;
+                    while (hallway != null)
                     {
-                        // Modify the seed
-                        var seed = instanceValue.Get("hallseed");
-                        if (seed != null && seed->ToString() != "unset")
+                        var instance = (CLayerInstanceElement*)hallway;
+                        var instanceValue = new RValue(instance->Instance);
+
+                        if (instanceValue.Get("currentPos") != null &&
+                            (HookUtil.IsEqualToNumeric(instanceValue.Get("currentPos"), 0)))
                         {
-                            if (maxCanRun > 3)
+                            // Modify the seed
+                            var seed = instanceValue.Get("hallseed");
+                            if (seed != null && seed->ToString() != "unset")
                             {
-                                if (rnsReloaded.ArrayGetLength(seed).HasValue && rnsReloaded.ArrayGetLength(seed)!.Value.Real != maxCanRun + 3)
+                                if (maxCanRun > 3)
                                 {
-                                    var rand = new Random((int)(InventoryUtil.Instance.seed));
-                                    //var rand = new Random();
-                                    ModifyElementVariable(rnsReloaded, hallway, "hallseed", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(rand.Next())).ToArray());
+                                    if (rnsReloaded.ArrayGetLength(seed).HasValue && rnsReloaded.ArrayGetLength(seed)!.Value.Real != maxCanRun + 3)
+                                    {
+                                        var rand = new Random((int)(InventoryUtil.Instance.seed));
+                                        //var rand = new Random();
+                                        ModifyElementVariable(hallway, "hallseed", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(rand.Next())).ToArray());
+                                    }
                                 }
                             }
-                        }
 
-                        // Modify the icons
-                        var img = instanceValue.Get("hallsubimg");
-                        if (img != null && img->ToString() != "unset")
-                        {
-                            if (maxCanRun > 3)
+                            // Modify the icons
+                            var img = instanceValue.Get("hallsubimg");
+                            if (img != null && img->ToString() != "unset")
                             {
-                                if (rnsReloaded.ArrayGetLength(img).HasValue && rnsReloaded.ArrayGetLength(img)!.Value.Real != maxCanRun + 3)
+                                if (maxCanRun > 3)
                                 {
-                                    ModifyElementVariable(rnsReloaded, hallway, "hallsubimg", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(0)).ToArray());
-                                }
-                                for (var i = 0; i < maxCanRun - 3; i++)
-                                {
-                                    ModifyElementVariable(rnsReloaded, hallway, "hallsubimg", ModificationType.ModifyArray, [new(maxCanRun - 1 + i), new(6)]);
+                                    if (rnsReloaded.ArrayGetLength(img).HasValue && rnsReloaded.ArrayGetLength(img)!.Value.Real != maxCanRun + 3)
+                                    {
+                                        ModifyElementVariable(hallway, "hallsubimg", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(0)).ToArray());
+                                    }
+                                    for (var i = 0; i < maxCanRun - 3; i++)
+                                    {
+                                        ModifyElementVariable(hallway, "hallsubimg", ModificationType.ModifyArray, [new(maxCanRun - 1 + i), new(6)]);
+                                    }
                                 }
                             }
-                        }
 
+                        }
+                        hallway = hallway->Next;
                     }
-                    hallway = hallway->Next;
+                    layer = layer->Next;
                 }
-                layer = layer->Next;
             }
         }
 
@@ -392,30 +422,37 @@ namespace RnSArchipelago.Game
         // If we are on the route selection screen, update it to match the available kingdoms
         internal RValue* ModifyRouteIcons(CInstance* self,CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (InventoryUtil.Instance.isActive)
+            if (IsReady(out var rnsReloaded))
             {
-                // Called continously on kingdoms 0-5, so just modify on the last one
-                if (argc == 1 && HookUtil.IsEqualToNumeric(argv[0], 5))
+                if (InventoryUtil.Instance.isActive)
                 {
-                    FindLayer(rnsReloaded, "ItemExtra", out var layer);
-                    if (layer != null)
+                    // Called continously on kingdoms 0-5, so just modify on the last one
+                    if (argc == 1 && HookUtil.IsEqualToNumeric(argv[0], 5))
                     {
-                        var hallway = layer->Elements.First;
-                        while (hallway != null)
+                        FindLayer("ItemExtra", out var layer);
+                        if (layer != null)
                         {
-                            var instance = (CLayerInstanceElement*)hallway;
-                            var instanceValue = new RValue(instance->Instance);
-
-                            var routeIcons = instanceValue.Get("buttonAvailable");
-                            if (routeIcons != null && routeIcons->ToString() != "unset")
+                            var hallway = layer->Elements.First;
+                            while (hallway != null)
                             {
-                                ModifyRouteIcons(routeIcons);
-                                returnValue = routeIcons->Get(5);
-                                return returnValue;
+                                var instance = (CLayerInstanceElement*)hallway;
+                                var instanceValue = new RValue(instance->Instance);
+
+                                var routeIcons = instanceValue.Get("buttonAvailable");
+                                if (routeIcons != null && routeIcons->ToString() != "unset")
+                                {
+                                    ModifyRouteIcons(routeIcons);
+                                    returnValue = routeIcons->Get(5);
+                                    return returnValue;
+                                }
+                                hallway = hallway->Next;
                             }
-                            hallway = hallway->Next;
                         }
                     }
+                }
+                else
+                {
+                    returnValue = this.fixChooseIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
                 }
             }
             else
@@ -430,99 +467,105 @@ namespace RnSArchipelago.Game
         // Modify the route to take a route that corresponds to the kingdom order
         internal void ModifyRoute(int maxCanRun, InventoryUtil.KingdomFlags visitableKingdoms, bool currentHallwayPosAware)
         {
-            HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "stageNameKey", out var element);
-
-            var instance = ((CLayerInstanceElement*)element)->Instance;
-
-            var kingdoms = InventoryUtil.Instance.GetKingdomsAvailableAtNthOrder(maxCanRun);
-
-            var hallkey = rnsReloaded.FindValue(instance, "hallkey");
-            var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
-
-            var currentHallwayPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "hallwayPos"));
-
-            // Handle the 0th position
-            if (!currentHallwayPosAware || currentHallwayPos < 0)
+            if (IsReady(out var rnsReloaded))
             {
-                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
-            }
+                HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
 
-            if (maxCanRun == 0)
-            {
-                return;
-            }
+                var instance = ((CLayerInstanceElement*)element)->Instance;
 
-            //var rand = new Random((int)(InventoryUtil.Instance.seed));
-            var rand = new Random();
+                var kingdoms = InventoryUtil.Instance.GetKingdomsAvailableAtNthOrder(maxCanRun);
 
-            var unplacedKingdoms = InventoryUtil.Instance.GetKingdomsAvailableAtNthOrder(maxCanRun);
+                var hallkey = rnsReloaded.FindValue(instance, "hallkey");
+                var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
 
-            // Handle the 1st position, trying to encorporate their request
-            if (!unplacedKingdoms.Contains(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1))))
-            {
-                int randomIndex = rand.Next(unplacedKingdoms.Count());
-                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 1), unplacedKingdoms[randomIndex]);
-                unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
-            } else
-            {
-                unplacedKingdoms.Remove(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1)));
-            }
+                var currentHallwayPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "hallwayPos"));
 
-            // Perform initial limiting
-            if (currentHallwayPosAware)
-            {
-                // Remove kingdoms that are already placed for the list of possible kingdoms
-                for (var i = 2; i <= currentHallwayPos; i++)
+                // Handle the 0th position
+                if (!currentHallwayPosAware || currentHallwayPos < 0)
                 {
-                    unplacedKingdoms.Remove(rnsReloaded.ArrayGetEntry(hallkey, i)->ToString());
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
                 }
 
-                // We've already handled pos 0 and 1, so we need to start at least at 2
-                currentHallwayPos = Math.Max(currentHallwayPos + 1, 2);
-            }
-
-            for (var i = currentHallwayPosAware ? currentHallwayPos : 2; i <= maxCanRun; i++)
-            {
-                var availibleNthKingdoms = InventoryUtil.Instance.GetNthOrderKingdoms(i).Intersect(unplacedKingdoms).ToList();
-
-                // Prioritize the kingdom of the correct order
-                if (availibleNthKingdoms.Count != 0)
+                if (maxCanRun == 0)
                 {
-                    int randomIndex = rand.Next(availibleNthKingdoms.Count());
-                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), availibleNthKingdoms[randomIndex]);
-                    unplacedKingdoms.Remove(availibleNthKingdoms[randomIndex]);
+                    return;
+                }
+
+                //var rand = new Random((int)(InventoryUtil.Instance.seed));
+                var rand = new Random();
+
+                var unplacedKingdoms = InventoryUtil.Instance.GetKingdomsAvailableAtNthOrder(maxCanRun);
+
+                // Handle the 1st position, trying to encorporate their request
+                if (!unplacedKingdoms.Contains(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1))))
+                {
+                    int randomIndex = rand.Next(unplacedKingdoms.Count());
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 1), unplacedKingdoms[randomIndex]);
+                    unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
                 }
                 else
                 {
-                    int randomIndex = rand.Next(unplacedKingdoms.Count());
-                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), unplacedKingdoms[randomIndex]);
-                    unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
+                    unplacedKingdoms.Remove(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1)));
                 }
-            }
 
-            // Always set the hallkey length to 9(?) just for easier managing, there are other variables to determine the actual number of runs
-            if (rnsReloaded.ArrayGetLength(hallkey)!.Value.Real == 6)
-            {
-                var endArray = new RValue[3];
-                endArray[0] = *hallkey;
-                rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
-            }
+                // Perform initial limiting
+                if (currentHallwayPosAware)
+                {
+                    // Remove kingdoms that are already placed for the list of possible kingdoms
+                    for (var i = 2; i <= currentHallwayPos; i++)
+                    {
+                        unplacedKingdoms.Remove(rnsReloaded.ArrayGetEntry(hallkey, i)->ToString());
+                    }
 
-            //TODO: REVISIT THIS, I DON'T THINK MAXCANRUN CURRENTLY ENCORPORATES KEEP AND PINNACLE
-            // Place the last 2 where they need to be, if they are visitable 
-            if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && maxCanRun >= maxKingdoms)
-            {
-                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_keep");
-            } else
-            {
-                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
-            }
-            if ((visitableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle) != 0 && maxCanRun >= maxKingdoms)
-            {
-                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "hw_pinnacle");
-            } else
-            {
-                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "");
+                    // We've already handled pos 0 and 1, so we need to start at least at 2
+                    currentHallwayPos = Math.Max(currentHallwayPos + 1, 2);
+                }
+
+                for (var i = currentHallwayPosAware ? currentHallwayPos : 2; i <= maxCanRun; i++)
+                {
+                    var availibleNthKingdoms = InventoryUtil.Instance.GetNthOrderKingdoms(i).Intersect(unplacedKingdoms).ToList();
+
+                    // Prioritize the kingdom of the correct order
+                    if (availibleNthKingdoms.Count != 0)
+                    {
+                        int randomIndex = rand.Next(availibleNthKingdoms.Count());
+                        rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), availibleNthKingdoms[randomIndex]);
+                        unplacedKingdoms.Remove(availibleNthKingdoms[randomIndex]);
+                    }
+                    else
+                    {
+                        int randomIndex = rand.Next(unplacedKingdoms.Count());
+                        rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), unplacedKingdoms[randomIndex]);
+                        unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
+                    }
+                }
+
+                // Always set the hallkey length to 9(?) just for easier managing, there are other variables to determine the actual number of runs
+                if (rnsReloaded.ArrayGetLength(hallkey)!.Value.Real == 6)
+                {
+                    var endArray = new RValue[3];
+                    endArray[0] = *hallkey;
+                    rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
+                }
+
+                //TODO: REVISIT THIS, I DON'T THINK MAXCANRUN CURRENTLY ENCORPORATES KEEP AND PINNACLE
+                // Place the last 2 where they need to be, if they are visitable 
+                if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && maxCanRun >= maxKingdoms)
+                {
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_keep");
+                }
+                else
+                {
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
+                }
+                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle) != 0 && maxCanRun >= maxKingdoms)
+                {
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "hw_pinnacle");
+                }
+                else
+                {
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "");
+                }
             }
 
         }
@@ -546,17 +589,20 @@ namespace RnSArchipelago.Game
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            if (InventoryUtil.Instance.isActive)
+            if (IsReady(out var rnsReloaded))
             {
-                var isKingdomSanity = InventoryUtil.Instance.isKingdomSanity;
-                var isProgressive = InventoryUtil.Instance.isProgressive;
-                if (isKingdomSanity || isProgressive)
+                if (InventoryUtil.Instance.isActive)
                 {
-                    returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                    this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "create route", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
-                    UpdateRoute(false);
+                    var isKingdomSanity = InventoryUtil.Instance.isKingdomSanity;
+                    var isProgressive = InventoryUtil.Instance.isProgressive;
+                    if (isKingdomSanity || isProgressive)
+                    {
+                        returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                        this.logger.PrintMessage(HookUtil.PrintHook("create route", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
+                        UpdateRoute(false);
 
-                    return returnValue;
+                        return returnValue;
+                    }
                 }
             }
             returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);

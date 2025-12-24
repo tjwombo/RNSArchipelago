@@ -90,11 +90,13 @@ namespace RnSArchipelago
                 && this.hooksRef.TryGetTarget(out var hooks)
             )
             {
-                locationHandler = new LocationHandler(rnsReloaded, logger);
-                conn = new ArchipelagoConnection(rnsReloaded, logger, this.config, data, locationHandler);
-                lobby = new LobbySettings(rnsReloaded, logger, hooks, data);
-                kingdom = new KingdomHandler(rnsReloaded, logger);
-                classHandler = new ClassHandler(rnsReloaded, logger);
+                HookUtil.rnsReloadedRef = rnsReloadedRef;
+                HookUtil.logger = logger;
+                locationHandler = new LocationHandler(rnsReloadedRef, logger);
+                conn = new ArchipelagoConnection(rnsReloadedRef, logger, this.config, data, locationHandler);
+                lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, data);
+                kingdom = new KingdomHandler(rnsReloadedRef, logger);
+                classHandler = new ClassHandler(rnsReloadedRef, logger);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
                 /*var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
@@ -110,11 +112,11 @@ namespace RnSArchipelago
                 this.outskirtsNHook.Enable();*/
 
                 // Test temp hook
-                /*var testId = rnsReloaded.ScriptFindId("scr_itemsys_draw_item");
+                var testId = rnsReloaded.ScriptFindId("scr_networkerror_message");
                 var testScript = rnsReloaded.GetScriptData(testId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
                 this.setItemHook.Activate();
-                this.setItemHook.Enable();*/
+                this.setItemHook.Enable();
 
 
                 AddArchipelagoButtonToMenu(); // Adds archipelago as a lobbyType
@@ -420,10 +422,11 @@ namespace RnSArchipelago
                 this.IsReady(out var rnsReloaded, out var hooks)
             )
             {
+                this.logger.PrintMessage(HookUtil.PrintHook("network error", self, returnValue, argc, argv), Color.Red);
                 returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
                 //this.logger.PrintMessage(new RValue(self).ToString(), Color.Red);
                 //this.logger.PrintMessage(HookUtil.FindLayerWithField(rnsReloaded, "displayStr"), Color.Red);
-                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "test", self, returnValue, argc, argv), Color.Gray);
+                this.logger.PrintMessage(HookUtil.PrintHook("network error", self, returnValue, argc, argv), Color.Red);
                 return returnValue;
             }
             returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
@@ -595,7 +598,7 @@ namespace RnSArchipelago
                 new Notch(NotchType.Chest, "", 0, Notch.BOSS_FLAG),
                 new Notch(NotchType.Boss, "enc_wolf_bluepaw0", 0, Notch.BOSS_FLAG)
             }, self, rnsReloaded);
-                this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "outskirts", self, returnValue, argc, argv), Color.Red);
+                this.logger.PrintMessage(HookUtil.PrintHook("outskirts", self, returnValue, argc, argv), Color.Red);
                 this.logger.PrintMessage(a.ToString(), Color.Red);
             }
             return returnValue;
