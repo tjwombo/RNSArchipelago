@@ -4,10 +4,6 @@ namespace RnSArchipelago.Config;
 
 public class Config : Configurable<Config>
 {
-    [DisplayName("Archiepelago Cache Location")]
-    //[DefaultValue(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Archipelago\\Cache")]
-    public string Cache { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Archipelago\\Cache";
-
     [DisplayName("Reloaded-II Mods Location")]
     //[DefaultValue(new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%")).FullName]
     public string Mods { get; set; } = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%")).FullName;

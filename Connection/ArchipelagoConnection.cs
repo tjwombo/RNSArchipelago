@@ -180,24 +180,6 @@ namespace RnSArchipelago.Connection
             }
             connect.Game = GAME;
             connect.Name = name;
-
-            if (File.Exists(modConfig.Cache + "\\common.json"))
-            {
-                TextReader textReader = File.OpenText(modConfig.Cache + "\\common.json");
-                var cache = JsonSerializer.Deserialize<JsonElement>(textReader.ReadToEnd());
-                if (cache.TryGetProperty("uuid", out var uuid))
-                {
-                    connect.Uuid = uuid.GetString()!;
-                }
-                else
-                {
-                    this.logger.PrintMessage("Uuid cannot be found", System.Drawing.Color.Red);
-                }
-            }
-            else
-            {
-                this.logger.PrintMessage("cache cannot be found", System.Drawing.Color.Red);
-            }
             connect.Version = VERSION;
 
             connect.ItemsHandling = ItemsHandlingFlags.AllItems;
@@ -205,28 +187,6 @@ namespace RnSArchipelago.Connection
             connect.RequestSlotData = true;
 
             Thread.Sleep(100);
-
-            // Don't request a datapackage if we have one
-            if (roomInfo.DataPackageChecksums.TryGetValue("Rabbit and Steel", out var checksum))
-            {
-                if (File.Exists(modConfig.Cache + "\\datapackage\\Rabbit and Steel\\" + checksum + ".json"))
-                {
-                    // TODO: Look into getting rid of this, as we can get the info from the session
-                    TextReader textReader = File.OpenText(modConfig.Cache + "\\datapackage\\Rabbit and Steel\\" + checksum + ".json");
-                    var cache = JsonSerializer.Deserialize<JsonElement>(textReader.ReadToEnd());
-                    if (cache.TryGetProperty("item_name_to_id", out var items))
-                    {
-                        var itemId = items.Deserialize<Dictionary<string, long>>()!;
-                        foreach (var item in itemId)
-                        {
-                            this.data.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
-                        }
-                    }
-
-                    session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { connect}).Wait();
-                    return;
-                }
-            }
 
             var data = new GetDataPackagePacket
             {
