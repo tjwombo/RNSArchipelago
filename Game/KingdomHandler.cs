@@ -55,6 +55,7 @@ namespace RnSArchipelago.Game
 
             var maxCanRun = 0;
             var unaccountedVisitableKingdoms = new List<string>();
+            var accountedForKingdoms = new List<string>();
             for (var i = 1; i <= maxOrder; i++)
             {
                 var reachableKingdomsByOrder = InventoryUtil.Instance.GetNthOrderKingdoms(i);
@@ -63,34 +64,43 @@ namespace RnSArchipelago.Game
                 {
                     foreach (var kingdom in unaccountedVisitableKingdoms)
                     {
+                        if (accountedForKingdoms.Contains(kingdom))
+                        {
+                            continue;
+                        }
                         switch (kingdom)
                         {
                             case "hw_nest":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0) {
+                                    accountedForKingdoms.Add("hw_nest");
                                     maxCanRun++;
                                 }
                                 break;
                             case "hw_arsenal":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
                                 {
-                                    maxCanRun++;
+                                   accountedForKingdoms.Add("hw_arsenal");
+                                   maxCanRun++;
                                 }
                                 break;
                             case "hw_lakeside":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_lakeside");
                                     maxCanRun++;
                                 }
                                 break;
                             case "hw_streets":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_streets");
                                     maxCanRun++;
                                 }
                                 break;
                             case "hw_lighthouse":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_lighthouse");
                                     maxCanRun++;
                                 }
                                 break;
@@ -106,35 +116,44 @@ namespace RnSArchipelago.Game
                 {
                     foreach (var kingdom in reachableKingdomsByOrder)
                     {
+                        if (accountedForKingdoms.Contains(kingdom))
+                        {
+                            continue;
+                        }
                         switch (kingdom)
                         {
                             case "hw_nest":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_nest");
                                     maxCanRun++;
                                 }
                                 break;
                             case "hw_arsenal":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_arsenal");
                                     maxCanRun++;
                                 }
                                 break;
                             case "hw_lakeside":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_lakeside");
                                     maxCanRun++;
                                 }
                                 break;
                             case "hw_streets":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_streets");
                                     maxCanRun++;
                                 }
                                 break;
                             case "hw_lighthouse":
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
                                 {
+                                    accountedForKingdoms.Add("hw_lighthouse");
                                     maxCanRun++;
                                 }
                                 break;
