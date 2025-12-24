@@ -17,6 +17,7 @@ namespace RnSArchipelago.Utils
         internal bool isKingdomSanity;
         //internal bool isOutskirtsShuffled;
         internal bool isProgressive;
+        internal bool useKingdomOrderWithKingdomSanity;
         internal long maxKingdoms;
         internal long seed;
         internal Dictionary<int, List<string>> kingdomOrder = [];
@@ -105,12 +106,20 @@ namespace RnSArchipelago.Utils
 
             isKingdomSanity = data.GetValue<long>(DataContext.Options, "kingdom_sanity") == 1;
             isProgressive = data.GetValue<long>(DataContext.Options, "progressive_regions") == 1;
+            useKingdomOrderWithKingdomSanity = data.GetValue<long>(DataContext.Options, "kingdom_sanity_kingdom_order") == 1;
             maxKingdoms = data.GetValue<long>(DataContext.Options, "max_kingdoms_per_run")!;
             seed = data.GetValue<long>(DataContext.Options, "seed");
 
             if (!isKingdomSanity)
             {
                 AvailableKingdoms = KingdomFlags.All;
+
+                List<string> excluded_kingdoms = data.GetValue<JArray>(DataContext.Options, "excluded_kingdoms")!.ToObject<List<string>>()!;
+
+                foreach (var kingdom in excluded_kingdoms)
+                {
+                    AvailableKingdoms = AvailableKingdoms & ~(KingdomFlags)Enum.Parse(typeof(KingdomFlags), kingdom.Replace(" ", "_").Replace("'", ""));
+                }
             }
 
             var kingdomOrderDict = data.GetValue<JObject>(DataContext.Options, "kingdom_order")!.ToObject<Dictionary<string, int>>();
@@ -469,9 +478,35 @@ namespace RnSArchipelago.Utils
         {
             var kingdoms = new List<string>();
 
-            for (var i = 0; i < n; i++)
+            if (isKingdomSanity && !useKingdomOrderWithKingdomSanity)
             {
-                kingdoms = [.. kingdoms, .. GetNthOrderKingdoms(i+1)];
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                {
+                    kingdoms.Add("hw_nest");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                {
+                    kingdoms.Add("hw_arsenal");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                {
+                    kingdoms.Add("hw_lakeside");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                {
+                    kingdoms.Add("hw_streets");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                {
+                    kingdoms.Add("hw_lighthouse");
+                }
+            }
+            else
+            {
+                for (var i = 0; i < n; i++)
+                {
+                    kingdoms = [.. kingdoms, .. GetNthOrderKingdoms(i + 1)];
+                }
             }
 
             return kingdoms;
@@ -485,27 +520,75 @@ namespace RnSArchipelago.Utils
                 return [];
             }
             var kingdoms = new List<string>();
-            foreach (var kingdom in kingdomOrder[n-1])
+            if (isKingdomSanity && !useKingdomOrderWithKingdomSanity)
             {
-                if (kingdom == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
                 {
-                    kingdoms.Add(kingdom);
+                    kingdoms.Add("hw_nest");
                 }
-                if (kingdom == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
                 {
-                    kingdoms.Add(kingdom);
+                    kingdoms.Add("hw_arsenal");
                 }
-                if (kingdom == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
                 {
-                    kingdoms.Add(kingdom);
+                    kingdoms.Add("hw_lakeside");
                 }
-                if (kingdom == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
                 {
-                    kingdoms.Add(kingdom);
+                    kingdoms.Add("hw_streets");
                 }
-                if (kingdom == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
                 {
-                    kingdoms.Add(kingdom);
+                    kingdoms.Add("hw_lighthouse");
+                }
+            }
+            else if (isProgressive || (isKingdomSanity && useKingdomOrderWithKingdomSanity))
+            {
+                foreach (var kingdom in kingdomOrder[n - 1])
+                {
+                    if (kingdom == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                    if (kingdom == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                    if (kingdom == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                    if (kingdom == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                    if (kingdom == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                }
+            } else
+            {
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                {
+                    kingdoms.Add("hw_nest");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                {
+                    kingdoms.Add("hw_arsenal");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                {
+                    kingdoms.Add("hw_lakeside");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                {
+                    kingdoms.Add("hw_streets");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                {
+                    kingdoms.Add("hw_lighthouse");
                 }
             }
             return kingdoms;

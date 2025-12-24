@@ -120,8 +120,7 @@ namespace RnSArchipelago.Connection
 
             if (this.session != null && this.session.Socket != null && this.session.Socket.Connected)
             {
-                var disconnect = this.session.Socket.DisconnectAsync();
-                disconnect.Wait();
+                this.session.Socket.DisconnectAsync().Wait();
             }
         }
 
