@@ -14,6 +14,8 @@ But if you insist you did, please report it in the Archipelago discord server [h
 
 ## Installation
 
+**Note Reloaded-II is having trouble finding the updated version, it is recommended to instal manually for the time being**
+
 This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II) and can be installed by
 Adding Rabbit and Steel as an application by clicking the + button
 
