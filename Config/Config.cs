@@ -4,11 +4,15 @@ namespace RnSArchipelago.Config;
 
 public class Config : Configurable<Config>
 {
+    [DisplayName("Enable Extra Debug Messages")]
+    [DefaultValue(false)]
+    public bool ExtraDebugMessages { get; set; } = false;
+
     [DisplayName("Reloaded-II Mods Location")]
     //[DefaultValue(new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%")).FullName]
     public string Mods { get; set; } = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%RELOADEDIIMODS%")).FullName;
 
-    [DisplayName("Skip Item Creation")]
+    [DisplayName("Skip ArchipelagoItem Folder Creation")]
     [DefaultValue(false)]
     public bool SkipItemCreation { get; set; } = false;
 

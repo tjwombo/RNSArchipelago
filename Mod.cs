@@ -92,10 +92,10 @@ namespace RnSArchipelago
             {
                 HookUtil.rnsReloadedRef = rnsReloadedRef;
                 HookUtil.logger = logger;
-                locationHandler = new LocationHandler(rnsReloadedRef, logger);
+                locationHandler = new LocationHandler(rnsReloadedRef, logger, this.config);
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, this.config, data, locationHandler);
                 lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, data);
-                kingdom = new KingdomHandler(rnsReloadedRef, logger);
+                kingdom = new KingdomHandler(rnsReloadedRef, logger, this.config);
                 classHandler = new ClassHandler(rnsReloadedRef, logger);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING

@@ -2,7 +2,7 @@
 	"ModId": "RnSArchipelago",
 	"ModName": "RnS Archipelago",
 	"ModAuthor": "Tjwombo",
-	"ModVersion": "0.2.1",
+	"ModVersion": "0.2.2",
 	"ModDescription": "Randomizer mod for Archipelago",
 	"ModDll": "RnSArchipelago.dll",
 	"ModIcon": "Preview.png",
@@ -54,5 +54,5 @@
 	"SupportedAppId": [
 		"rabbitsteel.exe"
 	],
-	"ProjectUrl": "https://archipelago.gg/"
+	"ProjectUrl": "https://github.com/tjwombo/RNSArchipelago"
 }

@@ -12,6 +12,7 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
         private readonly ILoggerV1 logger;
+        internal Config.Config? modConfig;
 
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
@@ -31,10 +32,11 @@ namespace RnSArchipelago.Game
             return false;
         }
 
-        internal KingdomHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger)
+        internal KingdomHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, Config.Config modConfig)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.modConfig = modConfig;
 
             InventoryUtil.Instance.UpdateKingdomRoute += UpdateRoute;
         }
@@ -181,6 +183,10 @@ namespace RnSArchipelago.Game
             {
                 if (InventoryUtil.Instance.isActive)
                 {
+                    if (modConfig!.ExtraDebugMessages)
+                    {
+                        this.logger.PrintMessage("Modify End Screen Icons", System.Drawing.Color.DarkOrange);
+                    }
                     var a = new RValue(self);
                     //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
 
@@ -210,7 +216,15 @@ namespace RnSArchipelago.Game
                                 //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
                                 //var b = new RValue(self);
                                 //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
+                                if (modConfig!.ExtraDebugMessages)
+                                {
+                                    this.logger.PrintMessage("Before Original Function End Screen", System.Drawing.Color.DarkOrange);
+                                }
                                 returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                                if (modConfig!.ExtraDebugMessages)
+                                {
+                                    this.logger.PrintMessage("Before Return End Screen", System.Drawing.Color.DarkOrange);
+                                }
                                 return returnValue;
                             }
                             //break;
@@ -220,8 +234,15 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
+            if (modConfig!.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Original Function End Screen", System.Drawing.Color.DarkOrange);
+            }
             returnValue = this.fixEndIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
-
+            if (modConfig!.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Return End Screen", System.Drawing.Color.DarkOrange);
+            }
             return returnValue;
         }
 
@@ -310,16 +331,32 @@ namespace RnSArchipelago.Game
             {
                 if (InventoryUtil.Instance.isActive)
                 {
+                    if (modConfig!.ExtraDebugMessages)
+                    {
+                        this.logger.PrintMessage("Calculate Route Length", System.Drawing.Color.DarkOrange);
+                    }
                     IncreaseRouteLength();
 
                     if (EndRouteEarly(self))
                     {
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
+                        if (modConfig!.ExtraDebugMessages)
+                        {
+                            this.logger.PrintMessage("Before Return Calculate Route End", System.Drawing.Color.DarkOrange);
+                        }
                         return returnValue;
                     }
                 }
             }
+            if (modConfig!.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Original Calculate Route Length", System.Drawing.Color.DarkOrange);
+            }
             returnValue = endHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (modConfig!.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Return Calculate Route Length", System.Drawing.Color.DarkOrange);
+            }
             return returnValue;
         }
 
@@ -445,6 +482,10 @@ namespace RnSArchipelago.Game
             {
                 if (InventoryUtil.Instance.isActive)
                 {
+                    if (modConfig!.ExtraDebugMessages)
+                    {
+                        this.logger.PrintMessage("Update Route Icons", System.Drawing.Color.DarkOrange);
+                    }
                     // Called continously on kingdoms 0-5, so just modify on the last one
                     if (argc == 1 && HookUtil.IsEqualToNumeric(argv[0], 5))
                     {
@@ -462,6 +503,10 @@ namespace RnSArchipelago.Game
                                 {
                                     ModifyRouteIcons(routeIcons);
                                     returnValue = routeIcons->Get(5);
+                                    if (modConfig!.ExtraDebugMessages)
+                                    {
+                                        this.logger.PrintMessage("Before Return Update Route Icons", System.Drawing.Color.DarkOrange);
+                                    }
                                     return returnValue;
                                 }
                                 hallway = hallway->Next;
@@ -471,15 +516,26 @@ namespace RnSArchipelago.Game
                 }
                 else
                 {
+                    if (modConfig!.ExtraDebugMessages)
+                    {
+                        this.logger.PrintMessage("Before Original Function Route Icons 1", System.Drawing.Color.DarkOrange);
+                    }
                     returnValue = this.fixChooseIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
                 }
             }
             else
             {
+                if (modConfig!.ExtraDebugMessages)
+                {
+                    this.logger.PrintMessage("Before Original Function Route Icons 2", System.Drawing.Color.DarkOrange);
+                }
                 returnValue = this.fixChooseIconsHook!.OriginalFunction(self, other, returnValue, argc, argv);
             }
 
-
+            if (modConfig!.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Return Route Icons", System.Drawing.Color.DarkOrange);
+            }
             return returnValue;
         }
 
@@ -612,19 +668,39 @@ namespace RnSArchipelago.Game
             {
                 if (InventoryUtil.Instance.isActive)
                 {
+                    if (modConfig!.ExtraDebugMessages)
+                    {
+                        this.logger.PrintMessage("Try Update Route", System.Drawing.Color.DarkOrange);
+                    }
                     var isKingdomSanity = InventoryUtil.Instance.isKingdomSanity;
                     var isProgressive = InventoryUtil.Instance.isProgressive;
                     if (isKingdomSanity || isProgressive)
                     {
+                        if (modConfig!.ExtraDebugMessages)
+                        {
+                            this.logger.PrintMessage("Before Original Function Update Route", System.Drawing.Color.DarkOrange);
+                        }
                         returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
                         this.logger.PrintMessage(HookUtil.PrintHook("create route", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
                         UpdateRoute(false);
 
+                        if (modConfig!.ExtraDebugMessages)
+                        {
+                            this.logger.PrintMessage("Before Return Update Route", System.Drawing.Color.DarkOrange);
+                        }
                         return returnValue;
                     }
                 }
             }
+            if (modConfig!.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Original Function Update Route", System.Drawing.Color.DarkOrange);
+            }
             returnValue = this.chooseHallsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (modConfig!.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Return Update Route", System.Drawing.Color.DarkOrange);
+            }
             return returnValue;
         }
     }
