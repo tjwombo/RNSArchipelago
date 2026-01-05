@@ -11,10 +11,19 @@
 	"ModNativeDll32": "",
 	"ModNativeDll64": "",
 	"Tags": [],
-	"CanUnload": null,
-	"HasExports": null,
+	"CanUnload": false,
+	"HasExports": false,
 	"IsLibrary": false,
 	"ReleaseMetadataFileName": "RnSArchipelago.ReleaseMetadata.json",
+	"IgnoreRegexes": [
+		".*\\.json"
+	],
+	"IncludeRegexes": [
+		"\\.deps\\.json",
+		"\\.runtimeconfig\\.json",
+		"ModConfig\\.json",
+		"ModConfig\\.json"
+	],
 	"PluginData": {
 		"GitHubDependencies": {
 			"IdToConfigMap": {
@@ -43,6 +52,12 @@
 			"RepositoryName": "RNSArchipelago",
 			"UseReleaseTag": true,
 			"AssetFileName": "Mod.zip"
+		},
+		"NuGet": {
+			"AllowUpdateFromAnyRepository": false,
+			"DefaultRepositoryUrls": [
+				"https://packages.sewer56.moe/v3/index.json"
+			]
 		}
 	},
 	"IsUniversalMod": false,

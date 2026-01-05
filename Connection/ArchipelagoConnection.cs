@@ -55,7 +55,7 @@ namespace RnSArchipelago.Connection
         }
 
         // Attempt to start a connection to archipelago with the given configs
-        internal async void StartConnection()
+        internal async Task StartConnection(bool returnToTitle = false)
         {
 
             var address = data.GetValue<string>(DataContext.Connection, "address");
@@ -86,7 +86,7 @@ namespace RnSArchipelago.Connection
                     JoinRoom(roomInfo!);
 
                     locationHandler.conn = this;
-                    Thread.Sleep(100); // Try to remove race condition
+                    Thread.Sleep(100); // TODO: Try to remove race condition
                     locationHandler.SendStartLocation();
 
                     return;
@@ -105,8 +105,24 @@ namespace RnSArchipelago.Connection
                         errorMessage += $"\n    {error}";
                     }
                     logger.PrintMessage(errorMessage, System.Drawing.Color.Red);
+
+                    
+                    if (returnToTitle)
+                    {
+                        MessageHandler.Instance.SendDisconnectedMessage();
+                        ReturnToTitle();
+                    }
+
                     return;
                 }
+            }
+        }
+
+        internal unsafe void ReturnToTitle()
+        {
+            if (IsReady(out var rnsReloaded))
+            {
+                rnsReloaded.ExecuteScript("scr_runmenu_disband_disband", null, null, []);
             }
         }
 
@@ -192,6 +208,7 @@ namespace RnSArchipelago.Connection
                 message.Contains("Unable to connect to the remote server"))
             {
                 MessageHandler.Instance.SendDisconnectedMessage();
+                session = null;
             }
 
             if (session != null)
@@ -206,6 +223,8 @@ namespace RnSArchipelago.Connection
                     session = null;
                 }
             }
+
+            InventoryUtil.Instance.Reset();
         }
 
         // Attempt to join the archipelago room with the provided data

@@ -235,6 +235,68 @@ namespace RnSArchipelago.Utils
             }
             return "";
         }
+        // Helper function to find a layer with a given field and value, so we can use the other ones 
+        internal static string FindLayerWithField(string field, string value)
+        {
+            if (IsReady(out var rnsReloaded))
+            {
+                var room = rnsReloaded.GetCurrentRoom();
+                // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+                var layer = room->Layers.First;
+                while (layer != null)
+                {
+                    // Find the element in the layer that is the lobby type selector, has name lobby
+                    var element = layer->Elements.First;
+                    while (element != null)
+                    {
+                        var instance = (CLayerInstanceElement*)element;
+                        var instanceValue = new RValue(instance->Instance);
+
+                        if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset"
+                            && rnsReloaded.GetString(instanceValue.Get(field)) == value)
+                        {
+                            return Marshal.PtrToStringAnsi((nint)layer->Name)!;
+                        }
+                        element = element->Next;
+                    }
+                    element = null;
+                    layer = layer->Next;
+                }
+                layer = null;
+            }
+            return "";
+        }
+        // Find an element knowing only a field name and its expected value
+        internal static void FindElement(string field, string value, out CLayerElementBase* element)
+        {
+            if (IsReady(out var rnsReloaded))
+            {
+                var room = rnsReloaded.GetCurrentRoom();
+                // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+                var layer = room->Layers.First;
+                while (layer != null)
+                {
+                    // Find the element in the layer that is the lobby type selector, has name lobby
+                    element = layer->Elements.First;
+                    while (element != null)
+                    {
+                        var instance = (CLayerInstanceElement*)element;
+                        var instanceValue = new RValue(instance->Instance);
+
+                        if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset"
+                            && rnsReloaded.GetString(instanceValue.Get(field)) == value)
+                        {
+                            return;
+                        }
+                        element = element->Next;
+                    }
+                    element = null;
+                    layer = layer->Next;
+                }
+                layer = null;
+            }
+            element = null;
+        }
         // Return a string that contains information about the function that is getting hooked, namely the amount of arguments and their values
         internal static string PrintHook(string name, CInstance* self, RValue* returnValue, int argc, RValue** argv)
         {

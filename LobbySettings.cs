@@ -6,6 +6,7 @@ using static RnSArchipelago.Utils.HookUtil;
 using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
 using System.Diagnostics.CodeAnalysis;
+using RnSArchipelago.Connection;
 
 namespace RnSArchipelago
 {
@@ -15,6 +16,7 @@ namespace RnSArchipelago
         private readonly ILoggerV1 logger;
         private readonly WeakReference<IReloadedHooks>? hooksRef;
         private readonly SharedData data;
+        private readonly ArchipelagoConnection conn;
 
         internal IHook<ScriptDelegate>? archipelagoButtonHook;
 
@@ -30,7 +32,10 @@ namespace RnSArchipelago
 
         internal IHook<ScriptDelegate>? lobbyTitleHook;
 
-        internal string ArchipelagoAddress { get; private set; } = "localhost:38281";
+        internal IHook<ScriptDelegate>? supressLobbySettingsVisuallyHook;
+        internal IHook<ScriptDelegate>? RecconectHook;
+
+        internal string ArchipelagoAddress { get; private set; } = "localhost:38281"; // TODO: Set this to archipelago and an empty port once early dev is finished
         internal string ArchipelagoName { get; private set; } = "Player1";
         internal string ArchipelagoPassword { get; private set; } = "";
         internal int ArchipelagoNum { get; private set; } = 4;
@@ -77,12 +82,13 @@ namespace RnSArchipelago
             return false;
         }
 
-        internal LobbySettings(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, WeakReference<IReloadedHooks>? hooksRef, SharedData data)
+        internal LobbySettings(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, WeakReference<IReloadedHooks>? hooksRef, SharedData data, ArchipelagoConnection conn)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.hooksRef = hooksRef;
             this.data = data;
+            this.conn = conn;
         }
 
         // TODO: ENSURE THIS DOESN'T APPEAR IN THE TOYBOX LOBBY
@@ -593,5 +599,73 @@ namespace RnSArchipelago
             return returnValue;
         }
 
+        internal RValue* SupressLobbySettingsVisually(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            if (IsReady(out var rnsReloaded, out var hooks))
+            {
+                if (argv[0]->ToString() == "lobbydisplay" && HookUtil.IsEqualToNumeric(argv[2], -350) && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                {
+                    HookUtil.FindElement("name", "click to edit lobby settings", out var element);
+                    var instance = new RValue(((CLayerInstanceElement*)element)->Instance);
+
+                    RValue boxTitle = new RValue(0);
+                    if (InventoryUtil.Instance.isActive)
+                    {
+                        rnsReloaded.CreateString(&boxTitle, "connected to archipelago");
+
+                        *instance.Get("spr") = new(121);
+                        *instance.Get("spriteOffsetX") = new(-400);
+                    }
+                    else
+                    {
+                        rnsReloaded.CreateString(&boxTitle, "disconencted - click to reconnect");
+
+                        *instance.Get("spr") = new(67);
+                        *instance.Get("subimg") = new(10);
+                        *instance.Get("spriteOffsetX") = new(-525);
+                        *instance.Get("spriteSc") = new(0.5);
+                    }
+                    *instance.Get("name") = boxTitle;
+
+                    *instance.Get("textScX") = new(1);
+                    *instance.Get("textScY") = new(1);
+
+                    *instance.Get("textOffsetY") = new(-10);
+
+                    *instance.Get("height") = new(110);
+
+                    // Attach it to a dummy function so that we can hook it
+                    var scoreId = rnsReloaded.CodeFunctionFind("parameter_count");
+                    if (scoreId.HasValue)
+                    {
+                        *instance.Get("funct") = new(scoreId.Value + 100000);
+                    }
+
+                    return returnValue;
+                }
+            }
+            this.supressLobbySettingsVisuallyHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
+        }
+
+        internal RValue* Recconect(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            if (IsReady(out var rnsReloaded))
+            {
+                this.logger.PrintMessage("Attempting to Reconnect", System.Drawing.Color.Red);
+                conn.StartConnection().ContinueWith(tsk =>
+                {
+                    rnsReloaded.ExecuteScript("scr_runmenu_lobbysettings_return", null, null, []);
+                });
+
+                return returnValue;
+            }
+            this.RecconectHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
+        }
     }
 }

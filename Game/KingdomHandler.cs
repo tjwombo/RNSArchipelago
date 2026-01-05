@@ -346,6 +346,9 @@ namespace RnSArchipelago.Game
                         }
                         return returnValue;
                     }
+                } else if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                {
+                    return returnValue;
                 }
             }
             if (modConfig!.ExtraDebugMessages)

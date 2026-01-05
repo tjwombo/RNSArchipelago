@@ -94,7 +94,7 @@ namespace RnSArchipelago
                 HookUtil.logger = logger;
                 locationHandler = new LocationHandler(rnsReloadedRef, logger, this.config);
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, this.config, data, locationHandler);
-                lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, data);
+                lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, data, conn);
                 kingdom = new KingdomHandler(rnsReloadedRef, logger, this.config);
                 classHandler = new ClassHandler(rnsReloadedRef, logger);
 
@@ -112,7 +112,7 @@ namespace RnSArchipelago
                 this.outskirtsNHook.Enable();*/
 
                 // Test temp hook
-                var testId = rnsReloaded.ScriptFindId("scr_networkerror_message");
+                var testId = rnsReloaded.ScriptFindId("scr_runmenu_midrun_continue");
                 var testScript = rnsReloaded.GetScriptData(testId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
                 this.setItemHook.Activate();
@@ -260,6 +260,23 @@ namespace RnSArchipelago
                 lobby.lobbyTitleHook = hooks.CreateHook<ScriptDelegate>(lobby.LobbyToTitle, titleScript->Functions->Function);
                 lobby.lobbyTitleHook.Activate();
                 lobby.lobbyTitleHook.Enable();
+
+                // Disables the lobby settings info while mid run
+                var visualSettingsId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobbysettings");
+                var visualSettingsScript = rnsReloaded.GetScriptData(visualSettingsId - 100000);
+                lobby.supressLobbySettingsVisuallyHook = hooks.CreateHook<ScriptDelegate>(lobby.SupressLobbySettingsVisually, visualSettingsScript->Functions->Function);
+                lobby.supressLobbySettingsVisuallyHook.Activate();
+                lobby.supressLobbySettingsVisuallyHook.Enable();
+
+                // Hook into an unused function to insert our own reconnect function
+                var paramId = rnsReloaded.CodeFunctionFind("parameter_count");
+                if (paramId.HasValue)
+                {
+                    var paramScript = rnsReloaded.GetScriptData(paramId.Value);
+                    lobby.RecconectHook = hooks.CreateHook<ScriptDelegate>(lobby.Recconect, paramScript->Functions->Function);
+                    lobby.RecconectHook.Activate();
+                    lobby.RecconectHook.Enable();
+                }
             }
         }
 
@@ -424,8 +441,8 @@ namespace RnSArchipelago
             {
                 this.logger.PrintMessage(HookUtil.PrintHook("network error", self, returnValue, argc, argv), Color.Red);
                 returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
-                //this.logger.PrintMessage(new RValue(self).ToString(), Color.Red);
-                //this.logger.PrintMessage(HookUtil.FindLayerWithField(rnsReloaded, "displayStr"), Color.Red);
+                this.logger.PrintMessage(new RValue(self).ToString(), Color.Red);
+                //this.logger.PrintMessage(HookUtil.FindLayerWithField("name", "connected to archipelago"), Color.Red);
                 this.logger.PrintMessage(HookUtil.PrintHook("network error", self, returnValue, argc, argv), Color.Red);
                 return returnValue;
             }
@@ -448,13 +465,7 @@ namespace RnSArchipelago
                     this.data.SetValue<string>(DataContext.Connection, "address", lobby.ArchipelagoAddress);
                     this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
                     this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
-                    conn!.StartConnection();
-
-                    // Tell the inventory utils that we are in archipelago mode
-                    //InventoryUtil.Instance.isActive = true;
-
-                    // TODO: Show error and return if connection problem
-
+                    _ = conn!.StartConnection(true);
 
                     // Setup as if a friends only lobby or solo lobby based on the number of players
                     this.logger.PrintMessage("" + lobby.ArchipelagoNum, Color.DarkOrange);
@@ -473,10 +484,7 @@ namespace RnSArchipelago
                     *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
                 } else
                 {
-                    // Tell the inventory utils that we are in normal mode
-                    //InventoryUtil.Instance.isActive = false;
-
-                    // Otherwise continue normally
+                    // Continue normally
                     returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);
                 }
             }

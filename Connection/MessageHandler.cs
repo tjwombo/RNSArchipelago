@@ -141,6 +141,7 @@ namespace RnSArchipelago.Connection
                         rnsReloaded!.CreateString(&gameMessage, message);
                         rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(), new(0), gameMessage, new(0)]);
                         this.logger!.PrintMessage(message, Color.Red);
+                        rnsReloaded.ExecuteScript("scr_runmenu_disband_disband", null, null, []);
                         break;
                     case ArchipelagoPacketType.Connected: // Get the options the user selected
                         var connected = (ConnectedPacket)packet;
