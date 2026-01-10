@@ -94,7 +94,7 @@ namespace RnSArchipelago
                 HookUtil.logger = logger;
                 locationHandler = new LocationHandler(rnsReloadedRef, logger, this.config);
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, this.config, data, locationHandler);
-                lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, data, conn);
+                lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, data, conn, this.config);
                 kingdom = new KingdomHandler(rnsReloadedRef, logger, this.config);
                 classHandler = new ClassHandler(rnsReloadedRef, logger);
 
@@ -466,6 +466,10 @@ namespace RnSArchipelago
                     this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
                     this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
                     _ = conn!.StartConnection(true);
+
+                    config.ArchipelagoName = lobby.ArchipelagoName;
+                    config.ArchipelagoAddress = lobby.ArchipelagoAddress;
+                    config.Save!.Invoke();
 
                     // Setup as if a friends only lobby or solo lobby based on the number of players
                     this.logger.PrintMessage("" + lobby.ArchipelagoNum, Color.DarkOrange);

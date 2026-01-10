@@ -4,6 +4,12 @@ namespace RnSArchipelago.Config;
 
 public class Config : Configurable<Config>
 {
+    [DisplayName("Archipelago Name")]
+    public string ArchipelagoName { get; set; } = "Player1";
+
+    [DisplayName("Archipelago Address")]
+    public string ArchipelagoAddress { get; set; } = "localhost:38281";
+
     [DisplayName("Enable Extra Debug Messages")]
     [DefaultValue(false)]
     public bool ExtraDebugMessages { get; set; } = false;

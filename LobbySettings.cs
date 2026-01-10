@@ -35,7 +35,7 @@ namespace RnSArchipelago
         internal IHook<ScriptDelegate>? supressLobbySettingsVisuallyHook;
         internal IHook<ScriptDelegate>? RecconectHook;
 
-        internal string ArchipelagoAddress { get; private set; } = "localhost:38281"; // TODO: Set this to archipelago and an empty port once early dev is finished
+        internal string ArchipelagoAddress { get; private set; } = "localhost:38281";
         internal string ArchipelagoName { get; private set; } = "Player1";
         internal string ArchipelagoPassword { get; private set; } = "";
         internal int ArchipelagoNum { get; private set; } = 4;
@@ -82,13 +82,16 @@ namespace RnSArchipelago
             return false;
         }
 
-        internal LobbySettings(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, WeakReference<IReloadedHooks>? hooksRef, SharedData data, ArchipelagoConnection conn)
+        internal LobbySettings(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, WeakReference<IReloadedHooks>? hooksRef, SharedData data, ArchipelagoConnection conn, Config.Config modConfig)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.hooksRef = hooksRef;
             this.data = data;
             this.conn = conn;
+
+            ArchipelagoName = modConfig.ArchipelagoName;
+            ArchipelagoAddress = modConfig.ArchipelagoAddress;
         }
 
         // TODO: ENSURE THIS DOESN'T APPEAR IN THE TOYBOX LOBBY
