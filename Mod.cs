@@ -469,7 +469,10 @@ namespace RnSArchipelago
 
                     config.ArchipelagoName = lobby.ArchipelagoName;
                     config.ArchipelagoAddress = lobby.ArchipelagoAddress;
-                    config.Save!.Invoke();
+                    if (config.Save != null)
+                    {
+                        config.Save.Invoke();
+                    }
 
                     // Setup as if a friends only lobby or solo lobby based on the number of players
                     this.logger.PrintMessage("" + lobby.ArchipelagoNum, Color.DarkOrange);
