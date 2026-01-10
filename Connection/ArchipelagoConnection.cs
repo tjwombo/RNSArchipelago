@@ -86,8 +86,6 @@ namespace RnSArchipelago.Connection
                     JoinRoom(roomInfo!);
 
                     locationHandler.conn = this;
-                    Thread.Sleep(100); // TODO: Try to remove race condition
-                    locationHandler.SendStartLocation();
 
                     return;
                 }

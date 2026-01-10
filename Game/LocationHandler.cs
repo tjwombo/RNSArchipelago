@@ -120,14 +120,6 @@ namespace RnSArchipelago.Game
             return LocationType.Other;
         }
 
-        // Send the starting locations
-        internal void SendStartLocation()
-        {
-            long[] locations = STARTING_LOCATIONS.Select(x => conn.session!.Locations.GetLocationIdFromName(GAME, x)).ToArray();
-            var locationPacket = new LocationChecksPacket { Locations = locations };
-            conn.session!.Socket.SendPacketAsync(locationPacket);
-        }
-
         // Send the location for completing an encounter
         internal RValue* SendNotchComplete(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
