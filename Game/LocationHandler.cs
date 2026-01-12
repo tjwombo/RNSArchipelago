@@ -29,10 +29,9 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? itemScoutShopHook;
         internal IHook<ScriptDelegate>? itemSetHook;
         internal IHook<ScriptDelegate>? itemSetDescriptionHook;
-        internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
+        //internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
         internal IHook<ScriptDelegate>? takeItemHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartNHook;
-        internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
 
         internal ArchipelagoConnection conn = null!;
         private long baseItemId = -1;
@@ -764,13 +763,13 @@ namespace RnSArchipelago.Game
         // Set the description for archipelago items to reflect their actual item
         internal RValue* SetUpgradeDescription(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.itemSetUpgradeDescriptionHook != null)
+            /*if (this.itemSetUpgradeDescriptionHook != null)
             {
                 returnValue = this.itemSetUpgradeDescriptionHook.OriginalFunction(self, other, returnValue, argc, argv);
             } else
             {
                 this.logger.PrintMessage("Unable to call item set upgrade description hook", System.Drawing.Color.Red);
-            }
+            }*/
 
             // TODO: probably should make a function that tells me what notch room type we are in
             var notchType = GetLocationType();
@@ -1037,7 +1036,8 @@ namespace RnSArchipelago.Game
                 {
                     long[] locations = [conn.session.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(GAME, baseLocation + " - " + character)];
                     var locationPacket = new LocationChecksPacket { Locations = locations };
-                    conn.session.Socket.SendPacketAsync(locationPacket);
+                    //conn.session.Socket.SendPacket(locationPacket);
+                    conn.session.Locations.CompleteLocationChecksAsync(locations);
                 }
             }
         }

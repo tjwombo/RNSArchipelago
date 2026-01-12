@@ -9,8 +9,6 @@ namespace RnSArchipelago.Utils
 
         static Random rand = new Random();
 
-        private static readonly string GAME = "Rabbit and Steel";
-
         private static readonly string[] SHOP_LOCATIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 

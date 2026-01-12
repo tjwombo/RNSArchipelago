@@ -34,13 +34,13 @@ namespace RnSArchipelago.Utils
         private ShopSetting shop_sanity = ShopSetting.None;
 
         internal delegate void UpdateKingdomRouteDelegate(bool currentHallwayPosAware = true);
-        internal event UpdateKingdomRouteDelegate UpdateKingdomRoute;
+        internal event UpdateKingdomRouteDelegate? UpdateKingdomRoute;
 
         internal delegate void AddChestDelegate();
-        internal event AddChestDelegate AddChest;
+        internal event AddChestDelegate? AddChest;
 
         internal delegate void SendGoalDelegate();
-        internal event SendGoalDelegate SendGoal;
+        internal event SendGoalDelegate? SendGoal;
 
         internal enum UpgradeSetting
         {
@@ -340,13 +340,13 @@ namespace RnSArchipelago.Utils
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
                         this.logger?.PrintMessage(AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
-                        UpdateKingdomRoute.Invoke();
+                        UpdateKingdomRoute?.Invoke();
                     } 
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
                         this.logger?.PrintMessage(ProgressiveRegions + "", System.Drawing.Color.DarkOrange);
-                        UpdateKingdomRoute.Invoke();
+                        UpdateKingdomRoute?.Invoke();
                     } 
                     else if (CLASSES.Contains(itemName))
                     {
@@ -360,7 +360,7 @@ namespace RnSArchipelago.Utils
                     } 
                     else if (itemName == "Treasuresphere")
                     {
-                        AddChest.Invoke();
+                        AddChest?.Invoke();
                         AvailableTreasurespheres++;
                     } 
                     else if (UPGRADES.Contains(itemName))
@@ -427,7 +427,7 @@ namespace RnSArchipelago.Utils
                         this.logger?.PrintMessage(String.Join(", ", victories), System.Drawing.Color.DarkOrange);
                         if (CheckGoal())
                         {
-                            SendGoal.Invoke();
+                            SendGoal?.Invoke();
                         }
                     }
                 }

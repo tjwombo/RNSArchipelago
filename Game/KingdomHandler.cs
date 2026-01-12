@@ -307,8 +307,8 @@ namespace RnSArchipelago.Game
             return false;
         }
 
-        // Increase the route length to the maximum value value
-        private void IncreaseRouteLength()
+        // Update the route length to the maximum value value
+        private void UpdateRouteLength()
         {
             if (IsReady(out var rnsReloaded))
             {
@@ -320,12 +320,13 @@ namespace RnSArchipelago.Game
                     {
                         var instance = (CLayerInstanceElement*)hallway;
                         var instanceValue = new RValue(instance->Instance);
-
-
-                        if (instanceValue.Get("hallkey") != null && instanceValue.Get("hallkey")->ToString() != "unset")
+                        var hallkey = instanceValue.Get("hallkey");
+                        var maxCanRun = CalculateMaxRun();
+                        
+                        if (hallkey != null && hallkey->ToString() != "unset" && HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")) != maxCanRun + 3)
                         {
                             // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
-                            HookUtil.ModifyElementVariable(hallway, "hallwayNumber", ModificationType.ModifyLiteral, [new(CalculateMaxRun() + 3)]);
+                            HookUtil.ModifyElementVariable(hallway, "hallwayNumber", ModificationType.ModifyLiteral, [new(maxCanRun + 3)]);
                             return;
                         }
                         hallway = hallway->Next;
@@ -345,16 +346,17 @@ namespace RnSArchipelago.Game
                 {
                     if (modConfig?.ExtraDebugMessages ?? false)
                     {
-                        this.logger.PrintMessage("Calculate Route Length", System.Drawing.Color.DarkOrange);
+                        this.logger.PrintMessage("Manage Route Length", System.Drawing.Color.DarkOrange);
                     }
-                    IncreaseRouteLength();
+
+                    UpdateRouteLength();
 
                     if (EndRouteEarly())
                     {
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
                         if (modConfig?.ExtraDebugMessages ?? false)
                         {
-                            this.logger.PrintMessage("Before Return Calculate Route End", System.Drawing.Color.DarkOrange);
+                            this.logger.PrintMessage("Before Return Manage Route End", System.Drawing.Color.DarkOrange);
                         }
                         return returnValue;
                     }
@@ -365,7 +367,7 @@ namespace RnSArchipelago.Game
             }
             if (modConfig?.ExtraDebugMessages ?? false)
             {
-                this.logger.PrintMessage("Before Original Calculate Route Length", System.Drawing.Color.DarkOrange);
+                this.logger.PrintMessage("Before Original Manage Route Length", System.Drawing.Color.DarkOrange);
             }
             if (this.endHallsHook != null)
             {
@@ -377,7 +379,7 @@ namespace RnSArchipelago.Game
             }
             if (modConfig?.ExtraDebugMessages ?? false)
             {
-                this.logger.PrintMessage("Before Return Calculate Route Length", System.Drawing.Color.DarkOrange);
+                this.logger.PrintMessage("Before Return Manage Route Length", System.Drawing.Color.DarkOrange);
             }
             return returnValue;
         }

@@ -29,18 +29,7 @@ namespace RnSArchipelago
 
         private readonly SharedData data = new();
 
-        private IHook<ScriptDelegate>? roomChangeHook;
-
-        private IHook<ScriptDelegate>? outskirtsHook;
-        private IHook<ScriptDelegate>? outskirtsNHook;
-
         private IHook<ScriptDelegate>? setItemHook;
-
-        private IHook<ScriptDelegate>? setCharHook;
-
-        private IHook<ScriptDelegate>? inventoryHook;
-
-        private IHook<ScriptDelegate>? endGameHook;
 
         private IHook<ScriptDelegate>? archipelagoWebsocketHook;
 
@@ -477,10 +466,10 @@ namespace RnSArchipelago
             if (this.IsReady(out var rnsReloaded))
             {
                 // If the lobby type is archipelago set up the websocket
-                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (lobby != null && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
                     // Validate archipelago options / connection
-                    this.data.SetValue<string>(DataContext.Connection, "name", lobby?.ArchipelagoName);
+                    this.data.SetValue<string>(DataContext.Connection, "name", lobby.ArchipelagoName);
                     this.data.SetValue<string>(DataContext.Connection, "address", lobby.ArchipelagoAddress);
                     this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
                     this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
@@ -631,38 +620,6 @@ namespace RnSArchipelago
             // Assumes that this environment variable is actually correct
             string path = Path.Combine(this.config.Mods, @"RnSArchipelago\ArchipelagoItems");
             CopyDirectory(path, @".\Mods\ArchipelagoItems", true);
-        }
-
-        // Changes the outskirts routing to only have shots and chests besides the boss
-        private RValue* OutskirtsDetour(
-            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
-        )
-        {
-            if (this.outskirtsHook != null)
-            {
-                returnValue = this.outskirtsHook.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                this.logger.PrintMessage("Unable to call outskirts hook", System.Drawing.Color.Red);
-            }
-            var a = new RValue(self);
-            if (this.IsReady(out var rnsReloaded))
-            {
-                rnsReloaded.utils.setHallway(new List<Notch> {
-                new Notch(NotchType.IntroRoom, "", 0, 0),
-                // Temp for testing because I'm too lazy to steel yourself lol
-                new Notch(NotchType.Shop, "", 0, 0),
-                new Notch(NotchType.Shop, "", 0, 0),
-                new Notch(NotchType.Chest, "", 0, 0),
-                new Notch(NotchType.Chest, "", 0, 0),
-                new Notch(NotchType.Chest, "", 0, Notch.BOSS_FLAG),
-                new Notch(NotchType.Boss, "enc_wolf_bluepaw0", 0, Notch.BOSS_FLAG)
-            }, self, rnsReloaded);
-                this.logger.PrintMessage(HookUtil.PrintHook("outskirts", self, returnValue, argc, argv), Color.Red);
-                this.logger.PrintMessage(a.ToString(), Color.Red);
-            }
-            return returnValue;
         }
 
         // Sets up the hooks to randomize the player abiliteis
