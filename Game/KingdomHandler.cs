@@ -260,17 +260,17 @@ namespace RnSArchipelago.Game
         }
 
         // End the route early if we arent allowed to continue
-        private bool EndRouteEarly(CInstance* self)
+        private bool EndRouteEarly()
         {
             if (IsReady(out var rnsReloaded))
             {
-                var isKingdomSanity = InventoryUtil.Instance.isKingdomSanity;
-                var isProgressive = InventoryUtil.Instance.isProgressive;
-                var maxKingdoms = InventoryUtil.Instance.maxKingdoms;
-                var regionCount = InventoryUtil.Instance.ProgressiveRegions;
-                var visitiableKingdomsCount = InventoryUtil.Instance.AvailableKingdomsCount();
-
                 var maxVisitableKingdoms = CalculateMaxRun();
+                var hallwayNumber = HookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent")); // 0 is Kingdom Outskirts
+
+                if (hallwayNumber < maxVisitableKingdoms)
+                {
+                    return false;
+                }
 
                 FindLayer("RunMenu_Blocker", out var layer);
                 if (layer != null)
@@ -283,20 +283,19 @@ namespace RnSArchipelago.Game
 
                         var currentPos = instanceValue.Get("currentPos");
                         var notchNumber = instanceValue.Get("notchNumber");
+
                         if (currentPos != null && notchNumber != null)
                         {
+                            // Check to see if we are at the last notch in the hallway
                             if (HookUtil.IsEqualToNumeric(currentPos, HookUtil.GetNumeric(notchNumber) - 1))
                             {
-                                // TODO: FIX - ENSURE ORDER 1-MAXKINGDOM IS CORRECT, I THINK A MAX KINGDOM OF 3 AND HAVING KINGDOM ORDER 1, 1, AND 2 COULD PASS THE CHECK
-                                // TODO: CONT - ALSO PRETTY SURE WE DONT HAVE A CHECK ON HAVING THE KINGDOM ITEM AND/OR PROGRESSIVE REGION
-                                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms))
+                                var hallkey = instanceValue.Get("hallkey");
+                                if (hallwayNumber == maxVisitableKingdoms)
                                 {
-                                    var hallkey = rnsReloaded.FindValue(self, "hallkey");
                                     return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_keep";
                                 }
-                                else if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent"), maxVisitableKingdoms + 1))
+                                else if (hallwayNumber == maxVisitableKingdoms + 1)
                                 {
-                                    var hallkey = rnsReloaded.FindValue(self, "hallkey");
                                     return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_pinnacle";
                                 }
                             }
@@ -350,7 +349,7 @@ namespace RnSArchipelago.Game
                     }
                     IncreaseRouteLength();
 
-                    if (EndRouteEarly(self))
+                    if (EndRouteEarly())
                     {
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
                         if (modConfig?.ExtraDebugMessages ?? false)
@@ -662,9 +661,9 @@ namespace RnSArchipelago.Game
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                 }
 
-                //TODO: REVISIT THIS, I DON'T THINK MAXCANRUN CURRENTLY ENCORPORATES KEEP AND PINNACLE
                 // Place the last 2 where they need to be, if they are visitable 
-                if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && maxCanRun >= maxKingdoms)
+                var isProgressive = InventoryUtil.Instance.isProgressive;
+                if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && maxCanRun == maxKingdoms && (!isProgressive || InventoryUtil.Instance.ProgressiveRegions >= maxKingdoms + 1))
                 {
                     rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_keep");
                 }
@@ -672,7 +671,7 @@ namespace RnSArchipelago.Game
                 {
                     rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
                 }
-                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle) != 0 && maxCanRun >= maxKingdoms)
+                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle) != 0 && maxCanRun == maxKingdoms && (!isProgressive || InventoryUtil.Instance.ProgressiveRegions >= maxKingdoms + 2))
                 {
                     rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "hw_pinnacle");
                 }

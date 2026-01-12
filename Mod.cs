@@ -132,7 +132,7 @@ namespace RnSArchipelago
                 SetupClassSanity(); // Limits the classes you can play based on current items
 
                 // TODO: REMOVE ONCE DONE TESTING
-                //oneShot();
+                oneShot();
 
                 // TODO: IMPLEMENT RANDOMIZATION OPTION AND GET THE UPGRADES WORKING FOR BASE RANDOM ABILITY
                 //RandomizePlayerAbilities(); // randomize the player abilities
