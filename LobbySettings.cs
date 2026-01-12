@@ -101,7 +101,13 @@ namespace RnSArchipelago
         )
         {
             // Create the object
-            returnValue = this.archipelagoButtonHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.archipelagoButtonHook != null)
+            {
+                returnValue = this.archipelagoButtonHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call archipelago button hook", System.Drawing.Color.Red);
+            }
 
             if (IsReady(out var rnsReloaded))
             {
@@ -125,7 +131,7 @@ namespace RnSArchipelago
                     if (stepId.HasValue)
                     {
                         layer->BeginScript.Real = stepId.Value;
-                        this.lobbySettingsDisplayStepHook!.Enable();
+                        this.lobbySettingsDisplayStepHook?.Enable();
                     }
 
                     if (element != null)
@@ -171,7 +177,13 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            returnValue = this.archipelagoOptionsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.archipelagoOptionsHook != null)
+            {
+                returnValue = this.archipelagoOptionsHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call archipelago options hook", System.Drawing.Color.Red);
+            }
 
             if (IsReady(out var rnsReloaded, out var hooks))
             {
@@ -276,7 +288,7 @@ namespace RnSArchipelago
                                 var passId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_passwordlock");
                                 var passScript = rnsReloaded.GetScriptData(passId - 100000);
                                 var createPasswordBoxHook = hooks.CreateHook<ScriptDelegate>(empty, passScript->Functions->Function);
-                                createPasswordBoxHook!.OriginalFunction.Invoke(instance->Instance, other, &dummy, 0, argv);
+                                createPasswordBoxHook?.OriginalFunction.Invoke(instance->Instance, other, &dummy, 0, argv);
 
                                 break;
                             case "[ \"single player\",\"two players\",\"three players\",\"four players\" ]":
@@ -310,7 +322,13 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            returnValue = this.archipelagoOptionsReturnHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.archipelagoOptionsReturnHook != null)
+            {
+                returnValue = this.archipelagoOptionsReturnHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call archipleago options return hook", System.Drawing.Color.Red);
+            }
 
             if (IsReady(out var rnsReloaded))
             {
@@ -376,7 +394,13 @@ namespace RnSArchipelago
                 rnsReloaded.ExecuteScript("scr_online_save", null, null, []);
             }
 
-            returnValue = this.lobbyTitleHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.lobbyTitleHook != null)
+            {
+                returnValue = this.lobbyTitleHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call lobby title hook", System.Drawing.Color.Red);
+            }
             return returnValue;
 
         }
@@ -472,17 +496,17 @@ namespace RnSArchipelago
                     else
                     {
                         layer->BeginScript.Real = -1;
-                        this.lobbySettingsDisplayStepHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                        this.lobbySettingsDisplayStepHook?.OriginalFunction(self, other, returnValue, argc, argv);
 
                         // Called as a layer step function, so we want to disable it once we leave the screens
-                        this.lobbySettingsDisplayStepHook!.Disable();
+                        this.lobbySettingsDisplayStepHook?.Disable();
                     }
 
                     return returnValue;
                 }
             }
 
-            this.lobbySettingsDisplayStepHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            this.lobbySettingsDisplayStepHook?.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
         }
 
@@ -541,7 +565,7 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            this.setNameHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            this.setNameHook?.OriginalFunction(self, other, returnValue, argc, argv);
             if (IsReady(out var rnsReloaded))
             {
                 if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
@@ -563,7 +587,7 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            this.setDescHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            this.setDescHook?.OriginalFunction(self, other, returnValue, argc, argv);
             if (IsReady(out var rnsReloaded))
             {
                 if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
@@ -585,7 +609,7 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            this.setPassHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            this.setPassHook?.OriginalFunction(self, other, returnValue, argc, argv);
             if (IsReady(out var rnsReloaded))
             {
                 if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
@@ -649,7 +673,7 @@ namespace RnSArchipelago
                     return returnValue;
                 }
             }
-            this.supressLobbySettingsVisuallyHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            this.supressLobbySettingsVisuallyHook?.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
         }
 
@@ -667,7 +691,7 @@ namespace RnSArchipelago
 
                 return returnValue;
             }
-            this.RecconectHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            this.RecconectHook?.OriginalFunction(self, other, returnValue, argc, argv);
             return returnValue;
         }
     }

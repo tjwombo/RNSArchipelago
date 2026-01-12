@@ -150,7 +150,7 @@ namespace RnSArchipelago.Utils
             else if (InventoryUtil.Instance.PotionSanity == InventoryUtil.PotionSetting.Locked) 
             {
                 List<string> actualPotions = InventoryUtil.Instance.AvailablePotions.Where(potion => (potion != "Full Heal Potion" && potion != "Level Up Potion")).ToList();
-                logger!.PrintMessage(String.Join(", ", actualPotions), System.Drawing.Color.DarkOrange);
+                logger?.PrintMessage(String.Join(", ", actualPotions), System.Drawing.Color.DarkOrange);
                 if (actualPotions.Count == 0)
                 {
                     *argv[0] = new RValue(0);
@@ -196,7 +196,7 @@ namespace RnSArchipelago.Utils
 
                 InventoryUtil.PrimaryUpgradeFlags randomPrimary = availablePrimary[rand.Next(availablePrimary.Length)];
 
-                logger!.PrintMessage(String.Join(" ", availablePrimary.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
+                logger?.PrintMessage(String.Join(" ", availablePrimary.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
                 if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryEmeraldGem)
                 {
@@ -239,7 +239,7 @@ namespace RnSArchipelago.Utils
 
                 InventoryUtil.SecondaryUpgradeFlags randomSecondary = availableSecondary[rand.Next(availableSecondary.Length)];
 
-                logger!.PrintMessage(String.Join(" ", availableSecondary.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
+                logger?.PrintMessage(String.Join(" ", availableSecondary.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
                 if (randomSecondary == InventoryUtil.SecondaryUpgradeFlags.SecondaryEmeraldGem)
                 {
@@ -286,7 +286,7 @@ namespace RnSArchipelago.Utils
 
                 InventoryUtil.SpecialUpgradeFlags randomSpecial = availableSpecial[rand.Next(availableSpecial.Length)];
 
-                logger!.PrintMessage(String.Join(" ", availableSpecial.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
+                logger?.PrintMessage(String.Join(" ", availableSpecial.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
                 if (randomSpecial == InventoryUtil.SpecialUpgradeFlags.SpecialEmeraldGem)
                 {
@@ -333,7 +333,7 @@ namespace RnSArchipelago.Utils
 
                 InventoryUtil.DefensiveUpgradeFlags randomDefensive = availableDefensive[rand.Next(availableDefensive.Length)];
 
-                logger!.PrintMessage(String.Join(" ", availableDefensive.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
+                logger?.PrintMessage(String.Join(" ", availableDefensive.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
                 if (randomDefensive == InventoryUtil.DefensiveUpgradeFlags.DefensiveEmeraldGem)
                 {

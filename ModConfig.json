@@ -47,14 +47,8 @@
 				}
 			}
 		},
-		"GitHubRelease": {
-			"UserName": "tjwombo",
-			"RepositoryName": "RNSArchipelago",
-			"UseReleaseTag": true,
-			"AssetFileName": "Mod.zip"
-		},
 		"NuGet": {
-			"AllowUpdateFromAnyRepository": false,
+			"AllowUpdateFromAnyRepository": true,
 			"DefaultRepositoryUrls": [
 				"https://packages.sewer56.moe/v3/index.json"
 			]

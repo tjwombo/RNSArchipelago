@@ -114,7 +114,7 @@ namespace RnSArchipelago.Utils
             {
                 AvailableKingdoms = KingdomFlags.All;
 
-                List<string> excluded_kingdoms = data.GetValue<JArray>(DataContext.Options, "excluded_kingdoms")!.ToObject<List<string>>()!;
+                List<string> excluded_kingdoms = data.GetValue<JArray>(DataContext.Options, "excluded_kingdoms")?.ToObject<List<string>>()!;
 
                 foreach (var kingdom in excluded_kingdoms)
                 {
@@ -122,7 +122,7 @@ namespace RnSArchipelago.Utils
                 }
             }
 
-            var kingdomOrderDict = data.GetValue<JObject>(DataContext.Options, "kingdom_order")!.ToObject<Dictionary<string, int>>();
+            var kingdomOrderDict = data.GetValue<JObject>(DataContext.Options, "kingdom_order")?.ToObject<Dictionary<string, int>>();
             kingdomOrder = [];
             foreach (var entry in kingdomOrderDict!)
             {
@@ -144,25 +144,25 @@ namespace RnSArchipelago.Utils
                 AvailableClasses = ClassFlags.All;
             }
 
-            checksPerClass = data.GetValue<JArray>(DataContext.Options, "checks_per_class")!.ToObject<List<string>>()!;
-            this.logger!.PrintMessage(String.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
+            checksPerClass = data.GetValue<JArray>(DataContext.Options, "checks_per_class")?.ToObject<List<string>>()!;
+            this.logger?.PrintMessage(String.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
 
             shuffleItemsets = data.GetValue<long>(DataContext.Options, "shuffle_item_sets") == 1;
             checksPerItemInChest = data.GetValue<long>(DataContext.Options, "checks_per_item_in_chest") == 1;
 
             UpgradeSanity = (UpgradeSetting)data.GetValue<long>(DataContext.Options, "upgrade_sanity");
-            this.logger!.PrintMessage(UpgradeSanity.ToString(), System.Drawing.Color.DarkOrange);
+            this.logger?.PrintMessage(UpgradeSanity.ToString(), System.Drawing.Color.DarkOrange);
 
             PotionSanity = (PotionSetting)data.GetValue<long>(DataContext.Options, "potion_sanity");
-            this.logger!.PrintMessage(PotionSanity.ToString(), System.Drawing.Color.DarkOrange);
+            this.logger?.PrintMessage(PotionSanity.ToString(), System.Drawing.Color.DarkOrange);
 
             goal = (GoalSetting)data.GetValue<long>(DataContext.Options, "goal_condition");
-            this.logger!.PrintMessage(goal.ToString(), System.Drawing.Color.DarkOrange);
+            this.logger?.PrintMessage(goal.ToString(), System.Drawing.Color.DarkOrange);
 
             shiraKills = data.GetValue<long>(DataContext.Options, "shira_defeats")!;
 
             shop_sanity = (ShopSetting)data.GetValue<long>(DataContext.Options, "shop_sanity");
-            this.logger!.PrintMessage(shop_sanity.ToString(), System.Drawing.Color.DarkOrange);
+            this.logger?.PrintMessage(shop_sanity.ToString(), System.Drawing.Color.DarkOrange);
         }
 
         [Flags]
@@ -339,24 +339,24 @@ namespace RnSArchipelago.Utils
                     if (KINGDOMS.Contains(itemName))
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
-                        this.logger!.PrintMessage(AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
+                        this.logger?.PrintMessage(AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
                         UpdateKingdomRoute.Invoke();
                     } 
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
-                        this.logger!.PrintMessage(ProgressiveRegions + "", System.Drawing.Color.DarkOrange);
+                        this.logger?.PrintMessage(ProgressiveRegions + "", System.Drawing.Color.DarkOrange);
                         UpdateKingdomRoute.Invoke();
                     } 
                     else if (CLASSES.Contains(itemName))
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
-                        this.logger!.PrintMessage(AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
+                        this.logger?.PrintMessage(AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
                     } 
                     else if (ITEMSETS.Contains(itemName))
                     {
                         AddItemsFromItemset(itemName);
-                        this.logger!.PrintMessage(String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+                        this.logger?.PrintMessage(String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     } 
                     else if (itemName == "Treasuresphere")
                     {
@@ -402,29 +402,29 @@ namespace RnSArchipelago.Utils
                         } else if (enumName.Contains("Primary"))
                         {
                             AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | (PrimaryUpgradeFlags)Enum.Parse(typeof(PrimaryUpgradeFlags), enumName);
-                            this.logger!.PrintMessage(AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            this.logger?.PrintMessage(AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         } else if (enumName.Contains("Secondary"))
                         {
                             AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | (SecondaryUpgradeFlags)Enum.Parse(typeof(SecondaryUpgradeFlags), enumName);
-                            this.logger!.PrintMessage(AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            this.logger?.PrintMessage(AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         } else if (enumName.Contains("Special"))
                         {
                             AvailableSpecialUpgrades = AvailableSpecialUpgrades | (SpecialUpgradeFlags)Enum.Parse(typeof(SpecialUpgradeFlags), enumName);
-                            this.logger!.PrintMessage(AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            this.logger?.PrintMessage(AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         } else if (enumName.Contains("Defensive"))
                         {
                             AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | (DefensiveUpgradeFlags)Enum.Parse(typeof(DefensiveUpgradeFlags), enumName);
-                            this.logger!.PrintMessage(AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            this.logger?.PrintMessage(AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
                     } 
                     else if (POTIONS.Contains(itemName))
                     {
                         AvailablePotions.Add(itemName);
-                        this.logger!.PrintMessage(String.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
+                        this.logger?.PrintMessage(String.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
                     } else if (itemName.Contains("Victory"))
                     {
                         victories.Add(itemName);
-                        this.logger!.PrintMessage(String.Join(", ", victories), System.Drawing.Color.DarkOrange);
+                        this.logger?.PrintMessage(String.Join(", ", victories), System.Drawing.Color.DarkOrange);
                         if (CheckGoal())
                         {
                             SendGoal.Invoke();

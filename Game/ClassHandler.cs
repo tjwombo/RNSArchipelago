@@ -43,7 +43,13 @@ namespace RnSArchipelago.Game
         // Visually lock the classes that are not available
         internal RValue* LockVisualClass(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            returnValue = this.lockVisualClassHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.lockVisualClassHook != null)
+            {
+                returnValue = this.lockVisualClassHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call lock visual class hook", System.Drawing.Color.Red);
+            }
             if (IsReady(out var rnsReloaded))
             {
                 if (InventoryUtil.Instance.isActive)
@@ -70,7 +76,13 @@ namespace RnSArchipelago.Game
         // Make it so that in the state machine if we select a locked class, instead of going to the next state, we loop back
         internal RValue* LockClass(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            returnValue = this.lockClassHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.lockClassHook != null)
+            {
+                returnValue = this.lockClassHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call lock class hook", System.Drawing.Color.Red);
+            }
             if (IsReady(out var rnsReloaded))
             {
                 if (InventoryUtil.Instance.isActive)
@@ -102,7 +114,13 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            returnValue = this.stopColorHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.stopColorHook != null)
+            {
+                returnValue = this.stopColorHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call stop color hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
     }

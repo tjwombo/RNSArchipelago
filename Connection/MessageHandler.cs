@@ -37,7 +37,7 @@ namespace RnSArchipelago.Connection
             {
                 return rnsReloaded != null;
             }
-            this.logger!.PrintMessage("Unable to find rnsReloaded in MessageHandler", System.Drawing.Color.Red);
+            this.logger?.PrintMessage("Unable to find rnsReloaded in MessageHandler", System.Drawing.Color.Red);
             rnsReloaded = null;
             return false;
         }
@@ -47,7 +47,7 @@ namespace RnSArchipelago.Connection
             if (IsReady(out var rnsReloaded))
             {
                 var message = new RValue();
-                rnsReloaded!.CreateString(&message, "Disconnected from the multiworld");
+                rnsReloaded.CreateString(&message, "Disconnected from the multiworld");
                 rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), message, new(0)]);
             }
         }
@@ -64,13 +64,13 @@ namespace RnSArchipelago.Connection
                         var hintNetworkItem = hintLogMessage.Item;
                         var hintFound = hintLogMessage.IsFound;
 
-                        if (modConfig!.SystemLog)
+                        if (modConfig?.SystemLog ?? false)
                         {
                             var hintMessage = new RValue();
-                            rnsReloaded!.CreateString(&hintMessage, message.ToString());
+                            rnsReloaded.CreateString(&hintMessage, message.ToString());
                             rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), hintMessage, new(0)]);
                         }
-                        logger!.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
+                        logger?.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
                         break;
                     case ItemSendLogMessage itemSendLogMessage:
                         var receiver = itemSendLogMessage.Receiver;
@@ -86,25 +86,26 @@ namespace RnSArchipelago.Connection
                         }
 
                         var itemMessage = new RValue();
-                        if ((modConfig!.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
-                            ((modConfig!.ProgressionLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
-                            (modConfig!.UsefulLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
-                            (modConfig!.FillerLog && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
-                            (modConfig!.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap))))
+                        if (modConfig != null && 
+                            (modConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
+                            ((modConfig.ProgressionLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
+                            (modConfig.UsefulLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
+                            (modConfig.FillerLog && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
+                            (modConfig.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap))))
                         {
-                            rnsReloaded!.CreateString(&itemMessage, messageToSend);
+                            rnsReloaded.CreateString(&itemMessage, messageToSend);
                             rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(sourceId), new(), new(0), itemMessage, new(0)]);
                         }
-                        logger!.PrintMessage(message.ToString(), System.Drawing.Color.Cyan);
+                        logger?.PrintMessage(message.ToString(), System.Drawing.Color.Cyan);
                         break;
                     case PlayerSpecificLogMessage playerLogMessage:
                         var playerMessage = new RValue();
-                        if (modConfig!.SystemLog)
+                        if (modConfig?.SystemLog ?? false)
                         {
-                            rnsReloaded!.CreateString(&playerMessage, message.ToString());
+                            rnsReloaded.CreateString(&playerMessage, message.ToString());
                             rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), playerMessage, new(0)]);
                         }
-                        logger!.PrintMessage(message.ToString(), System.Drawing.Color.White);
+                        logger?.PrintMessage(message.ToString(), System.Drawing.Color.White);
                         break;
                     case AdminCommandResultLogMessage:
                     case CommandResultLogMessage:
@@ -112,12 +113,12 @@ namespace RnSArchipelago.Connection
                     case ServerChatLogMessage:
                     case TutorialLogMessage:
                     default:
-                        if (modConfig!.SystemLog)
+                        if (modConfig?.SystemLog ?? false)
                         {
                             var gameMessage = new RValue();
-                            rnsReloaded!.CreateString(&gameMessage, message.ToString());
+                            rnsReloaded.CreateString(&gameMessage, message.ToString());
                             rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), gameMessage, new(0)]);
-                            logger!.PrintMessage(message.ToString(), System.Drawing.Color.White);
+                            logger?.PrintMessage(message.ToString(), System.Drawing.Color.White);
                         }
                         break;
                 }
@@ -133,14 +134,14 @@ namespace RnSArchipelago.Connection
                     case ArchipelagoPacketType.RoomInfo:
                         // Save the seed so we can have a static random
                         var room = (RoomInfoPacket)packet;
-                        this.data!.SetValue<object>(DataContext.Options, "seed", room.SeedName);
+                        this.data?.SetValue<object>(DataContext.Options, "seed", room.SeedName);
                         break;
                     case ArchipelagoPacketType.ConnectionRefused:
                         var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
                         var gameMessage = new RValue();
-                        rnsReloaded!.CreateString(&gameMessage, message);
+                        rnsReloaded.CreateString(&gameMessage, message);
                         rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(), new(0), gameMessage, new(0)]);
-                        this.logger!.PrintMessage(message, Color.Red);
+                        this.logger?.PrintMessage(message, Color.Red);
                         rnsReloaded.ExecuteScript("scr_runmenu_disband_disband", null, null, []);
                         break;
                     case ArchipelagoPacketType.Connected: // Get the options the user selected
@@ -148,8 +149,8 @@ namespace RnSArchipelago.Connection
                         slot = connected.Slot;
                         foreach (var option in connected.SlotData)
                         {
-                            this.logger!.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
-                            this.data!.SetValue<object>(DataContext.Options, option.Key, option.Value);
+                            this.logger?.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
+                            this.data?.SetValue<object>(DataContext.Options, option.Key, option.Value);
                         }
                         InventoryUtil.Instance.logger = this.logger;
                         InventoryUtil.Instance.GetOptions(data!);
@@ -170,7 +171,7 @@ namespace RnSArchipelago.Connection
                             var itemId = gameData.ItemLookup;
                             foreach (var item in itemId)
                             {
-                                this.data!.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
+                                this.data?.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
                             }
                         }
                         break;

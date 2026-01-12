@@ -2,7 +2,6 @@
 using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
-using System.Text.Json;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Packets;
@@ -10,8 +9,6 @@ using Archipelago.MultiClient.Net.Models;
 using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
 using RnSArchipelago.Game;
-using System.IO;
-using System.Runtime.InteropServices;
 using System.Diagnostics.CodeAnalysis;
 
 namespace RnSArchipelago.Connection
@@ -127,17 +124,17 @@ namespace RnSArchipelago.Connection
         // Return to the lobby settings
         internal unsafe RValue* ResetConn(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig!.ExtraDebugMessages)
+            if (modConfig?.ExtraDebugMessages ?? false)
             {
                 this.logger.PrintMessage("Before Original Function Reset Conn", System.Drawing.Color.DarkOrange);
             }
-            this.resetConnHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            if (modConfig!.ExtraDebugMessages)
+            this.resetConnHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            if (modConfig?.ExtraDebugMessages ?? false)
             {
                 this.logger.PrintMessage("Rest Conn", System.Drawing.Color.DarkOrange);
             }
             ResetConn();
-            if (modConfig!.ExtraDebugMessages)
+            if (modConfig?.ExtraDebugMessages ?? false)
             {
                 this.logger.PrintMessage("Before Return Reset Conn", System.Drawing.Color.DarkOrange);
             }
@@ -147,17 +144,17 @@ namespace RnSArchipelago.Connection
         // Return to the lobby settings, after a win/loss
         internal unsafe RValue* ResetConnEnd(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig!.ExtraDebugMessages)
+            if (modConfig?.ExtraDebugMessages ?? false)
             {
                 this.logger.PrintMessage("Before Original Function Reset Conn End", System.Drawing.Color.DarkOrange);
             }
-            this.resetConnEndHook!.OriginalFunction(self, other, returnValue, argc, argv);
-            if (modConfig!.ExtraDebugMessages)
+            this.resetConnEndHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            if (modConfig?.ExtraDebugMessages ?? false)
             {
                 this.logger.PrintMessage("Reset Conn End", System.Drawing.Color.DarkOrange);
             }
             ResetConn();
-            if (modConfig!.ExtraDebugMessages)
+            if (modConfig?.ExtraDebugMessages ?? false)
             {
                 this.logger.PrintMessage("Before Return Reset Conn End", System.Drawing.Color.DarkOrange);
             }
@@ -251,7 +248,7 @@ namespace RnSArchipelago.Connection
             {
                 Games = ["Rabbit and Steel"]
             };
-            session!.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect}).Wait();
+            session?.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect}).Wait();
         }
     }
 }

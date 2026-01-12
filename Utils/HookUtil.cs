@@ -28,7 +28,7 @@ namespace RnSArchipelago.Utils
             {
                 return rnsReloaded != null;
             }
-            logger!.PrintMessage("Unable to find rnsReloaded in HookUtil", System.Drawing.Color.Red);
+            logger?.PrintMessage("Unable to find rnsReloaded in HookUtil", System.Drawing.Color.Red);
             rnsReloaded = null;
             return false;
         }
@@ -79,6 +79,11 @@ namespace RnSArchipelago.Utils
         internal static long GetNumeric(RValue* value)
         {
             return (int)value->Real | value->Int32;
+        }
+
+        internal static long GetNumeric(RValue value)
+        {
+            return (int)value.Real | value.Int32;
         }
 
         // Find a given layer in the room

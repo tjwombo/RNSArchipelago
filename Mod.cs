@@ -194,9 +194,12 @@ namespace RnSArchipelago
             {
                 var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
                 var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
-                lobby!.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoLobbyType, menuScript->Functions->Function);
-                lobby.archipelagoButtonHook.Activate();
-                lobby.archipelagoButtonHook.Enable();
+                if (lobby != null)
+                {
+                    lobby.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoLobbyType, menuScript->Functions->Function);
+                    lobby.archipelagoButtonHook.Activate();
+                    lobby.archipelagoButtonHook.Enable();
+                }
 
             }
         }
@@ -205,13 +208,13 @@ namespace RnSArchipelago
         private void AddArchipelagoOptionsToMenu()
         {
             if (
-                this.IsReady(out var rnsReloaded, out var hooks)
+                this.IsReady(out var rnsReloaded, out var hooks) && lobby != null
             )
             {
                 // Create the archipelago lobby type
                 var optionsId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_setup");
                 var optionsScript = rnsReloaded.GetScriptData(optionsId - 100000);
-                lobby!.archipelagoOptionsHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoOptions, optionsScript->Functions->Function);
+                lobby.archipelagoOptionsHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoOptions, optionsScript->Functions->Function);
                 lobby.archipelagoOptionsHook.Activate();
                 lobby.archipelagoOptionsHook.Enable();
 
@@ -294,19 +297,22 @@ namespace RnSArchipelago
                 this.archipelagoWebsocketHook.Activate();
                 this.archipelagoWebsocketHook.Enable();
 
-                // Close the connection after returning to lobby settings
-                var resetId = rnsReloaded.ScriptFindId("scr_runmenu_disband_disband");
-                var resetScript = rnsReloaded.GetScriptData(resetId - 100000);
-                conn!.resetConnHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConn, resetScript->Functions->Function);
-                conn.resetConnHook.Activate();
-                conn.resetConnHook.Enable();
+                if (conn != null)
+                {
+                    // Close the connection after returning to lobby settings
+                    var resetId = rnsReloaded.ScriptFindId("scr_runmenu_disband_disband");
+                    var resetScript = rnsReloaded.GetScriptData(resetId - 100000);
+                    conn.resetConnHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConn, resetScript->Functions->Function);
+                    conn.resetConnHook.Activate();
+                    conn.resetConnHook.Enable();
 
-                // Close the connection after returning to lobby settings from a victory/defeat screen
-                var resetEndId = rnsReloaded.ScriptFindId("scr_runmenu_victory_disbandlobby");
-                var resetEndScript = rnsReloaded.GetScriptData(resetEndId - 100000);
-                conn.resetConnEndHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnEnd, resetEndScript->Functions->Function);
-                conn.resetConnEndHook.Activate();
-                conn.resetConnEndHook.Enable();
+                    // Close the connection after returning to lobby settings from a victory/defeat screen
+                    var resetEndId = rnsReloaded.ScriptFindId("scr_runmenu_victory_disbandlobby");
+                    var resetEndScript = rnsReloaded.GetScriptData(resetEndId - 100000);
+                    conn.resetConnEndHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnEnd, resetEndScript->Functions->Function);
+                    conn.resetConnEndHook.Activate();
+                    conn.resetConnEndHook.Enable();
+                }
             }
         }
 
@@ -440,13 +446,26 @@ namespace RnSArchipelago
             )
             {
                 this.logger.PrintMessage(HookUtil.PrintHook("network error", self, returnValue, argc, argv), Color.Red);
-                returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                if (this.setItemHook != null)
+                {
+                    returnValue = this.setItemHook.OriginalFunction(self, other, returnValue, argc, argv);
+                } else
+                {
+                    this.logger.PrintMessage("Unable to call set item hook", System.Drawing.Color.Red);
+                }
                 this.logger.PrintMessage(new RValue(self).ToString(), Color.Red);
                 //this.logger.PrintMessage(HookUtil.FindLayerWithField("name", "connected to archipelago"), Color.Red);
                 this.logger.PrintMessage(HookUtil.PrintHook("network error", self, returnValue, argc, argv), Color.Red);
                 return returnValue;
             }
-            returnValue = this.setItemHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.setItemHook != null)
+            {
+                returnValue = this.setItemHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call set item hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
 
@@ -461,11 +480,11 @@ namespace RnSArchipelago
                 if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
                     // Validate archipelago options / connection
-                    this.data.SetValue<string>(DataContext.Connection, "name", lobby!.ArchipelagoName);
+                    this.data.SetValue<string>(DataContext.Connection, "name", lobby?.ArchipelagoName);
                     this.data.SetValue<string>(DataContext.Connection, "address", lobby.ArchipelagoAddress);
                     this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
                     this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
-                    _ = conn!.StartConnection(true);
+                    _ = conn?.StartConnection(true);
 
                     config.ArchipelagoName = lobby.ArchipelagoName;
                     config.ArchipelagoAddress = lobby.ArchipelagoAddress;
@@ -485,14 +504,27 @@ namespace RnSArchipelago
                         //*rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(0);
                         *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
                     }
-                    returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                    if (this.archipelagoWebsocketHook != null)
+                    {
+                        returnValue = this.archipelagoWebsocketHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    } else
+                    {
+                        this.logger.PrintMessage("Unable to call archipelago websocket hook", System.Drawing.Color.Red);
+                    }
 
                     // Return to archipelago lobby
                     *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
                 } else
                 {
                     // Continue normally
-                    returnValue = this.archipelagoWebsocketHook!.OriginalFunction(self, other, returnValue, argc, argv);
+                    if (this.archipelagoWebsocketHook != null)
+                    {
+                        returnValue = this.archipelagoWebsocketHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    }
+                    else
+                    {
+                        this.logger.PrintMessage("Unable to call archipelago websocket hook", System.Drawing.Color.Red);
+                    }
                 }
             }
            
@@ -546,7 +578,14 @@ namespace RnSArchipelago
         internal RValue* killquickly(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             argv[2]->Real = 100000000;
-            returnValue = this.oneShotHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.oneShotHook != null)
+            {
+                returnValue = this.oneShotHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call oneshot hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
 
@@ -599,7 +638,14 @@ namespace RnSArchipelago
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            returnValue = this.outskirtsHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.outskirtsHook != null)
+            {
+                returnValue = this.outskirtsHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call outskirts hook", System.Drawing.Color.Red);
+            }
             var a = new RValue(self);
             if (this.IsReady(out var rnsReloaded))
             {
@@ -667,7 +713,13 @@ namespace RnSArchipelago
                 }
             }
 
-            returnValue = this.selectCharacterAbilitiesHook!.OriginalFunction(self, other, returnValue, argc, argv);
+            if (this.selectCharacterAbilitiesHook != null)
+            {
+                returnValue = this.selectCharacterAbilitiesHook.OriginalFunction(self, other, returnValue, argc, argv);
+            } else
+            {
+                this.logger.PrintMessage("Unable to call select character abilities hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
 
