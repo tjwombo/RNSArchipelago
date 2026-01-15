@@ -37,8 +37,6 @@ namespace RnSArchipelago.Game
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.modConfig = modConfig;
-
-            InventoryUtil.Instance.UpdateKingdomRoute += UpdateRoute;
         }
 
         // Calcuate the number of kingdoms your currently allowed to visit in a run
@@ -349,7 +347,13 @@ namespace RnSArchipelago.Game
                         this.logger.PrintMessage("Manage Route Length", System.Drawing.Color.DarkOrange);
                     }
 
-                    UpdateRouteLength();
+                    if (InventoryUtil.Instance.shouldUpdateKingdomRoute)
+                    {
+                        InventoryUtil.Instance.shouldUpdateKingdomRoute = false;
+                        UpdateRoute();
+
+                        UpdateRouteLength();
+                    }
 
                     if (EndRouteEarly())
                     {

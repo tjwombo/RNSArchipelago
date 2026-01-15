@@ -33,8 +33,7 @@ namespace RnSArchipelago.Utils
         private HashSet<string> victories = [];
         private ShopSetting shop_sanity = ShopSetting.None;
 
-        internal delegate void UpdateKingdomRouteDelegate(bool currentHallwayPosAware = true);
-        internal event UpdateKingdomRouteDelegate? UpdateKingdomRoute;
+        internal bool shouldUpdateKingdomRoute;
 
         internal delegate void AddChestDelegate();
         internal event AddChestDelegate? AddChest;
@@ -340,13 +339,13 @@ namespace RnSArchipelago.Utils
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
                         this.logger?.PrintMessage(AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
-                        UpdateKingdomRoute?.Invoke();
+                        shouldUpdateKingdomRoute = true;
                     } 
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
                         this.logger?.PrintMessage(ProgressiveRegions + "", System.Drawing.Color.DarkOrange);
-                        UpdateKingdomRoute?.Invoke();
+                        shouldUpdateKingdomRoute = true;
                     } 
                     else if (CLASSES.Contains(itemName))
                     {
