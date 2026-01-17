@@ -86,6 +86,7 @@ namespace RnSArchipelago
                 MessageHandler.Instance.rnsReloadedRef = rnsReloadedRef;
                 MessageHandler.Instance.logger = logger;
                 MessageHandler.Instance.modConfig = this.config;
+                MessageHandler.Instance.data = data;
 
                 locationHandler = new LocationHandler(rnsReloadedRef, logger, this.config);
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, this.config, data, locationHandler);
