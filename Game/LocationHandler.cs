@@ -68,8 +68,6 @@ namespace RnSArchipelago.Game
 
             InventoryUtil.Instance.AddChest += AddChestToNotch;
             InventoryUtil.Instance.SendGoal += SendGoal;
-
-            ShopItemsUtil.logger = logger;
         }
 
         private enum LocationType

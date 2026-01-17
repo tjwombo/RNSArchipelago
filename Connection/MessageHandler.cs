@@ -153,11 +153,11 @@ namespace RnSArchipelago.Connection
                             this.data?.SetValue<object>(DataContext.Options, option.Key, option.Value);
                         }
                         InventoryUtil.Instance.logger = this.logger;
-                        InventoryUtil.Instance.GetOptions(data!);
+                        InventoryUtil.Instance.GetOptions();
                         break;
                     case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageRecieved, but actual mod use of items will be handled here
                         var itemPacket = (ReceivedItemsPacket)packet;
-                        InventoryUtil.Instance.ReceiveItem(itemPacket, data!);
+                        InventoryUtil.Instance.ReceiveItem(itemPacket);
                         // Maybe have a subscriber pattern here or in inventoryutil to invoke a method for each received item type
                         break;
                     case ArchipelagoPacketType.LocationInfo:

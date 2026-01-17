@@ -65,11 +65,6 @@ namespace RnSArchipelago.Connection
                 if (IsReady(out var rnsReloaded))
                 {
                     var message = MessageHandler.Instance;
-                    message.rnsReloadedRef = rnsReloadedRef;
-                    message.logger = logger;
-                    message.modConfig = modConfig;
-                    message.data = data;
-
                     session.Socket.PacketReceived += message.OnPacketReceived;
                     session.MessageLog.OnMessageReceived += message.OnMessageReceived;
                     session.Socket.SocketOpened += ConnectionOpened;

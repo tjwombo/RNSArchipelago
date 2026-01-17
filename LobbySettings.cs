@@ -15,7 +15,6 @@ namespace RnSArchipelago
         private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
         private readonly ILoggerV1 logger;
         private readonly WeakReference<IReloadedHooks>? hooksRef;
-        private readonly SharedData data;
         private readonly ArchipelagoConnection conn;
 
         internal IHook<ScriptDelegate>? archipelagoButtonHook;
@@ -82,12 +81,11 @@ namespace RnSArchipelago
             return false;
         }
 
-        internal LobbySettings(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, WeakReference<IReloadedHooks>? hooksRef, SharedData data, ArchipelagoConnection conn, Config.Config modConfig)
+        internal LobbySettings(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, WeakReference<IReloadedHooks>? hooksRef, ArchipelagoConnection conn, Config.Config modConfig)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.hooksRef = hooksRef;
-            this.data = data;
             this.conn = conn;
 
             ArchipelagoName = modConfig.ArchipelagoName;

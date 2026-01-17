@@ -13,6 +13,8 @@ namespace RnSArchipelago.Utils
 
         internal ILoggerV1? logger;
 
+        internal SharedData data;
+
         internal bool isActive;
         internal bool isKingdomSanity;
         //internal bool isOutskirtsShuffled;
@@ -99,7 +101,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Init function to get the options the user has selected
-        internal void GetOptions(SharedData data)
+        internal void GetOptions()
         {
             isActive = true;
 
@@ -328,7 +330,7 @@ namespace RnSArchipelago.Utils
         internal List<string> AvailablePotions => availablePotions;
 
         // Handle receiving kingdom related items
-        internal void ReceiveItem(ReceivedItemsPacket recievedItem, SharedData data)
+        internal void ReceiveItem(ReceivedItemsPacket recievedItem)
         {
             foreach (var item in recievedItem.Items)
             {

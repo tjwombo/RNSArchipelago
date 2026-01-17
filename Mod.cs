@@ -81,9 +81,15 @@ namespace RnSArchipelago
             {
                 HookUtil.rnsReloadedRef = rnsReloadedRef;
                 HookUtil.logger = logger;
+                ShopItemsUtil.logger = logger;
+                InventoryUtil.Instance.data = data;
+                MessageHandler.Instance.rnsReloadedRef = rnsReloadedRef;
+                MessageHandler.Instance.logger = logger;
+                MessageHandler.Instance.modConfig = this.config;
+
                 locationHandler = new LocationHandler(rnsReloadedRef, logger, this.config);
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, this.config, data, locationHandler);
-                lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, data, conn, this.config);
+                lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, conn, this.config);
                 kingdom = new KingdomHandler(rnsReloadedRef, logger, this.config);
                 classHandler = new ClassHandler(rnsReloadedRef, logger);
 
