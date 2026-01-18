@@ -71,6 +71,46 @@ namespace RnSArchipelago.Utils
             }
         }
 
+        internal static RValue CreateRArray(object[] values)
+        {
+            if (IsReady(out var rnsReloaded))
+            {
+                var array = rnsReloaded.ExecuteCodeFunction("array_create", null, null, [new(values.Length)]);
+                if (array.HasValue)
+                {
+                    var arrayValues = array.Value;
+                    for (var i = 0; i < values.Length; i++)
+                    {
+                        if (values[i] is string s)
+                        {
+                            var stringValue = new RValue();
+                            rnsReloaded.CreateString(&stringValue, s);
+                            *arrayValues[i] = stringValue;
+
+                        }
+                        else if (values[i] is long l)
+                        {
+                            *arrayValues[i] = new RValue(l);
+                        } else if (values[i] is double d)
+                        {
+                            *arrayValues[i] = new RValue(d);
+                        } 
+                        else if (values[i] is int intValue)
+                        {
+                            *arrayValues[i] = new RValue(intValue);
+                        } 
+                        else
+                        {
+                            logger.PrintMessage(values[i] + " is not convertable", System.Drawing.Color.Red);
+                        }
+                    }
+
+                    return arrayValues;
+                }
+            }
+            return null;
+        }
+
         internal static bool IsEqualToNumeric(RValue* value, long testValue)
         {
             return value->Real == testValue || value->Int32 == testValue;

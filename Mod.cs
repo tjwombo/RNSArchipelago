@@ -39,6 +39,10 @@ namespace RnSArchipelago
         private readonly List<int> availableSpecial = [];
         private readonly List<int> availableDefensive = [];
 
+        private static readonly string[] keys = { "hardDiff", "lunarDiff", "charSpBlade", "charSniper", "charBruiser", "charDefender", "charAncient" };
+        private long[] originalUnlocks = new long[keys.Length];
+        private RValue* unlockKeys;
+
         internal IHook<ScriptDelegate>? oneShotHook;
 
         private LobbySettings? lobby;
@@ -478,7 +482,7 @@ namespace RnSArchipelago
                     // Validate archipelago options / connection
                     this.data.SetValue<string>(DataContext.Connection, "name", lobby.ArchipelagoName);
                     this.data.SetValue<string>(DataContext.Connection, "address", lobby.ArchipelagoAddress);
-                    this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
+                    this.data.SetValue<string>(DataContext.Connection, "numPlayers", "" + lobby.ArchipelagoNum);
                     this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
                     _ = conn?.StartConnection(true);
 
@@ -487,6 +491,22 @@ namespace RnSArchipelago
                     if (config.Save != null)
                     {
                         config.Save.Invoke();
+                    }
+
+                    // Lock/Unlock things for the save file
+                    unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
+                    var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
+
+                    if (keysLength.HasValue) {
+                        for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
+                        {
+                            var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
+                            if (keys.Contains(entry))
+                            {
+                                originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = HookUtil.GetNumeric(*rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i));
+                                *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = new RValue(1);
+                            }
+                        }
                     }
 
                     // Setup as if a friends only lobby or solo lobby based on the number of players
@@ -512,6 +532,22 @@ namespace RnSArchipelago
                     *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
                 } else
                 {
+                    // Restore the save file
+                    unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
+                    var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
+
+                    if (keysLength.HasValue)
+                    {
+                        for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
+                        {
+                            var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
+                            if (keys.Contains(entry))
+                            {
+                                *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = new RValue(originalUnlocks[i]);
+                            }
+                        }
+                    }
+
                     // Continue normally
                     if (this.archipelagoWebsocketHook != null)
                     {

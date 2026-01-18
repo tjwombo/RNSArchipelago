@@ -1125,23 +1125,13 @@ namespace RnSArchipelago.Game
                     currentPos = 0;
                 }
                 var notches = rnsReloaded.FindValue(instance, "notches");
-                var emptyString = new RValue();
-                rnsReloaded.CreateString(&emptyString, "");
+                var notch = HookUtil.CreateRArray([5, "", 0, 0]);
 
-                var notchArray = rnsReloaded.ExecuteCodeFunction("array_create", null, null, [new(4)]);
-                if (notchArray.HasValue)
-                {
-                    var notch = notchArray.Value;
-                    *notch[0] = new(5);
-                    *notch[1] = emptyString;
-                    *notch[2] = new(0);
-                    *notch[3] = new(0);
-
-                    // Actually increase things
-                    rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*notches, new RValue(currentPos + 1), notch]);
-                    rnsReloaded.FindValue(instance, "notchNumber")->Real = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "notchNumber")) + 1;
-                    rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
-                }
+                // Actually increase things
+                rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*notches, new RValue(currentPos + 1), notch]);
+                rnsReloaded.FindValue(instance, "notchNumber")->Real = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "notchNumber")) + 1;
+                rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
+                
             }
         }
 
