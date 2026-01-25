@@ -12,8 +12,9 @@ namespace RnSArchipelago.Utils
         internal static InventoryUtil Instance => _instance;
 
         internal ILoggerV1? logger;
-
-        internal SharedData data;
+        
+        // data will be initialized by Mod before it's used
+        internal SharedData data = null!;
 
         internal bool isActive;
         internal bool isKingdomSanity;
@@ -105,17 +106,17 @@ namespace RnSArchipelago.Utils
         {
             isActive = true;
 
-            isKingdomSanity = data.GetValue<long>(DataContext.Options, "kingdom_sanity") == 1;
-            isProgressive = data.GetValue<long>(DataContext.Options, "progressive_regions") == 1;
-            useKingdomOrderWithKingdomSanity = data.GetValue<long>(DataContext.Options, "kingdom_sanity_kingdom_order") == 1;
-            maxKingdoms = data.GetValue<long>(DataContext.Options, "max_kingdoms_per_run")!;
-            seed = data.GetValue<long>(DataContext.Options, "seed");
+            isKingdomSanity = data.options.Get<long>("kingdom_sanity") == 1;
+            isProgressive = data.options.Get<long>("progressive_regions") == 1;
+            useKingdomOrderWithKingdomSanity = data.options.Get<long>("kingdom_sanity_kingdom_order") == 1;
+            maxKingdoms = data.options.Get<long>("max_kingdoms_per_run");
+            seed = data.options.Get<long>("seed");
 
             if (!isKingdomSanity)
             {
                 AvailableKingdoms = KingdomFlags.All;
 
-                List<string> excluded_kingdoms = data.GetValue<JArray>(DataContext.Options, "excluded_kingdoms")?.ToObject<List<string>>()!;
+                List<string> excluded_kingdoms = data.options.Get<JArray>("excluded_kingdoms")?.ToObject<List<string>>()!;
 
                 foreach (var kingdom in excluded_kingdoms)
                 {
@@ -123,7 +124,7 @@ namespace RnSArchipelago.Utils
                 }
             }
 
-            var kingdomOrderDict = data.GetValue<JObject>(DataContext.Options, "kingdom_order")?.ToObject<Dictionary<string, int>>();
+            var kingdomOrderDict = data.options.Get<JObject>("kingdom_order")?.ToObject<Dictionary<string, int>>();
             kingdomOrder = [];
             foreach (var entry in kingdomOrderDict!)
             {
@@ -138,31 +139,31 @@ namespace RnSArchipelago.Utils
                 }
             }
 
-            isClassSanity = data.GetValue<long>(DataContext.Options, "class_sanity") == 1;
+            isClassSanity = data.options.Get<long>("class_sanity") == 1;
 
             if (!isClassSanity)
             {
                 AvailableClasses = ClassFlags.All;
             }
 
-            checksPerClass = data.GetValue<JArray>(DataContext.Options, "checks_per_class")?.ToObject<List<string>>()!;
+            checksPerClass = data.options.Get<JArray>("checks_per_class")?.ToObject<List<string>>()!;
             this.logger?.PrintMessage(String.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
 
-            shuffleItemsets = data.GetValue<long>(DataContext.Options, "shuffle_item_sets") == 1;
-            checksPerItemInChest = data.GetValue<long>(DataContext.Options, "checks_per_item_in_chest") == 1;
+            shuffleItemsets = data.options.Get<long>("shuffle_item_sets") == 1;
+            checksPerItemInChest = data.options.Get<long>("checks_per_item_in_chest") == 1;
 
-            UpgradeSanity = (UpgradeSetting)data.GetValue<long>(DataContext.Options, "upgrade_sanity");
+            UpgradeSanity = (UpgradeSetting) data.options.Get<long>("upgrade_sanity");
             this.logger?.PrintMessage(UpgradeSanity.ToString(), System.Drawing.Color.DarkOrange);
 
-            PotionSanity = (PotionSetting)data.GetValue<long>(DataContext.Options, "potion_sanity");
+            PotionSanity = (PotionSetting)data.options.Get<long>("potion_sanity");
             this.logger?.PrintMessage(PotionSanity.ToString(), System.Drawing.Color.DarkOrange);
 
-            goal = (GoalSetting)data.GetValue<long>(DataContext.Options, "goal_condition");
+            goal = (GoalSetting)data.options.Get<long>("goal_condition");
             this.logger?.PrintMessage(goal.ToString(), System.Drawing.Color.DarkOrange);
 
-            shiraKills = data.GetValue<long>(DataContext.Options, "shira_defeats")!;
+            shiraKills = data.options.Get<long>("shira_defeats")!;
 
-            shop_sanity = (ShopSetting)data.GetValue<long>(DataContext.Options, "shop_sanity");
+            shop_sanity = (ShopSetting)data.options.Get<long>("shop_sanity");
             this.logger?.PrintMessage(shop_sanity.ToString(), System.Drawing.Color.DarkOrange);
         }
 
@@ -334,7 +335,7 @@ namespace RnSArchipelago.Utils
         {
             foreach (var item in receivedItem.Items)
             {
-                var itemName = data.GetValue<string>(DataContext.IdToItem, item.Item);
+                var itemName = data.idToItem.Get<string>(item.Item);
                 if (itemName != default)
                 {
                     if (KINGDOMS.Contains(itemName))

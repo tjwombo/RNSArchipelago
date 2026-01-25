@@ -134,7 +134,7 @@ namespace RnSArchipelago.Connection
                     case ArchipelagoPacketType.RoomInfo:
                         // Save the seed so we can have a static random
                         var room = (RoomInfoPacket)packet;
-                        this.data?.SetValue<object>(DataContext.Options, "seed", room.SeedName);
+                        this.data?.options.Set<object>("seed", room.SeedName);
                         break;
                     case ArchipelagoPacketType.ConnectionRefused:
                         var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
@@ -150,7 +150,7 @@ namespace RnSArchipelago.Connection
                         foreach (var option in connected.SlotData)
                         {
                             this.logger?.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
-                            this.data?.SetValue<object>(DataContext.Options, option.Key, option.Value);
+                            this.data?.options.Set<object>(option.Key, option.Value);
                         }
                         InventoryUtil.Instance.logger = this.logger;
                         InventoryUtil.Instance.GetOptions();
@@ -171,7 +171,7 @@ namespace RnSArchipelago.Connection
                             var itemId = gameData.ItemLookup;
                             foreach (var item in itemId)
                             {
-                                this.data?.SetValue<string>(DataContext.IdToItem, item.Value, item.Key);
+                                this.data?.idToItem.Set<string>(item.Value, item.Key);
                             }
                         }
                         break;
