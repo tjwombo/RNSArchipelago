@@ -330,9 +330,9 @@ namespace RnSArchipelago.Utils
         internal List<string> AvailablePotions => availablePotions;
 
         // Handle receiving kingdom related items
-        internal void ReceiveItem(ReceivedItemsPacket recievedItem)
+        internal void ReceiveItem(ReceivedItemsPacket receivedItem)
         {
-            foreach (var item in recievedItem.Items)
+            foreach (var item in receivedItem.Items)
             {
                 var itemName = data.GetValue<string>(DataContext.IdToItem, item.Item);
                 if (itemName != default)

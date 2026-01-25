@@ -155,7 +155,7 @@ namespace RnSArchipelago.Connection
                         InventoryUtil.Instance.logger = this.logger;
                         InventoryUtil.Instance.GetOptions();
                         break;
-                    case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageRecieved, but actual mod use of items will be handled here
+                    case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageReceived, but actual mod use of items will be handled here
                         var itemPacket = (ReceivedItemsPacket)packet;
                         InventoryUtil.Instance.ReceiveItem(itemPacket);
                         // Maybe have a subscriber pattern here or in inventoryutil to invoke a method for each received item type
@@ -163,7 +163,7 @@ namespace RnSArchipelago.Connection
                     case ArchipelagoPacketType.LocationInfo:
                     case ArchipelagoPacketType.RoomUpdate:
                         break;
-                    case ArchipelagoPacketType.PrintJSON: // Handled through OnMessageRecieved, so will likely never use
+                    case ArchipelagoPacketType.PrintJSON: // Handled through OnMessageReceived, so will likely never use
                         break;
                     case ArchipelagoPacketType.DataPackage:
                         if (((DataPackagePacket)packet).DataPackage.Games.TryGetValue(GAME, out var gameData))
