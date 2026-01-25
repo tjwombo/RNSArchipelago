@@ -9,6 +9,8 @@ using System.Drawing;
 using RnSArchipelago.Utils;
 using RnSArchipelago.Data;
 using System.Diagnostics.CodeAnalysis;
+using Reloaded.Hooks.Definitions;
+using System.Collections.Concurrent;
 
 namespace RnSArchipelago.Connection
 {
@@ -26,6 +28,10 @@ namespace RnSArchipelago.Connection
         internal Config.Config? modConfig;
         internal SharedData? data;
 
+        internal IHook<ScriptDelegate>? addMessageHook;
+        internal readonly ConcurrentQueue<LogMessage> messages = new();
+        internal string errorMessage = "";
+
         private static readonly string GAME = "Rabbit and Steel";
         internal int slot = 0;
 
@@ -42,90 +48,46 @@ namespace RnSArchipelago.Connection
             return false;
         }
 
-        internal unsafe void SendDisconnectedMessage()
+        internal void OnMessageReceived(LogMessage message)
         {
-            if (IsReady(out var rnsReloaded))
+            switch (message)
             {
-                var message = new RValue();
-                rnsReloaded.CreateString(&message, "Disconnected from the multiworld");
-                rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), message, new(0)]);
+                case HintItemSendLogMessage hintLogMessage:
+                    if (modConfig?.SystemLog ?? false)
+                    {
+                        messages.Enqueue(hintLogMessage);
+                    }
+                    logger?.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
+                    break;
+                case ItemSendLogMessage itemSendLogMessage:
+                    if (modConfig != null &&
+                        (modConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
+                        ((modConfig.ProgressionLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
+                        (modConfig.UsefulLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
+                        (modConfig.FillerLog && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
+                        (modConfig.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap))))
+                    {
+                        messages.Enqueue(itemSendLogMessage);
+                    }
+                    logger?.PrintMessage(itemSendLogMessage.ToString(), System.Drawing.Color.Cyan);
+                    break;
+                case PlayerSpecificLogMessage:
+                case AdminCommandResultLogMessage:
+                case CommandResultLogMessage:
+                case CountdownLogMessage:
+                case ServerChatLogMessage:
+                case TutorialLogMessage:
+                default:
+                    if (modConfig?.SystemLog ?? false)
+                    {
+                        messages.Enqueue(message);
+                    }
+                    logger?.PrintMessage(message.ToString(), System.Drawing.Color.White);
+                    break;
             }
         }
 
-        internal unsafe void OnMessageReceived(LogMessage message)
-        {
-            if (IsReady(out var rnsReloaded))
-            {
-                switch (message)
-                {
-                    case HintItemSendLogMessage hintLogMessage:
-                        var hintReceiver = hintLogMessage.Receiver;
-                        var hintSender = hintLogMessage.Sender;
-                        var hintNetworkItem = hintLogMessage.Item;
-                        var hintFound = hintLogMessage.IsFound;
-
-                        if (modConfig?.SystemLog ?? false)
-                        {
-                            var hintMessage = new RValue();
-                            rnsReloaded.CreateString(&hintMessage, message.ToString());
-                            rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), hintMessage, new(0)]);
-                        }
-                        logger?.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
-                        break;
-                    case ItemSendLogMessage itemSendLogMessage:
-                        var receiver = itemSendLogMessage.Receiver;
-                        var sender = itemSendLogMessage.Sender;
-                        var networkItem = itemSendLogMessage.Item;
-
-                        var messageToSend = message.ToString();
-                        var sourceId = -1;
-                        if (itemSendLogMessage.IsSenderTheActivePlayer)
-                        {
-                            sourceId = 0;
-                            messageToSend = messageToSend.Remove(0, messageToSend.IndexOf(" "));
-                        }
-
-                        var itemMessage = new RValue();
-                        if (modConfig != null && 
-                            (modConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
-                            ((modConfig.ProgressionLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
-                            (modConfig.UsefulLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
-                            (modConfig.FillerLog && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
-                            (modConfig.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap))))
-                        {
-                            rnsReloaded.CreateString(&itemMessage, messageToSend);
-                            rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(sourceId), new(), new(0), itemMessage, new(0)]);
-                        }
-                        logger?.PrintMessage(message.ToString(), System.Drawing.Color.Cyan);
-                        break;
-                    case PlayerSpecificLogMessage playerLogMessage:
-                        var playerMessage = new RValue();
-                        if (modConfig?.SystemLog ?? false)
-                        {
-                            rnsReloaded.CreateString(&playerMessage, message.ToString());
-                            rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), playerMessage, new(0)]);
-                        }
-                        logger?.PrintMessage(message.ToString(), System.Drawing.Color.White);
-                        break;
-                    case AdminCommandResultLogMessage:
-                    case CommandResultLogMessage:
-                    case CountdownLogMessage:
-                    case ServerChatLogMessage:
-                    case TutorialLogMessage:
-                    default:
-                        if (modConfig?.SystemLog ?? false)
-                        {
-                            var gameMessage = new RValue();
-                            rnsReloaded.CreateString(&gameMessage, message.ToString());
-                            rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(0), new(0), gameMessage, new(0)]);
-                            logger?.PrintMessage(message.ToString(), System.Drawing.Color.White);
-                        }
-                        break;
-                }
-            }
-        }
-
-        internal unsafe void OnPacketReceived(ArchipelagoPacketBase packet)
+        internal void OnPacketReceived(ArchipelagoPacketBase packet)
         {
             if (IsReady(out var rnsReloaded))
             {
@@ -138,11 +100,9 @@ namespace RnSArchipelago.Connection
                         break;
                     case ArchipelagoPacketType.ConnectionRefused:
                         var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
-                        var gameMessage = new RValue();
-                        rnsReloaded.CreateString(&gameMessage, message);
-                        rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(), new(0), gameMessage, new(0)]);
+                        errorMessage = message;
                         this.logger?.PrintMessage(message, Color.Red);
-                        rnsReloaded.ExecuteScript("scr_runmenu_disband_disband", null, null, []);
+                        
                         break;
                     case ArchipelagoPacketType.Connected: // Get the options the user selected
                         var connected = (ConnectedPacket)packet;
@@ -182,6 +142,65 @@ namespace RnSArchipelago.Connection
                         break;
                 }
             }
+        }
+
+        internal unsafe RValue* AddMessage(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (IsReady(out var rnsReloaded))
+            {
+                if (errorMessage != "")
+                {
+                    var message = new RValue();
+                    rnsReloaded.CreateString(&message, errorMessage);
+                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(), new(0), message, new(0)]);
+
+                    // Return to lobby in a safe thread if there was a connection error
+                    if (errorMessage.StartsWith("Connection refused: "))
+                    {
+                        rnsReloaded.ExecuteScript("scr_runmenu_disband_disband", null, null, []);
+                    }
+                    errorMessage = "";
+                }
+                else if (messages.TryDequeue(out var message))
+                {
+                    var sourceId = -1;
+                    var typedMessage = new RValue();
+
+                    switch (message)
+                    {
+                        case ItemSendLogMessage itemSendLogMessage:
+                            var messageToSend = itemSendLogMessage.ToString();
+                            
+                            if (itemSendLogMessage.IsSenderTheActivePlayer)
+                            {
+                                sourceId = 0;
+                                messageToSend = messageToSend.Remove(0, messageToSend.IndexOf(" "));
+                            }
+
+                            rnsReloaded.CreateString(&typedMessage, messageToSend);
+
+                            break;
+                        default:
+                            if (modConfig?.SystemLog ?? false)
+                            {
+                                rnsReloaded.CreateString(&typedMessage, message.ToString());
+                            }
+                            break;
+                    }
+
+                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(sourceId), new(), new(0), typedMessage, new(0)]);
+
+                }
+            }
+            if (this.addMessageHook != null)
+            {
+                returnValue = this.addMessageHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger?.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
+            }
+            return returnValue;
         }
     }
 }

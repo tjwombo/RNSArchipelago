@@ -112,11 +112,11 @@ namespace RnSArchipelago
                 this.outskirtsNHook.Enable();*/
 
                 // Test temp hook
-                var testId = rnsReloaded.ScriptFindId("scr_runmenu_midrun_continue");
+                /*var testId = rnsReloaded.ScriptFindId("gameframe_get_border_width");
                 var testScript = rnsReloaded.GetScriptData(testId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
                 this.setItemHook.Activate();
-                this.setItemHook.Enable();
+                this.setItemHook.Enable();*/
 
 
                 AddArchipelagoButtonToMenu(); // Adds archipelago as a lobbyType
@@ -313,6 +313,13 @@ namespace RnSArchipelago
                     conn.resetConnEndHook.Activate();
                     conn.resetConnEndHook.Enable();
                 }
+
+                // Set up in game message queue checking
+                var drawId = rnsReloaded.ScriptFindId("gameframe_draw");
+                var drawScript = rnsReloaded.GetScriptData(drawId - 100000);
+                MessageHandler.Instance.addMessageHook = hooks.CreateHook<ScriptDelegate>(MessageHandler.Instance.AddMessage, drawScript->Functions->Function);
+                MessageHandler.Instance.addMessageHook.Activate();
+                MessageHandler.Instance.addMessageHook.Enable();
             }
         }
 

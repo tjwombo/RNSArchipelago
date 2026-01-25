@@ -99,7 +99,7 @@ namespace RnSArchipelago.Connection
                     
                     if (returnToTitle)
                     {
-                        MessageHandler.Instance.SendDisconnectedMessage();
+                        MessageHandler.Instance.errorMessage = "Disconnected from the multiworld";
                         ReturnToTitle();
                     }
 
@@ -161,6 +161,8 @@ namespace RnSArchipelago.Connection
         {
             InventoryUtil.Instance.Reset();
 
+            MessageHandler.Instance.messages.Clear();
+
             data.SetValue<string>(DataContext.Connection, "name", default!);
             data.SetValue<string>(DataContext.Connection, "address", default!);
             data.SetValue<string>(DataContext.Connection, "numPlayers", default!);
@@ -180,7 +182,7 @@ namespace RnSArchipelago.Connection
         internal void ConnectionClosed(string reason)
         {
             logger.PrintMessage("Connection closed: " + reason, System.Drawing.Color.Red);
-            MessageHandler.Instance.SendDisconnectedMessage();
+            MessageHandler.Instance.errorMessage = "Disconnected from the multiworld";
             if (session != null && session.Socket != null)
             {
                 session.MessageLog.OnMessageReceived -= MessageHandler.Instance.OnMessageReceived;
@@ -197,7 +199,7 @@ namespace RnSArchipelago.Connection
             if (message == "The remote party closed the WebSocket connection without completing the close handshake." ||
                 message.Contains("Unable to connect to the remote server"))
             {
-                MessageHandler.Instance.SendDisconnectedMessage();
+                MessageHandler.Instance.errorMessage = "Disconnected from the multiworld";
                 session = null;
             }
 
