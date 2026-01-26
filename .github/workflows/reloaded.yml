@@ -16,9 +16,6 @@ on:
   push:
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
 
 env: 
   PUBLISH_COMMON_PATH: ./Publish/ToUpload/
