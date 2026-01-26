@@ -32,6 +32,9 @@ namespace RnSArchipelago
         private IHook<ScriptDelegate>? setItemHook;
 
         private IHook<ScriptDelegate>? archipelagoWebsocketHook;
+        private IHook<ScriptDelegate>? screenUpdateHook;
+        private TaskFactory gameThreadTaskFactory;
+        private ThreadBoundTaskScheduler gameThreadTaskScheduler;
 
         private IHook<ScriptDelegate>? selectCharacterAbilitiesHook;
         private readonly List<int> availablePrimary = [];
@@ -83,6 +86,7 @@ namespace RnSArchipelago
                 HookUtil.logger = logger;
                 ShopItemsUtil.logger = logger;
                 InventoryUtil.Instance.data = data;
+                MessageHandler.Instance.mod = this;
                 MessageHandler.Instance.rnsReloadedRef = rnsReloadedRef;
                 MessageHandler.Instance.logger = logger;
                 MessageHandler.Instance.modConfig = this.config;
@@ -292,6 +296,14 @@ namespace RnSArchipelago
                 this.archipelagoWebsocketHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoWebsocket, menuScript->Functions->Function);
                 this.archipelagoWebsocketHook.Activate();
                 this.archipelagoWebsocketHook.Enable();
+                
+                var screenUpdateId = rnsReloaded.ScriptFindId("scr_should_update");
+                var screenUpdateScript = rnsReloaded.GetScriptData(screenUpdateId - 100000);
+                this.gameThreadTaskScheduler = new(Thread.CurrentThread);
+                this.gameThreadTaskFactory = new(this.gameThreadTaskScheduler);
+                this.screenUpdateHook = hooks.CreateHook<ScriptDelegate>(this.OnScreenUpdate, screenUpdateScript->Functions->Function);
+                this.screenUpdateHook.Activate();
+                this.screenUpdateHook.Enable();
 
                 if (conn != null)
                 {
@@ -525,6 +537,24 @@ namespace RnSArchipelago
             }
            
             return returnValue;
+        }
+
+        private RValue* OnScreenUpdate(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            this.gameThreadTaskScheduler.Run();
+            return this.screenUpdateHook!.OriginalFunction(self, other, returnValue, argc, argv);
+        }
+
+        public Task RunOnGameThread(Action action)
+        {
+            return this.gameThreadTaskFactory.StartNew(action);
+        }
+
+        public Task<T> RunOnGameThread<T>(Func<T> action)
+        {
+            return this.gameThreadTaskFactory.StartNew(action);
         }
 
         // Set up the hooks for kingdom sanity handling
