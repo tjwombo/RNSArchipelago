@@ -39,6 +39,7 @@ namespace RnSArchipelago
         private readonly List<int> availableSpecial = [];
         private readonly List<int> availableDefensive = [];
 
+        internal IHook<ScriptDelegate>? originalUnlockHook;
         private static readonly string[] keys = { "hardDiff", "lunarDiff", "charSpBlade", "charSniper", "charBruiser", "charDefender", "charAncient" };
         private long[] originalUnlocks = new long[keys.Length];
         private RValue* unlockKeys;
@@ -287,6 +288,13 @@ namespace RnSArchipelago
                 this.IsReady(out var rnsReloaded, out var hooks)
             )
             {
+                // Store the initial unlock keys configuration
+                var saveId = rnsReloaded.ScriptFindId("scr_unlock_read_save");
+                var saveScript = rnsReloaded.GetScriptData(saveId - 100000);
+                this.originalUnlockHook = hooks.CreateHook<ScriptDelegate>(this.SetOriginalUnlock, saveScript->Functions->Function);
+                this.originalUnlockHook.Activate();
+                this.originalUnlockHook.Enable();
+
                 // Start the connection to archipelago
                 var menuId = rnsReloaded.ScriptFindId("scr_runmenu_main_startrun_multi");
                 var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
@@ -473,6 +481,41 @@ namespace RnSArchipelago
             return returnValue;
         }
 
+        private RValue* SetOriginalUnlock(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            if (this.originalUnlockHook != null)
+            {
+                returnValue = this.originalUnlockHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call original unlock hook", System.Drawing.Color.Red);
+            }
+
+            if (IsReady(out var rnsReloaded))
+            {
+                this.logger.PrintMessage("1", System.Drawing.Color.Red);
+                unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
+                var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
+                if (keysLength.HasValue)
+                {
+                    for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
+                    {
+                        var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
+                        if (keys.Contains(entry))
+                        {
+                            this.logger.PrintMessage("a", System.Drawing.Color.Red);
+                            originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = HookUtil.GetNumeric(*rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i));
+                        }
+                    }
+                }
+            }
+
+            return returnValue;
+        }
+
         // Create and validate the websocket connection to archipelago before moving to the character selection room
         private RValue* CreateArchipelagoWebsocket(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
@@ -537,7 +580,6 @@ namespace RnSArchipelago
                 } else
                 {
                     // Restore the save file
-                    unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
                     var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
 
                     if (keysLength.HasValue)
