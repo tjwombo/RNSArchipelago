@@ -32,6 +32,7 @@ namespace RnSArchipelago.Game
         //internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
         internal IHook<ScriptDelegate>? takeItemHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartNHook;
+        internal IHook<ScriptDelegate>? readyCheckHook;
 
         internal ArchipelagoConnection conn = null!;
         private long baseItemId = -1;
@@ -1026,17 +1027,18 @@ namespace RnSArchipelago.Game
                 var baseLocation = GetBaseLocation();
 
                 HookUtil.FindElementInLayer("Ally", "allyId", out var instance);
-                var element = ((CLayerInstanceElement*)instance)->Instance;
-                var characterId = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "allyId"));
-                var character = InventoryUtil.Instance.GetClass(characterId);
-
-                if (conn.session != null)
+                if (instance != null)
                 {
-                    long[] locations = [conn.session.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(GAME, baseLocation + " - " + character)];
-                    var locationPacket = new LocationChecksPacket { Locations = locations };
-                    //conn.session.Socket.SendPacket(locationPacket);
-                    conn.session.Locations.CompleteLocationChecksAsync(locations);
-                }
+                    var element = ((CLayerInstanceElement*)instance)->Instance;
+                    var characterId = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "allyId"));
+                    var character = InventoryUtil.Instance.GetClass(characterId);
+
+                    if (conn.session != null)
+                    {
+                        long[] locations = [conn.session.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(GAME, baseLocation + " - " + character)];
+                        conn.session.Locations.CompleteLocationChecksAsync(locations);
+                    }
+                }   
             }
         }
 
@@ -1174,6 +1176,30 @@ namespace RnSArchipelago.Game
                 this.logger.PrintMessage("Return From Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
             }
 
+            return returnValue;
+        }
+
+        internal RValue* StopReadyCheck(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+
+            if (IsReady(out var rnsReloaded))
+            {
+                if (!InventoryUtil.Instance.isActive && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                {
+                    HookUtil.FindElementInLayer("PlayerField", "percent", out var fieldElement);
+                    if (fieldElement != null)
+                    {
+                        var fieldInstance = new RValue(((CLayerInstanceElement*)fieldElement)->Instance);
+                        *fieldInstance.Get("percent") = new(-0.1);
+                    }
+                }
+            }
+
+
+            if (this.readyCheckHook != null)
+            {
+                returnValue = this.readyCheckHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
             return returnValue;
         }
 

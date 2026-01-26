@@ -1,4 +1,5 @@
-﻿using Reloaded.Hooks.Definitions;
+﻿using Archipelago.MultiClient.Net.Packets;
+using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
@@ -13,6 +14,7 @@ namespace RnSArchipelago.Game
         private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
         private readonly ILoggerV1 logger;
         internal Config.Config? modConfig;
+        internal LocationHandler locationHandler;
 
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
@@ -32,11 +34,12 @@ namespace RnSArchipelago.Game
             return false;
         }
 
-        internal KingdomHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, Config.Config modConfig)
+        internal KingdomHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, Config.Config modConfig, LocationHandler locationHandler)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.modConfig = modConfig;
+            this.locationHandler = locationHandler;
         }
 
         // Calcuate the number of kingdoms your currently allowed to visit in a run
@@ -342,6 +345,7 @@ namespace RnSArchipelago.Game
             {
                 if (InventoryUtil.Instance.isActive)
                 {
+
                     if (modConfig?.ExtraDebugMessages ?? false)
                     {
                         this.logger.PrintMessage("Manage Route Length", System.Drawing.Color.DarkOrange);
@@ -355,6 +359,20 @@ namespace RnSArchipelago.Game
                         UpdateRouteLength();
                     }
 
+                    // Backup send location in case they disconnected during the fight
+                    HookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var element);
+                    if (element != null)
+                    {
+                        var instance = new RValue(((CLayerInstanceElement*)element)->Instance);
+                        // Wasn't playing well with IsEqualToNumeric
+                        var currentPos = HookUtil.GetNumeric(instance.Get("currentPos"));
+                        var hallwayPos = HookUtil.GetNumeric(instance.Get("hallwayPos"));
+                        if (currentPos != 0 || hallwayPos != 0)
+                        {
+                            locationHandler.SendNotchLoctaion(); // TODO: Will send a location even if we skip a chest. Unsure if I like that or not
+                        }
+                    }
+
                     if (EndRouteEarly())
                     {
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
@@ -364,9 +382,6 @@ namespace RnSArchipelago.Game
                         }
                         return returnValue;
                     }
-                } else if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
-                {
-                    return returnValue;
                 }
             }
             if (modConfig?.ExtraDebugMessages ?? false)

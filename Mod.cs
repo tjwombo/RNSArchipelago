@@ -95,7 +95,7 @@ namespace RnSArchipelago
                 locationHandler = new LocationHandler(rnsReloadedRef, logger, this.config);
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, this.config, data, locationHandler);
                 lobby = new LobbySettings(rnsReloadedRef, logger, hooksRef, conn, this.config);
-                kingdom = new KingdomHandler(rnsReloadedRef, logger, this.config);
+                kingdom = new KingdomHandler(rnsReloadedRef, logger, this.config, locationHandler);
                 classHandler = new ClassHandler(rnsReloadedRef, logger);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
@@ -127,7 +127,7 @@ namespace RnSArchipelago
                 SetupSendBattleAndChestLocations(); // Creates the hook to send locations on encounter win and chest open
                 SetupArchipelagoItems(); // Creates the archipelago items and puts them in the correct chest
 
-                SetupKingdomSanity(); // Modifies the route based on current items
+                SetupKingdomManagement(); // Modifies the route based on current items
 
                 SetupClassSanity(); // Limits the classes you can play based on current items
 
@@ -218,15 +218,12 @@ namespace RnSArchipelago
                 lobby.archipelagoOptionsHook.Activate();
                 lobby.archipelagoOptionsHook.Enable();
 
-                // Create a sudo step function to run while the display is visible
-                var osId = rnsReloaded.CodeFunctionFind("os_get_info");
-                if (osId.HasValue)
-                {
-                    // Update the info banner
-                    var osScript = rnsReloaded.GetScriptData(osId.Value);
-                    lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, osScript->Functions->Function);
-                    lobby.lobbySettingsDisplayStepHook.Activate();
-                }
+                // Update the info banner through a step function
+                var displayId = rnsReloaded.ScriptFindId("gameframe_draw");
+                var displayScript = rnsReloaded.GetScriptData(displayId - 100000);
+                lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, displayScript->Functions->Function);
+                lobby.lobbySettingsDisplayStepHook.Activate();
+
 
                 // Update the name if entered before returning
                 var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
@@ -571,7 +568,7 @@ namespace RnSArchipelago
         }
 
         // Set up the hooks for kingdom sanity handling
-        private void SetupKingdomSanity()
+        private void SetupKingdomManagement()
         {
             if (this.IsReady(out var rnsReloaded, out var hooks))
             {
@@ -598,6 +595,11 @@ namespace RnSArchipelago
                 kingdom.fixEndIconsHook = hooks.CreateHook<ScriptDelegate>(kingdom.ModifyEndScreenIcons, iconsEndScript->Functions->Function);
                 kingdom.fixEndIconsHook.Activate();
                 kingdom.fixEndIconsHook.Enable();
+
+                var readyCheckScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_should_update") - 100000);
+                locationHandler.readyCheckHook = hooks.CreateHook<ScriptDelegate>(locationHandler.StopReadyCheck, readyCheckScript->Functions->Function);
+                locationHandler.readyCheckHook.Activate();
+                locationHandler.readyCheckHook.Enable();
             }
         }
 
