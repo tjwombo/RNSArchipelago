@@ -55,7 +55,7 @@ namespace RnSArchipelago.Connection
         internal async Task StartConnection(bool returnToTitle = false)
         {
 
-            var address = data.GetValue<string>(DataContext.Connection, "address");
+            var address = data.connection.Get<string>("address");
 
             if (session == null || !session.Socket.Connected)
             {
@@ -161,12 +161,10 @@ namespace RnSArchipelago.Connection
         {
             InventoryUtil.Instance.Reset();
 
-            MessageHandler.Instance.messages.Clear();
-
-            data.SetValue<string>(DataContext.Connection, "name", default!);
-            data.SetValue<string>(DataContext.Connection, "address", default!);
-            data.SetValue<string>(DataContext.Connection, "numPlayers", default!);
-            data.SetValue<string>(DataContext.Connection, "password", default!);
+            data.connection.Set<string>("name", default!);
+            data.connection.Set<string>("address", default!);
+            data.connection.Set<string>("numPlayers", default!);
+            data.connection.Set<string>("password", default!);
 
             if (this.session != null && this.session.Socket != null && this.session.Socket.Connected)
             {
@@ -223,8 +221,8 @@ namespace RnSArchipelago.Connection
         internal void JoinRoom(RoomInfoPacket roomInfo)
         {
 
-            var name = this.data.GetValue<string>(DataContext.Connection, "name");
-            var password = this.data.GetValue<string>(DataContext.Connection, "password");
+            var name = this.data.connection.Get<string>("name");
+            var password = this.data.connection.Get<string>("password");
 
             var connect = new ConnectPacket();
             if (roomInfo.Password)
