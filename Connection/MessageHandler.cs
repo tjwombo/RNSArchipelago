@@ -134,7 +134,7 @@ namespace RnSArchipelago.Connection
                     case ArchipelagoPacketType.RoomInfo:
                         // Save the seed so we can have a static random
                         var room = (RoomInfoPacket)packet;
-                        this.data?.options.Set<object>("seed", room.SeedName);
+                        this.data?.options.Set("seed", room.SeedName);
                         break;
                     case ArchipelagoPacketType.ConnectionRefused:
                         var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);

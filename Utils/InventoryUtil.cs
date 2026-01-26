@@ -22,7 +22,7 @@ namespace RnSArchipelago.Utils
         internal bool isProgressive;
         internal bool useKingdomOrderWithKingdomSanity;
         internal long maxKingdoms;
-        internal long seed;
+        internal string? seed;
         internal Dictionary<int, List<string>> kingdomOrder = [];
 
         internal bool isClassSanity;
@@ -110,7 +110,7 @@ namespace RnSArchipelago.Utils
             isProgressive = data.options.Get<long>("progressive_regions") == 1;
             useKingdomOrderWithKingdomSanity = data.options.Get<long>("kingdom_sanity_kingdom_order") == 1;
             maxKingdoms = data.options.Get<long>("max_kingdoms_per_run");
-            seed = data.options.Get<long>("seed");
+            seed = data.options.Get<string>("seed");
 
             if (!isKingdomSanity)
             {
