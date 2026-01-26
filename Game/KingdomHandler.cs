@@ -414,7 +414,7 @@ namespace RnSArchipelago.Game
                                     var seedLength = rnsReloaded.ArrayGetLength(seed);
                                     if (seedLength.HasValue && HookUtil.GetNumeric(seedLength.Value) != maxCanRun + 3)
                                     {
-                                        var rand = new Random((int)(InventoryUtil.Instance.seed));
+                                        var rand = new Random(InventoryUtil.Instance.seed?.GetHashCode() ?? default);
                                         //var rand = new Random();
                                         ModifyElementVariable(hallway, "hallseed", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(rand.Next())).ToArray());
                                     }

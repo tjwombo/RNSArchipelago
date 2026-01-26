@@ -476,10 +476,10 @@ namespace RnSArchipelago
                 if (lobby != null && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
                     // Validate archipelago options / connection
-                    this.data.SetValue<string>(DataContext.Connection, "name", lobby.ArchipelagoName);
-                    this.data.SetValue<string>(DataContext.Connection, "address", lobby.ArchipelagoAddress);
-                    this.data.SetValue<string>(DataContext.Connection, "numPlayers", ""+lobby.ArchipelagoNum);
-                    this.data.SetValue<string>(DataContext.Connection, "password", lobby.ArchipelagoPassword);
+                    this.data.connection.Set<string>("name", lobby.ArchipelagoName);
+                    this.data.connection.Set<string>("address", lobby.ArchipelagoAddress);
+                    this.data.connection.Set<string>("numPlayers", $"{lobby.ArchipelagoNum}");
+                    this.data.connection.Set<string>("password", lobby.ArchipelagoPassword);
                     _ = conn?.StartConnection(true);
 
                     config.ArchipelagoName = lobby.ArchipelagoName;
