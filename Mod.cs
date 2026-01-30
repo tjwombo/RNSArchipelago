@@ -496,7 +496,6 @@ namespace RnSArchipelago
 
             if (IsReady(out var rnsReloaded))
             {
-                this.logger.PrintMessage("1", System.Drawing.Color.Red);
                 unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
                 var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
                 if (keysLength.HasValue)
@@ -506,7 +505,6 @@ namespace RnSArchipelago
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
                         if (keys.Contains(entry))
                         {
-                            this.logger.PrintMessage("a", System.Drawing.Color.Red);
                             originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = HookUtil.GetNumeric(*rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i));
                         }
                     }

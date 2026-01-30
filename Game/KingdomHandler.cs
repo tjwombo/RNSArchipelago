@@ -4,6 +4,7 @@ using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using static RnSArchipelago.Utils.HookUtil;
 
@@ -367,7 +368,8 @@ namespace RnSArchipelago.Game
                         // Wasn't playing well with IsEqualToNumeric
                         var currentPos = HookUtil.GetNumeric(instance.Get("currentPos"));
                         var hallwayPos = HookUtil.GetNumeric(instance.Get("hallwayPos"));
-                        if (currentPos != 0 || hallwayPos != 0)
+                        var index = HookUtil.GetNumeric(instance.Get("currentPos"));
+                        if ((currentPos != 0 || hallwayPos != 0) && index != -1)
                         {
                             locationHandler.SendNotchLoctaion(); // TODO: Will send a location even if we skip a chest. Unsure if I like that or not
                         }
