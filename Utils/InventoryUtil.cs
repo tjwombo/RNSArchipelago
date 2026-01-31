@@ -1,5 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
 using Newtonsoft.Json.Linq;
+using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Data;
 
@@ -7,14 +8,15 @@ namespace RnSArchipelago.Utils
 {
     internal class InventoryUtil
     {
-        private static readonly InventoryUtil _instance = new InventoryUtil();
+        private readonly ILogger logger;
+        private readonly SharedData data;
 
-        internal static InventoryUtil Instance => _instance;
-
-        internal ILoggerV1? logger;
-        
-        // data will be initialized by Mod before it's used
-        internal SharedData data = null!;
+        public InventoryUtil(ILogger logger, SharedData data)
+        {
+            this.logger = logger;
+            this.data = data;
+            Reset();
+        }
 
         internal bool isActive;
         internal bool isKingdomSanity;
@@ -77,10 +79,6 @@ namespace RnSArchipelago.Utils
         }
 
         internal ShopSetting ShopSanity => shop_sanity;
-
-
-
-        private InventoryUtil() => Reset();
 
         internal void Reset()
         {
@@ -368,7 +366,7 @@ namespace RnSArchipelago.Utils
                     else if (UPGRADES.Contains(itemName))
                     {
                         var enumName = itemName.Replace(" ", "");
-                        if (InventoryUtil.Instance.UpgradeSanity == InventoryUtil.UpgradeSetting.Simple)
+                        if (this.UpgradeSanity == InventoryUtil.UpgradeSetting.Simple)
                         {
                             if (enumName.Contains("Emerald"))
                             {

@@ -9,14 +9,20 @@ using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using System.Diagnostics.CodeAnalysis;
+using Reloaded.Mod.Interfaces;
 
 namespace RnSArchipelago.Game
 {
     internal unsafe class LocationHandler
     {
-        private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
-        private readonly ILoggerV1 logger;
-        internal Config.Config? modConfig;
+        private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
+        private readonly Random rand;
+        private readonly ILogger logger;
+        private readonly HookUtil hookUtil;
+        private readonly InventoryUtil inventoryUtil;
+        private readonly ShopItemsUtil shopItemsUtil;
+        private readonly Config.Config modConfig;
+        private readonly ArchipelagoConnection conn;
 
         internal IHook<ScriptDelegate>? notchCompleteHook;
         internal IHook<ScriptDelegate>? chestOpenHook;
@@ -34,10 +40,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartNHook;
         internal IHook<ScriptDelegate>? readyCheckHook;
 
-        internal ArchipelagoConnection conn = null!;
         private long baseItemId = -1;
-
-        private Random rand = new Random();
 
         private static readonly string GAME = "Rabbit and Steel";
         private static readonly string[] STARTING_LOCATIONS = ["Starting Class", "Starting Kingdom", "Starting Primary", "Starting Secondary", "Starting Special", "Starting Defensive"];
@@ -48,27 +51,19 @@ namespace RnSArchipelago.Game
         private Task<Dictionary<long, ScoutedItemInfo>> chestContents = null!;
         private Task<Dictionary<long, ScoutedItemInfo>> shopContents = null!;
 
-        private bool IsReady(
-            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
-        )
-        {
-            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
-            {
-                return rnsReloaded != null;
-            }
-            this.logger.PrintMessage("Unable to find rnsReloaded in LocationHandler", System.Drawing.Color.Red);
-            rnsReloaded = null;
-            return false;
-        }
-
-        internal LocationHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, Config.Config modConfig)
+        internal LocationHandler(WeakReference<IRNSReloaded> rnsReloadedRef, Random rand, ILogger logger, HookUtil hookUtil, InventoryUtil inventoryUtil, ShopItemsUtil shopItemsUtil, Config.Config modConfig, ArchipelagoConnection conn)
         {
             this.rnsReloadedRef = rnsReloadedRef;
+            this.rand = rand;
             this.logger = logger;
+            this.hookUtil = hookUtil;
+            this.inventoryUtil = inventoryUtil;
+            this.shopItemsUtil = shopItemsUtil;
             this.modConfig = modConfig;
+            this.conn = conn;
 
-            InventoryUtil.Instance.AddChest += AddChestToNotch;
-            InventoryUtil.Instance.SendGoal += SendGoal;
+            this.inventoryUtil.AddChest += AddChestToNotch;
+            this.inventoryUtil.SendGoal += SendGoal;
         }
 
         private enum LocationType
@@ -85,33 +80,33 @@ namespace RnSArchipelago.Game
         // Get the location type of the provided notch index, default is current notch
         private LocationType GetLocationType(int index = -1)
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                HookUtil.FindElementInLayer("RunMenu_Blocker", "xSubimg", out var element);
+                this.hookUtil.FindElementInLayer("RunMenu_Blocker", "xSubimg", out var element);
                 var instance = ((CLayerInstanceElement*)element)->Instance;
                 if (index == -1)
                 {
-                    index = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
+                    index = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
                 }
                 var currentXImg = rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "xSubimg"), index);
 
-                if (HookUtil.IsEqualToNumeric(currentXImg, 1))
+                if (this.hookUtil.IsEqualToNumeric(currentXImg, 1))
                 {
                     return LocationType.Chest;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 2))
+                else if (this.hookUtil.IsEqualToNumeric(currentXImg, 2))
                 {
                     return LocationType.Shop;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 4))
+                else if (this.hookUtil.IsEqualToNumeric(currentXImg, 4))
                 {
                     return LocationType.Boss;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 5))
+                else if (this.hookUtil.IsEqualToNumeric(currentXImg, 5))
                 {
                     return LocationType.SpecialChest;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 0))
+                else if (this.hookUtil.IsEqualToNumeric(currentXImg, 0))
                 {
                     return LocationType.Battle;
                 }
@@ -133,7 +128,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call notch complete hook", System.Drawing.Color.Red);
             }
-            if (InventoryUtil.Instance.isActive)
+            if (this.inventoryUtil.isActive)
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -162,7 +157,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call chest open hook", System.Drawing.Color.Red);
             }
-            if (InventoryUtil.Instance.isActive)
+            if (this.inventoryUtil.isActive)
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -191,7 +186,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call setup items hook", System.Drawing.Color.Red);
             }
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -202,7 +197,7 @@ namespace RnSArchipelago.Game
                 var modInfoLength = rnsReloaded.ArrayGetLength(modInfo);
                 if (modInfoLength.HasValue)
                 {
-                    for (var i = 0; i < HookUtil.GetNumeric(modInfoLength.Value); i++)
+                    for (var i = 0; i < this.hookUtil.GetNumeric(modInfoLength.Value); i++)
                     {
                         var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
                         if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
@@ -252,7 +247,7 @@ namespace RnSArchipelago.Game
                 this.logger.PrintMessage("Unable to call enable mod hook", System.Drawing.Color.Red);
             }
 
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -262,7 +257,7 @@ namespace RnSArchipelago.Game
                 var modInfoLength = rnsReloaded.ArrayGetLength(modInfo);
                 if (modInfoLength.HasValue)
                 {
-                    for (var i = 0; i < HookUtil.GetNumeric(modInfoLength.Value); i++)
+                    for (var i = 0; i < this.hookUtil.GetNumeric(modInfoLength.Value); i++)
                     {
                         var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
                         if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
@@ -287,7 +282,7 @@ namespace RnSArchipelago.Game
         // Scout the network items in the chest ahead of time so once we need the results the task has finished
         internal RValue* ScoutChestItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (InventoryUtil.Instance.isActive)
+            if (this.inventoryUtil.isActive)
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -316,9 +311,9 @@ namespace RnSArchipelago.Game
         // Scout the network items in the shop ahead of time so once we need the results the task has finished
         internal RValue* ScoutShopItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (InventoryUtil.Instance.isActive)
+                if (this.inventoryUtil.isActive)
                 {
                     if (modConfig?.ExtraDebugMessages ?? false)
                     {
@@ -342,11 +337,11 @@ namespace RnSArchipelago.Game
                     long? id = -1;
                     for (var j = 0; j < 9; j++)
                     {
-                        id = conn.session?.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[j]);
+                        id = this.conn.session?.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[j]);
 
                         // TODO: RE-TURN THIS ON WHEN THE AP ITEM HAS BEEN BOUGHT
                         // if the item is an archipelago item, disable the purchase condition, mainly applies to hp and upgrades
-                        if (id.HasValue && conn.session != null && !conn.session.Locations.AllLocationsChecked.Contains(id.Value))
+                        if (id.HasValue && this.conn.session != null && !this.conn.session.Locations.AllLocationsChecked.Contains(id.Value))
                         {
                             *rnsReloaded.ArrayGetEntry(instance["storeSlotHeal"], j) = new RValue(0);
                             *rnsReloaded.ArrayGetEntry(instance["storeSlotUpgrade"], j) = new RValue(0);
@@ -392,7 +387,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item amount hook", System.Drawing.Color.Red);
             }
-            if (InventoryUtil.Instance.isActive)
+            if (this.inventoryUtil.isActive)
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -411,7 +406,7 @@ namespace RnSArchipelago.Game
         {
             if (conn.session != null)
             {
-                if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Global)
+                if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                 {
                     long id = conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
@@ -430,7 +425,7 @@ namespace RnSArchipelago.Game
                         return;
                     }
                 }
-                else if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Regional)
+                else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                 {
                     long id = conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
@@ -460,9 +455,9 @@ namespace RnSArchipelago.Game
         // Set the item inside the chest to the proper item
         internal RValue* SetItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (InventoryUtil.Instance.isActive)
+                if (this.inventoryUtil.isActive)
                 {
                     if (modConfig?.ExtraDebugMessages ?? false)
                     {
@@ -473,12 +468,12 @@ namespace RnSArchipelago.Game
                     if (location == LocationType.Chest)
                     {
                         // Set the item to the archipelago item
-                        if (InventoryUtil.Instance.checksPerItemInChest)
+                        if (this.inventoryUtil.checksPerItemInChest)
                         {
                             for (var i = 0; i < 5; i++)
                             {
                                 // Determine which slot item we are at, which should be the first -1
-                                if (HookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 1), i), 1), -1))
+                                if (this.hookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 1), i), 1), -1))
                                 {
                                     var info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos(i))];
 
@@ -500,16 +495,16 @@ namespace RnSArchipelago.Game
                                 }
                             }
                         }
-                        else if (InventoryUtil.Instance.shuffleItemsets)
+                        else if (this.inventoryUtil.shuffleItemsets)
                         {
-                            if (InventoryUtil.Instance.AvailableItems.Count == 0)
+                            if (this.inventoryUtil.AvailableItems.Count == 0)
                             {
                                 *argv[0] = new RValue(0);
                             }
                             else
                             {
-                                var index = rand.Next(InventoryUtil.Instance.AvailableItems.Count);
-                                *argv[0] = new RValue(InventoryUtil.Instance.AvailableItems[index]);
+                                var index = this.rand.Next(this.inventoryUtil.AvailableItems.Count);
+                                *argv[0] = new RValue(this.inventoryUtil.AvailableItems[index]);
                             }
                         }
                     }
@@ -519,14 +514,14 @@ namespace RnSArchipelago.Game
                         // Determine which slot item we are at, which should be the first -1
                         for (var i = 0; i < 9; i++)
                         {
-                            if (HookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 2), i), 1), -1))
+                            if (this.hookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 2), i), 1), -1))
                             {
                                 GetUnclaimedShopItems(i, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem);
 
                                 switch (i)
                                 {
                                     case 0:
-                                        ShopItemsUtil.SetHpPotion(argv, archipelagoItem, useArchipelagoItem);
+                                        this.shopItemsUtil.SetHpPotion(argv, archipelagoItem, useArchipelagoItem);
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -536,7 +531,7 @@ namespace RnSArchipelago.Game
                                         }
                                         break;
                                     case 1:
-                                        ShopItemsUtil.SetLevelPotion(argv, archipelagoItem, useArchipelagoItem);
+                                        this.shopItemsUtil.SetLevelPotion(argv, archipelagoItem, useArchipelagoItem);
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -549,7 +544,7 @@ namespace RnSArchipelago.Game
                                     case 2:
                                     case 3:
                                     case 4:
-                                        ShopItemsUtil.SetPotion(argv, archipelagoItem, useArchipelagoItem);
+                                        this.shopItemsUtil.SetPotion(argv, archipelagoItem, useArchipelagoItem);
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -560,7 +555,7 @@ namespace RnSArchipelago.Game
                                         }
                                         break;
                                     case 5:
-                                        ShopItemsUtil.SetPrimaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
+                                        this.shopItemsUtil.SetPrimaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -571,7 +566,7 @@ namespace RnSArchipelago.Game
                                         }
                                         break;
                                     case 6:
-                                        ShopItemsUtil.SetSecondaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
+                                        this.shopItemsUtil.SetSecondaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -582,7 +577,7 @@ namespace RnSArchipelago.Game
                                         }
                                         break;
                                     case 7:
-                                        ShopItemsUtil.SetSpecialUpgrade(argv, archipelagoItem, useArchipelagoItem);
+                                        this.shopItemsUtil.SetSpecialUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -593,7 +588,7 @@ namespace RnSArchipelago.Game
                                         }
                                         break;
                                     case 8:
-                                        ShopItemsUtil.SetDefensiveUpgrade(argv, archipelagoItem, useArchipelagoItem);
+                                        this.shopItemsUtil.SetDefensiveUpgrade(argv, archipelagoItem, useArchipelagoItem);
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -611,16 +606,16 @@ namespace RnSArchipelago.Game
                     }
                     else if (location == LocationType.SpecialChest)
                     {
-                        if (InventoryUtil.Instance.shuffleItemsets)
+                        if (this.inventoryUtil.shuffleItemsets)
                         {
-                            if (InventoryUtil.Instance.AvailableItems.Count == 0)
+                            if (this.inventoryUtil.AvailableItems.Count == 0)
                             {
                                 *argv[0] = new RValue(0);
                             }
                             else
                             {
-                                var index = rand.Next(InventoryUtil.Instance.AvailableItems.Count);
-                                *argv[0] = new RValue(InventoryUtil.Instance.AvailableItems[index]);
+                                var index = rand.Next(this.inventoryUtil.AvailableItems.Count);
+                                *argv[0] = new RValue(this.inventoryUtil.AvailableItems[index]);
                             }
 
                             // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working
@@ -629,7 +624,7 @@ namespace RnSArchipelago.Game
                             /*rnsReloaded.FindValue(instance, "yScale")->Real = 1;
                             rnsReloaded.FindValue(instance, "yScale")->Real = 1;*/
 
-                            this.logger.PrintMessage(HookUtil.PrintHook("mod", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
+                            this.logger.PrintMessage(this.hookUtil.PrintHook("mod", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
                         }
                     }
                 }
@@ -657,7 +652,7 @@ namespace RnSArchipelago.Game
         // Get the ingame item id for the first archipelago item
         internal RValue* GetItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -665,7 +660,7 @@ namespace RnSArchipelago.Game
                 }
                 if (rnsReloaded.GetString(argv[0]).Contains("ArchipelagoItems"))
                 {
-                    baseItemId = HookUtil.GetNumeric(rnsReloaded.FindValue(self, "item_data_entry_max")) + 1;
+                    baseItemId = this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "item_data_entry_max")) + 1;
                 }
             }
 
@@ -703,43 +698,43 @@ namespace RnSArchipelago.Game
                 this.logger.PrintMessage("Unable to call item set description hook", System.Drawing.Color.Red);
             }
 
-            if (InventoryUtil.Instance.isActive)
+            if (this.inventoryUtil.isActive)
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
                     this.logger.PrintMessage("Set Item Descriptions", System.Drawing.Color.DarkOrange);
                 }
                 //if an archipelago item, set the description to the real item
-                if (HookUtil.IsEqualToNumeric(argv[0], baseItemId) || HookUtil.IsEqualToNumeric(argv[0], baseItemId + 1) || HookUtil.IsEqualToNumeric(argv[0], baseItemId + 2))
+                if (this.hookUtil.IsEqualToNumeric(argv[0], baseItemId) || this.hookUtil.IsEqualToNumeric(argv[0], baseItemId + 1) || this.hookUtil.IsEqualToNumeric(argv[0], baseItemId + 2))
                 {
                     ScoutedItemInfo? info = null;
                     //TODO: Look into making the better
                     var safeSelf = new RValue(self);
 
-                    if (InventoryUtil.Instance.checksPerItemInChest && GetLocationType() == LocationType.Chest)
+                    if (this.inventoryUtil.checksPerItemInChest && GetLocationType() == LocationType.Chest)
                     {
-                        info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos((int)HookUtil.GetNumeric(safeSelf["slotId"])))];
+                        info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos((int)this.hookUtil.GetNumeric(safeSelf["slotId"])))];
                     }
-                    else if (InventoryUtil.Instance.ShopSanity != InventoryUtil.ShopSetting.None && GetLocationType() == LocationType.Shop)
+                    else if (this.inventoryUtil.ShopSanity != InventoryUtil.ShopSetting.None && GetLocationType() == LocationType.Shop)
                     {
                         if (conn.session != null)
                         {
-                            if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Global)
+                            if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                             {
-                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[(int)HookUtil.GetNumeric(safeSelf["slotId"])])];
+                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(safeSelf["slotId"])])];
                             }
-                            else if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Regional)
+                            else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                             {
-                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(safeSelf["slotId"])])];
+                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(safeSelf["slotId"])])];
                             }
                         }
                     }
 
-                    if (this.IsReady(out var rnsReloaded))
+                    if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
                     {
                         if (info != null)
                         {
-                            var player = info.Player.Slot == MessageHandler.Instance.slot ? "your" : info.Player.Name + "'s";
+                            var player = info.Player.Slot == this.conn.messageHandler.slot ? "your" : info.Player.Name + "'s";
 
                             rnsReloaded.CreateString(returnValue, info.ItemDisplayName + " for " + player + " world");
                         }
@@ -869,11 +864,11 @@ namespace RnSArchipelago.Game
 
             if (conn.session != null)
             {
-                if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Global)
+                if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                 {
                     locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(GAME, x)).ToArray();
                 }
-                else if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Regional)
+                else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                 {
                     locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + x)).ToArray();
                 }
@@ -886,30 +881,30 @@ namespace RnSArchipelago.Game
         // Prevent 'fake' items from actually being taken
         internal RValue* TakeItem(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (InventoryUtil.Instance.isActive)
+                if (this.inventoryUtil.isActive)
                 {
                     if (modConfig?.ExtraDebugMessages ?? false)
                     {
                         this.logger.PrintMessage("Prepare Take Item", System.Drawing.Color.DarkOrange);
                     }
-                    var itemPos = HookUtil.GetNumeric(argv[2]);
+                    var itemPos = this.hookUtil.GetNumeric(argv[2]);
                     CLayerElementBase* instance = null;
                     if (GetLocationType() == LocationType.Chest)
                     {
-                        HookUtil.FindElementInLayer("LootInfo", "slotId", itemPos + "", out instance);
+                        this.hookUtil.FindElementInLayer("LootInfo", "slotId", itemPos + "", out instance);
                     }
                     else if (GetLocationType() == LocationType.Shop)
                     {
-                        HookUtil.FindElementInLayer("InventoryInfo", "slotId", itemPos + "", out instance);
+                        this.hookUtil.FindElementInLayer("InventoryInfo", "slotId", itemPos + "", out instance);
                     }
                     if (instance != null)
                     {
                         var element = ((CLayerInstanceElement*)instance)->Instance;
                         var itemId = rnsReloaded.FindValue(element, "itemId");
 
-                        if (!HookUtil.IsEqualToNumeric(itemId, baseItemId) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 1) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 2))
+                        if (!this.hookUtil.IsEqualToNumeric(itemId, baseItemId) && !this.hookUtil.IsEqualToNumeric(itemId, baseItemId + 1) && !this.hookUtil.IsEqualToNumeric(itemId, baseItemId + 2))
                         {
                             if (modConfig?.ExtraDebugMessages ?? false)
                             {
@@ -929,25 +924,25 @@ namespace RnSArchipelago.Game
                             return returnValue;
                         }
 
-                        this.logger.PrintMessage(HookUtil.PrintHook("take", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
+                        this.logger.PrintMessage(this.hookUtil.PrintHook("take", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
 
-                        if (InventoryUtil.Instance.checksPerItemInChest && GetLocationType() == LocationType.Chest)
+                        if (this.inventoryUtil.checksPerItemInChest && GetLocationType() == LocationType.Chest)
                         {
-                            var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos((int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "slotId"))))] };
+                            var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(element, "slotId"))))] };
                             conn.session?.Socket.SendPacketAsync(locationPacket);
                         }
-                        else if (InventoryUtil.Instance.ShopSanity != InventoryUtil.ShopSetting.None && GetLocationType() == LocationType.Shop)
+                        else if (this.inventoryUtil.ShopSanity != InventoryUtil.ShopSetting.None && GetLocationType() == LocationType.Shop)
                         {
                             if (conn.session != null)
                             {
-                                if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Global)
+                                if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                                 {
-                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
+                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(argv[2])])] };
                                     conn.session?.Socket.SendPacketAsync(locationPacket);
                                 }
-                                else if (InventoryUtil.Instance.ShopSanity == InventoryUtil.ShopSetting.Regional)
+                                else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                                 {
-                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
+                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(argv[2])])] };
                                     conn.session?.Socket.SendPacketAsync(locationPacket);
                                 }
                             }
@@ -955,7 +950,7 @@ namespace RnSArchipelago.Game
                             var slots = new RValue(self);
 
                             // Set the item cache to -1, so we repopulate it
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(slots["slots"], 2), (int)HookUtil.GetNumeric(argv[2])), 1) = new RValue(-1);
+                            *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(slots["slots"], 2), (int)this.hookUtil.GetNumeric(argv[2])), 1) = new RValue(-1);
 
                             rnsReloaded.ExecuteScript("scr_itemsys_populate_store", self, other, [new RValue(0)]);
 
@@ -1022,16 +1017,16 @@ namespace RnSArchipelago.Game
         // Send the location for finishing a notch if there is a generic location for it, i.e. battle, chest, or boss (not shop)
         internal void SendNotchLoctaion()
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 var baseLocation = GetBaseLocation();
 
-                HookUtil.FindElementInLayer("Ally", "allyId", out var instance);
+                this.hookUtil.FindElementInLayer("Ally", "allyId", out var instance);
                 if (instance != null)
                 {
                     var element = ((CLayerInstanceElement*)instance)->Instance;
-                    var characterId = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "allyId"));
-                    var character = InventoryUtil.Instance.GetClass(characterId);
+                    var characterId = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(element, "allyId"));
+                    var character = this.inventoryUtil.GetClass(characterId);
 
                     if (conn.session != null)
                     {
@@ -1045,9 +1040,9 @@ namespace RnSArchipelago.Game
         // Get the base location name, ex. Kingdom Outskirts Chest 1
         private string GetBaseLocation()
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                HookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var instance);
+                this.hookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var instance);
                 var element = ((CLayerInstanceElement*)instance)->Instance;
 
                 var kingdomName = rnsReloaded.FindValue(element, "stageName")->ToString();
@@ -1070,9 +1065,9 @@ namespace RnSArchipelago.Game
         // Get the name of the location for the notch based on its image and number of occurence
         private string GetNotchName(CInstance* element)
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                var notchPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "currentPos"));
+                var notchPos = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(element, "currentPos"));
                 var notchType = GetLocationType();
 
                 if (notchType == LocationType.Boss)
@@ -1116,22 +1111,22 @@ namespace RnSArchipelago.Game
         // Make the next notch be an ingame only chest
         private void AddChestToNotch()
         {
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                HookUtil.FindElementInLayer("RunMenu_Blocker", "xSubimg", out var element);
+                this.hookUtil.FindElementInLayer("RunMenu_Blocker", "xSubimg", out var element);
                 var instance = ((CLayerInstanceElement*)element)->Instance;
 
-                var currentPos = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
+                var currentPos = this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
                 if (currentPos == -1)
                 {
                     currentPos = 0;
                 }
                 var notches = rnsReloaded.FindValue(instance, "notches");
-                var notch = HookUtil.CreateRArray([5, "", 0, 0]);
+                var notch = this.hookUtil.CreateRArray([5, "", 0, 0]);
 
                 // Actually increase things
                 rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*notches, new RValue(currentPos + 1), notch]);
-                rnsReloaded.FindValue(instance, "notchNumber")->Real = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "notchNumber")) + 1;
+                rnsReloaded.FindValue(instance, "notchNumber")->Real = this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "notchNumber")) + 1;
                 rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
                 
             }
@@ -1153,7 +1148,7 @@ namespace RnSArchipelago.Game
             }
 
 
-            if (this.IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (modConfig?.ExtraDebugMessages ?? false)
                 {
@@ -1164,7 +1159,7 @@ namespace RnSArchipelago.Game
 
                 if (kingdomName.Equals("Kingdom Outskirts"))
                 {
-                    for (int i = 0; i < InventoryUtil.Instance.AvailableTreasurespheres; i++)
+                    for (int i = 0; i < this.inventoryUtil.AvailableTreasurespheres; i++)
                     {
                         AddChestToNotch();
                     }
@@ -1182,11 +1177,11 @@ namespace RnSArchipelago.Game
         internal RValue* StopReadyCheck(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
 
-            if (IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (!InventoryUtil.Instance.isActive && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (!this.inventoryUtil.isActive && this.hookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
-                    HookUtil.FindElementInLayer("PlayerField", "percent", out var fieldElement);
+                    this.hookUtil.FindElementInLayer("PlayerField", "percent", out var fieldElement);
                     if (fieldElement != null)
                     {
                         var fieldInstance = new RValue(((CLayerInstanceElement*)fieldElement)->Instance);

@@ -10,45 +10,42 @@ using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
 using RnSArchipelago.Game;
 using System.Diagnostics.CodeAnalysis;
+using Reloaded.Mod.Interfaces;
 
 namespace RnSArchipelago.Connection
 {
     internal class ArchipelagoConnection
     {
-        private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
-        private readonly ILoggerV1 logger;
+        private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
+        private readonly ILogger logger;
+        private readonly InventoryUtil inventoryUtil;
         private readonly Config.Config modConfig;
         private readonly SharedData data;
+
+        internal readonly MessageHandler messageHandler;
 
         internal IHook<ScriptDelegate>? resetConnHook;
         internal IHook<ScriptDelegate>? resetConnEndHook;
 
         internal ArchipelagoSession? session;
-        internal LocationHandler locationHandler;
 
         private static readonly NetworkVersion VERSION = new(0, 6, 3);
         private static readonly string GAME = "Rabbit and Steel";
 
-        private bool IsReady(
-            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
-        )
-        {
-            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
-            {
-                return rnsReloaded != null;
-            }
-            this.logger.PrintMessage("Unable to find rnsReloaded in ArchipelagoConnection", System.Drawing.Color.Red);
-            rnsReloaded = null;
-            return false;
-        }
-
-        internal ArchipelagoConnection(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger, Config.Config config, SharedData data, LocationHandler locationHandler)
+        internal ArchipelagoConnection(
+            WeakReference<IRNSReloaded> rnsReloadedRef,
+            ILogger logger,
+            InventoryUtil inventoryUtil,
+            Config.Config config,
+            SharedData data)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.inventoryUtil = inventoryUtil;
             this.modConfig = config;
             this.data = data;
-            this.locationHandler = locationHandler;
+
+            this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryUtil, config, data);
         }
 
         // Attempt to start a connection to archipelago with the given configs
@@ -62,11 +59,10 @@ namespace RnSArchipelago.Connection
 
                 session = ArchipelagoSessionFactory.CreateSession(address);
 
-                if (IsReady(out var rnsReloaded))
+                if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
                 {
-                    var message = MessageHandler.Instance;
-                    session.Socket.PacketReceived += message.OnPacketReceived;
-                    session.MessageLog.OnMessageReceived += message.OnMessageReceived;
+                    session.Socket.PacketReceived += this.messageHandler.OnPacketReceived;
+                    session.MessageLog.OnMessageReceived += this.messageHandler.OnMessageReceived;
                     session.Socket.SocketOpened += ConnectionOpened;
                     session.Socket.ErrorReceived += ErrorReceived;
                     session.Socket.SocketClosed += ConnectionClosed;
@@ -76,8 +72,6 @@ namespace RnSArchipelago.Connection
                 {
                     var roomInfo = await session.ConnectAsync();
                     JoinRoom(roomInfo!);
-
-                    locationHandler.conn = this;
 
                     return;
                 }
@@ -99,7 +93,7 @@ namespace RnSArchipelago.Connection
                     
                     if (returnToTitle)
                     {
-                        MessageHandler.Instance.errorMessage = "Disconnected from the multiworld";
+                        this.messageHandler.errorMessage = "Disconnected from the multiworld";
                         ReturnToTitle();
                     }
 
@@ -110,7 +104,7 @@ namespace RnSArchipelago.Connection
 
         internal unsafe void ReturnToTitle()
         {
-            if (IsReady(out var rnsReloaded))
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 rnsReloaded.ExecuteScript("scr_runmenu_disband_disband", null, null, []);
             }
@@ -159,7 +153,7 @@ namespace RnSArchipelago.Connection
         // Reset the archipelago connection and inventory
         internal void ResetConn()
         {
-            InventoryUtil.Instance.Reset();
+            this.inventoryUtil.Reset();
 
             data.connection.Set<string>("name", default!);
             data.connection.Set<string>("address", default!);
@@ -180,10 +174,10 @@ namespace RnSArchipelago.Connection
         internal void ConnectionClosed(string reason)
         {
             logger.PrintMessage("Connection closed: " + reason, System.Drawing.Color.Red);
-            MessageHandler.Instance.errorMessage = "Disconnected from the multiworld";
+            this.messageHandler.errorMessage = "Disconnected from the multiworld";
             if (session != null && session.Socket != null)
             {
-                session.MessageLog.OnMessageReceived -= MessageHandler.Instance.OnMessageReceived;
+                session.MessageLog.OnMessageReceived -= this.messageHandler.OnMessageReceived;
                 session.Socket.SocketOpened -= ConnectionOpened;
                 session.Socket.SocketClosed -= ConnectionClosed;
             }
@@ -197,7 +191,7 @@ namespace RnSArchipelago.Connection
             if (message == "The remote party closed the WebSocket connection without completing the close handshake." ||
                 message.Contains("Unable to connect to the remote server"))
             {
-                MessageHandler.Instance.errorMessage = "Disconnected from the multiworld";
+                this.messageHandler.errorMessage = "Disconnected from the multiworld";
                 session = null;
             }
 
@@ -214,7 +208,7 @@ namespace RnSArchipelago.Connection
                 }
             }
 
-            InventoryUtil.Instance.Reset();
+            this.inventoryUtil.Reset();
         }
 
         // Attempt to join the archipelago room with the provided data
