@@ -11,22 +11,31 @@ using RnSArchipelago.Data;
 using System.Diagnostics.CodeAnalysis;
 using Reloaded.Hooks.Definitions;
 using System.Collections.Concurrent;
+using Reloaded.Mod.Interfaces;
 
 namespace RnSArchipelago.Connection
 {
     internal class MessageHandler
     {
+        private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
+        private readonly ILogger logger;
+        private readonly InventoryUtil inventoryUtil;
+        private readonly Config.Config modConfig;
+        private readonly SharedData data;
 
-        private static readonly MessageHandler _instance = new MessageHandler();
-
-        internal static MessageHandler Instance => _instance;
-
-        private MessageHandler() { }
-
-        internal WeakReference<IRNSReloaded>? rnsReloadedRef;
-        internal ILoggerV1? logger;
-        internal Config.Config? modConfig;
-        internal SharedData? data;
+        public MessageHandler(
+            WeakReference<IRNSReloaded> rnsReloadedRef,
+            ILogger logger,
+            InventoryUtil inventoryUtil,
+            Config.Config modConfig,
+            SharedData data)
+        {
+            this.rnsReloadedRef = rnsReloadedRef;
+            this.logger = logger;
+            this.inventoryUtil = inventoryUtil;
+            this.modConfig = modConfig;
+            this.data = data;
+        }
 
         internal IHook<ScriptDelegate>? addMessageHook;
         internal readonly ConcurrentQueue<LogMessage> messages = new();
@@ -35,33 +44,19 @@ namespace RnSArchipelago.Connection
         private static readonly string GAME = "Rabbit and Steel";
         internal int slot = 0;
 
-        private bool IsReady(
-            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
-        )
-        {
-            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
-            {
-                return rnsReloaded != null;
-            }
-            this.logger?.PrintMessage("Unable to find rnsReloaded in MessageHandler", System.Drawing.Color.Red);
-            rnsReloaded = null;
-            return false;
-        }
-
         internal void OnMessageReceived(LogMessage message)
         {
             switch (message)
             {
                 case HintItemSendLogMessage hintLogMessage:
-                    if (modConfig?.SystemLog ?? false)
+                    if (modConfig.SystemLog)
                     {
                         messages.Enqueue(hintLogMessage);
                     }
-                    logger?.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
+                    logger.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
                     break;
                 case ItemSendLogMessage itemSendLogMessage:
-                    if (modConfig != null &&
-                        (modConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
+                    if ((modConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
                         ((modConfig.ProgressionLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
                         (modConfig.UsefulLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
                         (modConfig.FillerLog && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
@@ -69,7 +64,7 @@ namespace RnSArchipelago.Connection
                     {
                         messages.Enqueue(itemSendLogMessage);
                     }
-                    logger?.PrintMessage(itemSendLogMessage.ToString(), System.Drawing.Color.Cyan);
+                    logger.PrintMessage(itemSendLogMessage.ToString(), System.Drawing.Color.Cyan);
                     break;
                 case PlayerSpecificLogMessage:
                 case AdminCommandResultLogMessage:
@@ -78,75 +73,73 @@ namespace RnSArchipelago.Connection
                 case ServerChatLogMessage:
                 case TutorialLogMessage:
                 default:
-                    if (modConfig?.SystemLog ?? false)
+                    if (modConfig.SystemLog)
                     {
                         messages.Enqueue(message);
                     }
-                    logger?.PrintMessage(message.ToString(), System.Drawing.Color.White);
+                    logger.PrintMessage(message.ToString(), System.Drawing.Color.White);
                     break;
             }
         }
 
         internal void OnPacketReceived(ArchipelagoPacketBase packet)
         {
-            if (IsReady(out var rnsReloaded))
+            if (!this.rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
+            
+            switch (packet.PacketType)
             {
-                switch (packet.PacketType)
-                {
-                    case ArchipelagoPacketType.RoomInfo:
-                        // Save the seed so we can have a static random
-                        var room = (RoomInfoPacket)packet;
-                        this.data?.options.Set("seed", room.SeedName);
-                        break;
-                    case ArchipelagoPacketType.ConnectionRefused:
-                        var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
-                        errorMessage = message;
-                        this.logger?.PrintMessage(message, Color.Red);
+                case ArchipelagoPacketType.RoomInfo:
+                    // Save the seed so we can have a static random
+                    var room = (RoomInfoPacket)packet;
+                    this.data.options.Set("seed", room.SeedName);
+                    break;
+                case ArchipelagoPacketType.ConnectionRefused:
+                    var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
+                    errorMessage = message;
+                    this.logger.PrintMessage(message, Color.Red);
                         
-                        break;
-                    case ArchipelagoPacketType.Connected: // Get the options the user selected
-                        var connected = (ConnectedPacket)packet;
-                        slot = connected.Slot;
-                        foreach (var option in connected.SlotData)
+                    break;
+                case ArchipelagoPacketType.Connected: // Get the options the user selected
+                    var connected = (ConnectedPacket)packet;
+                    slot = connected.Slot;
+                    foreach (var option in connected.SlotData)
+                    {
+                        this.logger.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
+                        this.data.options.Set<object>(option.Key, option.Value);
+                    }
+                    this.inventoryUtil.GetOptions();
+                    break;
+                case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageReceived, but actual mod use of items will be handled here
+                    var itemPacket = (ReceivedItemsPacket)packet;
+                    this.inventoryUtil.ReceiveItem(itemPacket);
+                    // Maybe have a subscriber pattern here or in inventoryutil to invoke a method for each received item type
+                    break;
+                case ArchipelagoPacketType.LocationInfo:
+                case ArchipelagoPacketType.RoomUpdate:
+                    break;
+                case ArchipelagoPacketType.PrintJSON: // Handled through OnMessageReceived, so will likely never use
+                    break;
+                case ArchipelagoPacketType.DataPackage:
+                    if (((DataPackagePacket)packet).DataPackage.Games.TryGetValue(GAME, out var gameData))
+                    {
+                        var itemId = gameData.ItemLookup;
+                        foreach (var item in itemId)
                         {
-                            this.logger?.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
-                            this.data?.options.Set<object>(option.Key, option.Value);
+                            this.data.idToItem.Set<string>(item.Value, item.Key);
                         }
-                        InventoryUtil.Instance.logger = this.logger;
-                        InventoryUtil.Instance.GetOptions();
-                        break;
-                    case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageReceived, but actual mod use of items will be handled here
-                        var itemPacket = (ReceivedItemsPacket)packet;
-                        InventoryUtil.Instance.ReceiveItem(itemPacket);
-                        // Maybe have a subscriber pattern here or in inventoryutil to invoke a method for each received item type
-                        break;
-                    case ArchipelagoPacketType.LocationInfo:
-                    case ArchipelagoPacketType.RoomUpdate:
-                        break;
-                    case ArchipelagoPacketType.PrintJSON: // Handled through OnMessageReceived, so will likely never use
-                        break;
-                    case ArchipelagoPacketType.DataPackage:
-                        if (((DataPackagePacket)packet).DataPackage.Games.TryGetValue(GAME, out var gameData))
-                        {
-                            var itemId = gameData.ItemLookup;
-                            foreach (var item in itemId)
-                            {
-                                this.data?.idToItem.Set<string>(item.Value, item.Key);
-                            }
-                        }
-                        break;
-                    case ArchipelagoPacketType.Bounced:
-                    case ArchipelagoPacketType.InvalidPacket:
-                    case ArchipelagoPacketType.Retrieved:
-                    case ArchipelagoPacketType.SetReply:
-                        break;
-                }
+                    }
+                    break;
+                case ArchipelagoPacketType.Bounced:
+                case ArchipelagoPacketType.InvalidPacket:
+                case ArchipelagoPacketType.Retrieved:
+                case ArchipelagoPacketType.SetReply:
+                    break;
             }
         }
 
         internal unsafe RValue* AddMessage(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (IsReady(out var rnsReloaded))
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (errorMessage != "")
                 {
@@ -181,7 +174,7 @@ namespace RnSArchipelago.Connection
 
                             break;
                         default:
-                            if (modConfig?.SystemLog ?? false)
+                            if (modConfig.SystemLog)
                             {
                                 rnsReloaded.CreateString(&typedMessage, message.ToString());
                             }
@@ -198,7 +191,7 @@ namespace RnSArchipelago.Connection
             }
             else
             {
-                this.logger?.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
+                this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
             }
             return returnValue;
         }

@@ -4,13 +4,16 @@ using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using RnSArchipelago.Utils;
 using System.Diagnostics.CodeAnalysis;
+using Reloaded.Mod.Interfaces;
 
 namespace RnSArchipelago.Game
 {
     internal unsafe class ClassHandler
     {
-        private readonly WeakReference<IRNSReloaded>? rnsReloadedRef;
-        private readonly ILoggerV1 logger;
+        private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
+        private readonly ILogger logger;
+        private readonly HookUtil hookUtil;
+        private readonly InventoryUtil inventoryUtil;
 
         internal IHook<ScriptDelegate>? lockClassHook;
         internal IHook<ScriptDelegate>? lockVisualClassHook;
@@ -21,23 +24,12 @@ namespace RnSArchipelago.Game
             return (long)(Math.Floor((abilityId + 1.0) / 7) * 7) - 1;
         }
 
-        private bool IsReady(
-            [MaybeNullWhen(false), NotNullWhen(true)] out IRNSReloaded rnsReloaded
-        )
-        {
-            if (this.rnsReloadedRef != null && this.rnsReloadedRef.TryGetTarget(out rnsReloaded))
-            {
-                return rnsReloaded != null;
-            }
-            this.logger.PrintMessage("Unable to find rnsReloaded in ClassHandler", System.Drawing.Color.Red);
-            rnsReloaded = null;
-            return false;
-        }
-
-        internal ClassHandler(WeakReference<IRNSReloaded>? rnsReloadedRef, ILoggerV1 logger)
+        internal ClassHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookUtil hookUtil, InventoryUtil inventoryUtil)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookUtil = hookUtil;
+            this.inventoryUtil = inventoryUtil;
         }
 
         // Visually lock the classes that are not available
@@ -50,21 +42,21 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call lock visual class hook", System.Drawing.Color.Red);
             }
-            if (IsReady(out var rnsReloaded))
+
+            if (!this.rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return returnValue;
+            
+            if (this.inventoryUtil.isActive)
             {
-                if (InventoryUtil.Instance.isActive)
+                if (this.inventoryUtil.isClassSanity && this.hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
                 {
-                    if (InventoryUtil.Instance.isClassSanity && HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
+                    for (var i = 0; i < this.inventoryUtil.AvailableClassesCount; i++)
                     {
-                        for (var i = 0; i < InventoryUtil.Instance.AvailableClassesCount; i++)
+                        if (!this.inventoryUtil.isClassAvailable(i))
                         {
-                            if (!InventoryUtil.Instance.isClassAvailable(i))
-                            {
-                                var chars = rnsReloaded.FindValue(self, "menuAvailable");
-                                *chars->Get(i) = new(0);
-                                var preview = rnsReloaded.FindValue(self, "menuPreview");
-                                *preview->Get(i) = new(0);
-                            }
+                            var chars = rnsReloaded.FindValue(self, "menuAvailable");
+                            *chars->Get(i) = new(0);
+                            var preview = rnsReloaded.FindValue(self, "menuPreview");
+                            *preview->Get(i) = new(0);
                         }
                     }
                 }
@@ -83,19 +75,19 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call lock class hook", System.Drawing.Color.Red);
             }
-            if (IsReady(out var rnsReloaded))
-            {
-                if (InventoryUtil.Instance.isActive)
-                {
-                    if (InventoryUtil.Instance.isClassSanity && !InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
-                    {
-                        var chars = rnsReloaded.FindValue(self, "step");
-                        *chars = new(1);
-                        var previous = rnsReloaded.FindValue(self, "previousStep");
-                        *previous = new(1);
 
-                        //rnsReloaded.ExecuteScript("scr_charselect2_update_chooseclass", self, other, []);
-                    }
+            if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return returnValue;
+            
+            if (this.inventoryUtil.isActive)
+            {
+                if (this.inventoryUtil.isClassSanity && !this.inventoryUtil.isClassAvailable((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                {
+                    var chars = rnsReloaded.FindValue(self, "step");
+                    *chars = new(1);
+                    var previous = rnsReloaded.FindValue(self, "previousStep");
+                    *previous = new(1);
+
+                    //rnsReloaded.ExecuteScript("scr_charselect2_update_chooseclass", self, other, []);
                 }
             }
             return returnValue;
@@ -104,11 +96,11 @@ namespace RnSArchipelago.Game
         // Make it so that the palettes are not drawn if we are going to loop back to the same state
         internal RValue* StopColorDraw(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (IsReady(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (InventoryUtil.Instance.isActive)
+                if (this.inventoryUtil.isActive)
                 {
-                    if (InventoryUtil.Instance.isClassSanity && !InventoryUtil.Instance.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    if (this.inventoryUtil.isClassSanity && !this.inventoryUtil.isClassAvailable((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                     {
                         return returnValue;
                     }
