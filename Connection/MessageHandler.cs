@@ -53,7 +53,7 @@ namespace RnSArchipelago.Connection
                     {
                         messages.Enqueue(hintLogMessage);
                     }
-                    logger?.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
+                    logger.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
                     break;
                 case ItemSendLogMessage itemSendLogMessage:
                     if ((modConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
@@ -64,7 +64,7 @@ namespace RnSArchipelago.Connection
                     {
                         messages.Enqueue(itemSendLogMessage);
                     }
-                    logger?.PrintMessage(itemSendLogMessage.ToString(), System.Drawing.Color.Cyan);
+                    logger.PrintMessage(itemSendLogMessage.ToString(), System.Drawing.Color.Cyan);
                     break;
                 case PlayerSpecificLogMessage:
                 case AdminCommandResultLogMessage:
@@ -91,12 +91,12 @@ namespace RnSArchipelago.Connection
                 case ArchipelagoPacketType.RoomInfo:
                     // Save the seed so we can have a static random
                     var room = (RoomInfoPacket)packet;
-                    this.data?.options.Set("seed", room.SeedName);
+                    this.data.options.Set("seed", room.SeedName);
                     break;
                 case ArchipelagoPacketType.ConnectionRefused:
                     var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
                     errorMessage = message;
-                    this.logger?.PrintMessage(message, Color.Red);
+                    this.logger.PrintMessage(message, Color.Red);
                         
                     break;
                 case ArchipelagoPacketType.Connected: // Get the options the user selected
@@ -104,8 +104,8 @@ namespace RnSArchipelago.Connection
                     slot = connected.Slot;
                     foreach (var option in connected.SlotData)
                     {
-                        this.logger?.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
-                        this.data?.options.Set<object>(option.Key, option.Value);
+                        this.logger.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
+                        this.data.options.Set<object>(option.Key, option.Value);
                     }
                     this.inventoryUtil.GetOptions();
                     break;
@@ -125,7 +125,7 @@ namespace RnSArchipelago.Connection
                         var itemId = gameData.ItemLookup;
                         foreach (var item in itemId)
                         {
-                            this.data?.idToItem.Set<string>(item.Value, item.Key);
+                            this.data.idToItem.Set<string>(item.Value, item.Key);
                         }
                     }
                     break;
@@ -174,7 +174,7 @@ namespace RnSArchipelago.Connection
 
                             break;
                         default:
-                            if (modConfig?.SystemLog ?? false)
+                            if (modConfig.SystemLog)
                             {
                                 rnsReloaded.CreateString(&typedMessage, message.ToString());
                             }

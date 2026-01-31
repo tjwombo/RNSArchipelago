@@ -117,7 +117,7 @@ namespace RnSArchipelago.Game
         // Send the location for completing an encounter
         internal RValue* SendNotchComplete(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Send Locaiton Check", System.Drawing.Color.DarkOrange);
             }
@@ -130,13 +130,13 @@ namespace RnSArchipelago.Game
             }
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Sending Location Check", System.Drawing.Color.DarkOrange);
                 }
                 SendNotchLoctaion();
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Send Location Check", System.Drawing.Color.DarkOrange);
             }
@@ -146,7 +146,7 @@ namespace RnSArchipelago.Game
         // Send the location for opening a chest
         internal RValue* SendChestOpen(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Send Chest Open Check", System.Drawing.Color.DarkOrange);
             }
@@ -159,13 +159,13 @@ namespace RnSArchipelago.Game
             }
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Sending Chest Open Check", System.Drawing.Color.DarkOrange);
                 }
                 SendNotchLoctaion();
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Send Chest Open Check", System.Drawing.Color.DarkOrange);
             }
@@ -175,7 +175,7 @@ namespace RnSArchipelago.Game
         // Update the archipelago items mod data
         internal RValue* SetupArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Set Up Item Mod", System.Drawing.Color.DarkOrange);
             }
@@ -188,7 +188,7 @@ namespace RnSArchipelago.Game
             }
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Set Up Item Mod", System.Drawing.Color.DarkOrange);
                 }
@@ -225,7 +225,7 @@ namespace RnSArchipelago.Game
                     this.logger.PrintMessage("Unable to find archipelago items mod", System.Drawing.Color.Red);
                 }
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Set Up Item Mod", System.Drawing.Color.DarkOrange);
             }
@@ -235,7 +235,7 @@ namespace RnSArchipelago.Game
         // After applying mod settings in game, ensure the archipelago items mod is enabled
         internal RValue* EnableArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Item Mod Enable", System.Drawing.Color.DarkOrange);
             }
@@ -249,7 +249,7 @@ namespace RnSArchipelago.Game
 
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Ensure Item Mod Is Enabled", System.Drawing.Color.DarkOrange);
                 }
@@ -263,7 +263,7 @@ namespace RnSArchipelago.Game
                         if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
                         {
                             *rnsReloaded.ArrayGetEntry(entry, 8) = new(1); // Enabled
-                            if (modConfig?.ExtraDebugMessages ?? false)
+                            if (modConfig.ExtraDebugMessages)
                             {
                                 this.logger.PrintMessage("Before Return Item Mod Enable", System.Drawing.Color.DarkOrange);
                             }
@@ -272,7 +272,7 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Item Mod Enable", System.Drawing.Color.DarkOrange);
             }
@@ -284,13 +284,13 @@ namespace RnSArchipelago.Game
         {
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Scouting Chest Items", System.Drawing.Color.DarkOrange);
                 }
                 GetArchipelagoChestItemInfo();
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Scout Chest", System.Drawing.Color.DarkOrange);
             }
@@ -301,7 +301,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item scout chest hook", System.Drawing.Color.Red);
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Scout Chest", System.Drawing.Color.DarkOrange);
             }
@@ -315,13 +315,13 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Scouting Chest Items", System.Drawing.Color.DarkOrange);
                     }
                     GetArchipelagoShopItemInfo();
 
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Before Original Function Scout Chest Item", System.Drawing.Color.DarkOrange);
                     }
@@ -347,14 +347,14 @@ namespace RnSArchipelago.Game
                             *rnsReloaded.ArrayGetEntry(instance["storeSlotUpgrade"], j) = new RValue(0);
                         }
                     }
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Before Return Scout Shop", System.Drawing.Color.DarkOrange);
                     }
                     return returnValue;
                 }
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Scout Shop", System.Drawing.Color.DarkOrange);
             }
@@ -365,7 +365,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item scout shop hook", System.Drawing.Color.Red); ;
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Scout Shop", System.Drawing.Color.DarkOrange);
             }
@@ -376,7 +376,7 @@ namespace RnSArchipelago.Game
         // Set the amount of items in the chest to corrospond to the amount it should be
         internal RValue* SetAmountOfItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Set Chest Amount", System.Drawing.Color.DarkOrange);
             }
@@ -389,13 +389,13 @@ namespace RnSArchipelago.Game
             }
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Setting Chest Amount", System.Drawing.Color.DarkOrange);
                 }
                 returnValue->Real = 5;
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Set Chest Amount", System.Drawing.Color.DarkOrange);
             }
@@ -459,7 +459,7 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Set Items", System.Drawing.Color.DarkOrange);
                     }
@@ -630,7 +630,7 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Set Item", System.Drawing.Color.DarkOrange);
             }
@@ -642,7 +642,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Set Item", System.Drawing.Color.DarkOrange);
             }
@@ -654,7 +654,7 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Get AP Item Mod", System.Drawing.Color.DarkOrange);
                 }
@@ -664,7 +664,7 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Get AP Item Mod", System.Drawing.Color.DarkOrange);
             }
@@ -676,7 +676,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item get hook", System.Drawing.Color.Red);
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Get AP Item Mod", System.Drawing.Color.DarkOrange);
             }
@@ -686,7 +686,7 @@ namespace RnSArchipelago.Game
         // Set the description for archipelago items to reflect their actual item
         internal RValue* SetItemsDescription(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Item Descriptions", System.Drawing.Color.DarkOrange);
             }
@@ -700,7 +700,7 @@ namespace RnSArchipelago.Game
 
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Set Item Descriptions", System.Drawing.Color.DarkOrange);
                 }
@@ -746,7 +746,7 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Item Descriptions", System.Drawing.Color.DarkOrange);
             }
@@ -885,7 +885,7 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Prepare Take Item", System.Drawing.Color.DarkOrange);
                     }
@@ -906,7 +906,7 @@ namespace RnSArchipelago.Game
 
                         if (!this.hookUtil.IsEqualToNumeric(itemId, baseItemId) && !this.hookUtil.IsEqualToNumeric(itemId, baseItemId + 1) && !this.hookUtil.IsEqualToNumeric(itemId, baseItemId + 2))
                         {
-                            if (modConfig?.ExtraDebugMessages ?? false)
+                            if (modConfig.ExtraDebugMessages)
                             {
                                 this.logger.PrintMessage("Before Original Function Take Item 1", System.Drawing.Color.DarkOrange);
                             }
@@ -917,7 +917,7 @@ namespace RnSArchipelago.Game
                             {
                                 this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
                             }
-                            if (modConfig?.ExtraDebugMessages ?? false)
+                            if (modConfig.ExtraDebugMessages)
                             {
                                 this.logger.PrintMessage("Return From Take Item 1", System.Drawing.Color.DarkOrange);
                             }
@@ -961,7 +961,7 @@ namespace RnSArchipelago.Game
                     }
                     else
                     {
-                        if (modConfig?.ExtraDebugMessages ?? false)
+                        if (modConfig.ExtraDebugMessages)
                         {
                             this.logger.PrintMessage("Before Original Function Take Item 2", System.Drawing.Color.DarkOrange);
                         }
@@ -977,7 +977,7 @@ namespace RnSArchipelago.Game
                 }
                 else
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Before Original Function Take Item 3", System.Drawing.Color.DarkOrange);
                     }
@@ -992,7 +992,7 @@ namespace RnSArchipelago.Game
                 }
             } else
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Before Original Function Take Item 4", System.Drawing.Color.DarkOrange);
                 }
@@ -1006,7 +1006,7 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Return From Take Item 2", System.Drawing.Color.DarkOrange);
             }
@@ -1135,7 +1135,7 @@ namespace RnSArchipelago.Game
         // On outskirts loading, besides loading into lobby, add the treasurespheres we have accumulated
         internal RValue* SpawnTreasuresphereOnStart(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Try Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
             }
@@ -1150,7 +1150,7 @@ namespace RnSArchipelago.Game
 
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Try Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
                 }
@@ -1166,7 +1166,7 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Return From Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
             }

@@ -516,7 +516,7 @@ namespace RnSArchipelago
                 this.data.connection.Set<string>("address", lobby.ArchipelagoAddress);
                 this.data.connection.Set<string>("numPlayers", $"{lobby.ArchipelagoNum}");
                 this.data.connection.Set<string>("password", lobby.ArchipelagoPassword);
-                _ = conn?.StartConnection(true);
+                _ = conn.StartConnection(true);
 
                 config.ArchipelagoName = lobby.ArchipelagoName;
                 config.ArchipelagoAddress = lobby.ArchipelagoAddress;

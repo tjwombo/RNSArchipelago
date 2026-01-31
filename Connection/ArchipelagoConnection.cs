@@ -113,17 +113,17 @@ namespace RnSArchipelago.Connection
         // Return to the lobby settings
         internal unsafe RValue* ResetConn(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Reset Conn", System.Drawing.Color.DarkOrange);
             }
             this.resetConnHook?.OriginalFunction(self, other, returnValue, argc, argv);
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Rest Conn", System.Drawing.Color.DarkOrange);
             }
             ResetConn();
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Reset Conn", System.Drawing.Color.DarkOrange);
             }
@@ -133,17 +133,17 @@ namespace RnSArchipelago.Connection
         // Return to the lobby settings, after a win/loss
         internal unsafe RValue* ResetConnEnd(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Reset Conn End", System.Drawing.Color.DarkOrange);
             }
             this.resetConnEndHook?.OriginalFunction(self, other, returnValue, argc, argv);
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Reset Conn End", System.Drawing.Color.DarkOrange);
             }
             ResetConn();
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Reset Conn End", System.Drawing.Color.DarkOrange);
             }

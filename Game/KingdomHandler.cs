@@ -177,7 +177,7 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Modify End Screen Icons", System.Drawing.Color.DarkOrange);
                     }
@@ -210,7 +210,7 @@ namespace RnSArchipelago.Game
                                 //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
                                 //var b = new RValue(self);
                                 //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
-                                if (modConfig?.ExtraDebugMessages ?? false)
+                                if (modConfig.ExtraDebugMessages)
                                 {
                                     this.logger.PrintMessage("Before Original Function End Screen", System.Drawing.Color.DarkOrange);
                                 }
@@ -221,7 +221,7 @@ namespace RnSArchipelago.Game
                                 {
                                     this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
                                 }
-                                if (modConfig?.ExtraDebugMessages ?? false)
+                                if (modConfig.ExtraDebugMessages)
                                 {
                                     this.logger.PrintMessage("Before Return End Screen", System.Drawing.Color.DarkOrange);
                                 }
@@ -234,7 +234,7 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function End Screen", System.Drawing.Color.DarkOrange);
             }
@@ -246,7 +246,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return End Screen", System.Drawing.Color.DarkOrange);
             }
@@ -339,7 +339,7 @@ namespace RnSArchipelago.Game
                 if (this.inventoryUtil.isActive)
                 {
 
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Manage Route Length", System.Drawing.Color.DarkOrange);
                     }
@@ -370,7 +370,7 @@ namespace RnSArchipelago.Game
                     if (EndRouteEarly())
                     {
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
-                        if (modConfig?.ExtraDebugMessages ?? false)
+                        if (modConfig.ExtraDebugMessages)
                         {
                             this.logger.PrintMessage("Before Return Manage Route End", System.Drawing.Color.DarkOrange);
                         }
@@ -378,7 +378,7 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Manage Route Length", System.Drawing.Color.DarkOrange);
             }
@@ -390,7 +390,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call end halls hook", System.Drawing.Color.Red);
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Manage Route Length", System.Drawing.Color.DarkOrange);
             }
@@ -521,7 +521,7 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Update Route Icons", System.Drawing.Color.DarkOrange);
                     }
@@ -542,7 +542,7 @@ namespace RnSArchipelago.Game
                                 {
                                     ModifyRouteIcons(routeIcons);
                                     returnValue = routeIcons->Get(5);
-                                    if (modConfig?.ExtraDebugMessages ?? false)
+                                    if (modConfig.ExtraDebugMessages)
                                     {
                                         this.logger.PrintMessage("Before Return Update Route Icons", System.Drawing.Color.DarkOrange);
                                     }
@@ -555,7 +555,7 @@ namespace RnSArchipelago.Game
                 }
                 else
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Before Original Function Route Icons 1", System.Drawing.Color.DarkOrange);
                     }
@@ -570,7 +570,7 @@ namespace RnSArchipelago.Game
             }
             else
             {
-                if (modConfig?.ExtraDebugMessages ?? false)
+                if (modConfig.ExtraDebugMessages)
                 {
                     this.logger.PrintMessage("Before Original Function Route Icons 2", System.Drawing.Color.DarkOrange);
                 }
@@ -584,7 +584,7 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Route Icons", System.Drawing.Color.DarkOrange);
             }
@@ -721,7 +721,7 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig?.ExtraDebugMessages ?? false)
+                    if (modConfig.ExtraDebugMessages)
                     {
                         this.logger.PrintMessage("Try Update Route", System.Drawing.Color.DarkOrange);
                     }
@@ -729,7 +729,7 @@ namespace RnSArchipelago.Game
                     var isProgressive = this.inventoryUtil.isProgressive;
                     if (isKingdomSanity || isProgressive)
                     {
-                        if (modConfig?.ExtraDebugMessages ?? false)
+                        if (modConfig.ExtraDebugMessages)
                         {
                             this.logger.PrintMessage("Before Original Function Update Route", System.Drawing.Color.DarkOrange);
                         }
@@ -743,7 +743,7 @@ namespace RnSArchipelago.Game
                         this.logger.PrintMessage(this.hookUtil.PrintHook("create route", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
                         UpdateRoute(false);
 
-                        if (modConfig?.ExtraDebugMessages ?? false)
+                        if (modConfig.ExtraDebugMessages)
                         {
                             this.logger.PrintMessage("Before Return Update Route", System.Drawing.Color.DarkOrange);
                         }
@@ -751,7 +751,7 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Update Route", System.Drawing.Color.DarkOrange);
             }
@@ -763,7 +763,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
             }
-            if (modConfig?.ExtraDebugMessages ?? false)
+            if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Return Update Route", System.Drawing.Color.DarkOrange);
             }
