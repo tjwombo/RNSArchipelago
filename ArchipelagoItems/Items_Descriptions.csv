@@ -1,5 +1,5 @@
 key,level,English,Japanese,Chinese
 ,,,,
-it_archipelago,0,"Archipelago item for another world.","Archipelago item for another world.","Archipelago item for another world."
-it_archipelago_progressive,0,"Progressive Archipelago item for another world.","Progressive Archipelago item for another world.","Progressive Archipelago item for another world."
-it_archipelago_received,0,"Received Archipelago item for another world.","Received Archipelago item for another world.","Received Archipelago item for another world."
+it_archipelago,0,"Archipelago item for another world.","ほかのワールドのアーキペラゴアイテム。","Archipelago item for another world."
+it_archipelago_progressive,0,"Progressive Archipelago item for another world.","ほかのワールドの進行用アーキペラゴアイテム。","Progressive Archipelago item for another world."
+it_archipelago_received,0,"Received Archipelago item for another world.","ほかのワールドの取得済みアーキペラゴアイテム。","Received Archipelago item for another world."
