@@ -16,10 +16,9 @@ But if you insist you did, please report it in the Archipelago discord server [h
 
 **Note Reloaded-II is having trouble finding the updated version automatically, it is recommended to install manually for the time being**
 
-This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II) and can be installed by
-Adding Rabbit and Steel as an application by clicking the + button
+This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II)
 
-And then
+You can install the mod thorugh Reloaded by adding Rabbit and Steel as an application by clicking the + button and then
 1. Download the mod by clicking the ⚙+ button
 2. Filter All Sources to RabbitSteel.exe
 3. Search "RnS Reloaded" and install it

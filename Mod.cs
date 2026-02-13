@@ -44,7 +44,8 @@ namespace RnSArchipelago
         private readonly List<int> availableDefensive = [];
 
         internal IHook<ScriptDelegate>? originalUnlockHook;
-        private static readonly string[] keys = { "hardDiff", "lunarDiff", "charSpBlade", "charSniper", "charBruiser", "charDefender", "charAncient" };
+        private static readonly string[] keys = { "hardDiff", "lunarDiff", "extraMode", "randomMode", "charSpBlade", "charSniper", "charBruiser", "charDefender", "charAncient", "charHammer", "charPyro", "charGunner", "charShadow" };
+
         private long[] originalUnlocks = new long[keys.Length];
         private RValue* unlockKeys;
 
@@ -82,7 +83,7 @@ namespace RnSArchipelago
         public void Ready()
         {
             if (
-                this.IsReady(out _, out _)
+                this.IsReady(out var rnsReloaded, out var hooks)
             )
             {
                 rand = new Random();
@@ -111,7 +112,7 @@ namespace RnSArchipelago
                 this.outskirtsNHook.Enable();*/
 
                 // Test temp hook
-                /*var testId = rnsReloaded.ScriptFindId("gameframe_get_border_width");
+                /*var testId = rnsReloaded.ScriptFindId("scr_gamecontrol_update_adventure");
                 var testScript = rnsReloaded.GetScriptData(testId - 100000);
                 this.setItemHook = hooks.CreateHook<ScriptDelegate>(this.test, testScript->Functions->Function);
                 this.setItemHook.Activate();

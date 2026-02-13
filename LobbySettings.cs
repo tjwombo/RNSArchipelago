@@ -1,11 +1,8 @@
 ﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using static RnSArchipelago.Utils.HookUtil;
-using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
-using System.Diagnostics.CodeAnalysis;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Connection;
 
@@ -101,13 +98,7 @@ namespace RnSArchipelago
                 this.hookUtil.FindElementInLayer("RunMenu_Options", out var layer, "name", "LOBBY", out var element);
                 if (layer != null)
                 {
-                    // Attach a layer script to hook into to act as a step hook
-                    var stepId = rnsReloaded.CodeFunctionFind("os_get_info");
-                    if (stepId.HasValue)
-                    {
-                        layer->BeginScript.Real = stepId.Value;
-                        this.lobbySettingsDisplayStepHook?.Enable();
-                    }
+                    this.lobbySettingsDisplayStepHook?.Enable();
 
                     if (element != null)
                     {
@@ -139,7 +130,6 @@ namespace RnSArchipelago
                         {
                             this.hookUtil.ModifyElementVariable(element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
                         }
-
                         return returnValue;
                     }
                 }
@@ -466,7 +456,6 @@ namespace RnSArchipelago
                     }
                     else
                     {
-                        layer->BeginScript.Real = -1;
                         this.lobbySettingsDisplayStepHook?.OriginalFunction(self, other, returnValue, argc, argv);
 
                         // Called as a layer step function, so we want to disable it once we leave the screens

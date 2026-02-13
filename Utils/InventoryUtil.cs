@@ -651,6 +651,10 @@ namespace RnSArchipelago.Utils
 
         internal string GetClass(int pos)
         {
+            if (CLASSES.Length <= pos)
+            {
+                return "";
+            }
             return CLASSES[pos];
         }
 
