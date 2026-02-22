@@ -188,21 +188,25 @@ namespace RnSArchipelago.Utils
         [Flags]
         internal enum ClassFlags
         {
-            None = 0b0000000000,
-            Wizard = 0b0000000001,
-            Assassin = 0b0000000010,
-            Heavyblade = 0b0000000100,
-            Dancer = 0b0000001000,
-            Druid = 0b0000010000,
-            Spellsword = 0b0000100000,
-            Sniper = 0b0001000000,
-            Bruiser = 0b0010000000,
-            Defender = 0b0100000000,
-            Ancient = 0b1000000000,
-            All = 0b1111111111
+            None = 0b00000000000000,
+            Wizard = 0b00000000000001,
+            Assassin = 0b00000000000010,
+            Heavyblade = 0b00000000000100,
+            Dancer = 0b00000000001000,
+            Druid = 0b00000000010000,
+            Spellsword = 0b00000000100000,
+            Sniper = 0b00000001000000,
+            Bruiser = 0b00000010000000,
+            Defender = 0b00000100000000,
+            Ancient = 0b00001000000000,
+            Hammermaid = 0b00010000000000,
+            Pyromancer = 0b00100000000000,
+            Gunner = 0b01000000000000,
+            Shadow = 0b10000000000000,
+            All = 0b11111111111111
         }
 
-        private static readonly string[] CLASSES = ["Wizard", "Assassin", "Heavyblade", "Dancer", "Druid", "Spellsword", "Sniper", "Bruiser", "Defender", "Ancient"];
+        private static readonly string[] CLASSES = ["Wizard", "Assassin", "Heavyblade", "Dancer", "Druid", "Spellsword", "Sniper", "Bruiser", "Defender", "Ancient", "Hammermaid", "Pyromancer", "Gunner", "Shadow"];
 
         internal ClassFlags AvailableClasses { get; set; }
 
@@ -991,6 +995,14 @@ namespace RnSArchipelago.Utils
                     return (AvailableClasses & InventoryUtil.ClassFlags.Defender) != 0;
                 case 9:
                     return (AvailableClasses & InventoryUtil.ClassFlags.Ancient) != 0;
+                case 10:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Hammermaid) != 0;
+                case 11:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Pyromancer) != 0;
+                case 12:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Gunner) != 0;
+                case 13:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Shadow) != 0;
             }
             return false;
         }
