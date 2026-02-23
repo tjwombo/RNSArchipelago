@@ -1,12 +1,12 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
 using Reloaded.Hooks.Definitions;
+using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using Reloaded.Mod.Interfaces;
 using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
@@ -100,6 +100,27 @@ namespace RnSArchipelago.Game
                                     maxCanRun++;
                                 }
                                 break;
+                            case "hw_depths":
+                                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                                {
+                                    accountedForKingdoms.Add("hw_depths");
+                                    maxCanRun++;
+                                }
+                                break;
+                            case "hw_aurum":
+                                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                                {
+                                    accountedForKingdoms.Add("hw_aurum");
+                                    maxCanRun++;
+                                }
+                                break;
+                            case "hw_sanct":
+                                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                                {
+                                    accountedForKingdoms.Add("hw_aurum");
+                                    maxCanRun++;
+                                }
+                                break;
                         }
                         if (runBefore != maxCanRun)
                         {
@@ -150,6 +171,27 @@ namespace RnSArchipelago.Game
                                 if ((visitableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
                                 {
                                     accountedForKingdoms.Add("hw_lighthouse");
+                                    maxCanRun++;
+                                }
+                                break;
+                            case "hw_depths":
+                                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                                {
+                                    accountedForKingdoms.Add("hw_depths");
+                                    maxCanRun++;
+                                }
+                                break;
+                            case "hw_aurum":
+                                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                                {
+                                    accountedForKingdoms.Add("hw_aurum");
+                                    maxCanRun++;
+                                }
+                                break;
+                            case "hw_sanct":
+                                if ((visitableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                                {
+                                    accountedForKingdoms.Add("hw_sanct");
                                     maxCanRun++;
                                 }
                                 break;
