@@ -168,19 +168,23 @@ namespace RnSArchipelago.Utils
         [Flags]
         internal enum KingdomFlags
         { 
-            None = 0b00000000,
-            Outskirts = 0b00000001,
-            Scholars_Nest = 0b00000010,
-            Kings_Arsenal = 0b00000100,
-            Red_Darkhouse = 0b00001000,
-            Churchmouse_Streets = 0b00010000,
-            Emerald_Lakeside = 0b00100000,
-            The_Pale_Keep = 0b01000000,
-            Moonlit_Pinnacle = 0b10000000,
-            All = 0b11111111
+            None = 0b000000000000,
+            Outskirts = 0b000000000001,
+            Crack_in_the_Geode = 0b00000000010,
+            Scholars_Nest = 0b000000000100,
+            Kings_Arsenal = 0b000000001000,
+            Red_Darkhouse = 0b000000010000,
+            Churchmouse_Streets = 0b000000100000,
+            Emerald_Lakeside = 0b000001000000,
+            Darkhouse_Depths = 0b000010000000,
+            Atelier_Aurum = 0b000100000000,
+            Subterra_Sanctum = 0b001000000000,
+            The_Pale_Keep = 0b010000000000,
+            Moonlit_Pinnacle = 0b100000000000,
+            All = 0b111111111111
         }
 
-        private static readonly string[] KINGDOMS = ["Kingdom Outskirts", "Scholar's Nest", "King's Arsenal", "Red Darkhouse", "Churchmouse Streets", "Emerald Lakeside", "The Pale Keep", "Moonlit Pinnacle"];
+        private static readonly string[] KINGDOMS = ["Kingdom Outskirts", "Crack in the Geode", "Scholar's Nest", "King's Arsenal", "Red Darkhouse", "Churchmouse Streets", "Emerald Lakeside", "Darkhouse Depths", "Atelier Aurum", "Subterra Sanctum", "The Pale Keep", "Moonlit Pinnacle"];
 
         internal KingdomFlags AvailableKingdoms { get; set; }
         internal int ProgressiveRegions { get; set; }
@@ -188,21 +192,25 @@ namespace RnSArchipelago.Utils
         [Flags]
         internal enum ClassFlags
         {
-            None = 0b0000000000,
-            Wizard = 0b0000000001,
-            Assassin = 0b0000000010,
-            Heavyblade = 0b0000000100,
-            Dancer = 0b0000001000,
-            Druid = 0b0000010000,
-            Spellsword = 0b0000100000,
-            Sniper = 0b0001000000,
-            Bruiser = 0b0010000000,
-            Defender = 0b0100000000,
-            Ancient = 0b1000000000,
-            All = 0b1111111111
+            None = 0b00000000000000,
+            Wizard = 0b00000000000001,
+            Assassin = 0b00000000000010,
+            Heavyblade = 0b00000000000100,
+            Dancer = 0b00000000001000,
+            Druid = 0b00000000010000,
+            Spellsword = 0b00000000100000,
+            Sniper = 0b00000001000000,
+            Bruiser = 0b00000010000000,
+            Defender = 0b00000100000000,
+            Ancient = 0b00001000000000,
+            Hammermaid = 0b00010000000000,
+            Pyromancer = 0b00100000000000,
+            Grenadier = 0b01000000000000,
+            Shadow = 0b10000000000000,
+            All = 0b11111111111111
         }
 
-        private static readonly string[] CLASSES = ["Wizard", "Assassin", "Heavyblade", "Dancer", "Druid", "Spellsword", "Sniper", "Bruiser", "Defender", "Ancient"];
+        private static readonly string[] CLASSES = ["Wizard", "Assassin", "Heavyblade", "Dancer", "Druid", "Spellsword", "Sniper", "Bruiser", "Defender", "Ancient", "Hammermaid", "Pyromancer", "Grenadier", "Shadow"];
 
         internal ClassFlags AvailableClasses { get; set; }
 
@@ -816,6 +824,18 @@ namespace RnSArchipelago.Utils
             {
                 return "hw_lighthouse";
             }
+            if (name == "Darkhouse Depths")
+            {
+                return "hw_depths";
+            }
+            if (name == "Atelier Aurum")
+            {
+                return "hw_aurum";
+            }
+            if (name == "Subterra Sanctum")
+            {
+                return "hw_sanct";
+            }
             return "";
         }
 
@@ -845,6 +865,18 @@ namespace RnSArchipelago.Utils
                 if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
                 {
                     kingdoms.Add("hw_lighthouse");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                {
+                    kingdoms.Add("hw_depths");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                {
+                    kingdoms.Add("hw_aurum");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                {
+                    kingdoms.Add("hw_sanct");
                 }
             }
             else
@@ -888,6 +920,18 @@ namespace RnSArchipelago.Utils
                 {
                     kingdoms.Add("hw_lighthouse");
                 }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                {
+                    kingdoms.Add("hw_depths");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                {
+                    kingdoms.Add("hw_aurum");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                {
+                    kingdoms.Add("hw_sanct");
+                }
             }
             else if (isProgressive || (isKingdomSanity && useKingdomOrderWithKingdomSanity))
             {
@@ -910,6 +954,18 @@ namespace RnSArchipelago.Utils
                         kingdoms.Add(kingdom);
                     }
                     if (kingdom == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                    if (kingdom == "hw_depths" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                    if (kingdom == "hw_aurum" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                    {
+                        kingdoms.Add(kingdom);
+                    }
+                    if (kingdom == "hw_sanct" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
                     {
                         kingdoms.Add(kingdom);
                     }
@@ -936,6 +992,18 @@ namespace RnSArchipelago.Utils
                 {
                     kingdoms.Add("hw_lighthouse");
                 }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                {
+                    kingdoms.Add("hw_depths");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                {
+                    kingdoms.Add("hw_aurum");
+                }
+                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                {
+                    kingdoms.Add("hw_sanct");
+                }
             }
             return kingdoms;
         }
@@ -961,6 +1029,18 @@ namespace RnSArchipelago.Utils
                 count++;
             }
             if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+            {
+                count++;
+            }
+            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+            {
+                count++;
+            }
+            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+            {
+                count++;
+            }
+            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
             {
                 count++;
             }
@@ -991,6 +1071,14 @@ namespace RnSArchipelago.Utils
                     return (AvailableClasses & InventoryUtil.ClassFlags.Defender) != 0;
                 case 9:
                     return (AvailableClasses & InventoryUtil.ClassFlags.Ancient) != 0;
+                case 10:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Hammermaid) != 0;
+                case 11:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Pyromancer) != 0;
+                case 12:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Grenadier) != 0;
+                case 13:
+                    return (AvailableClasses & InventoryUtil.ClassFlags.Shadow) != 0;
             }
             return false;
         }

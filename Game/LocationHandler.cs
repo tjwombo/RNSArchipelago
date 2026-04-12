@@ -1049,7 +1049,7 @@ namespace RnSArchipelago.Game
                 kingdomName = kingdomName.Replace(Environment.NewLine, " ");
 
                 var notchName = GetNotchName(element);
-                if (notchName.Contains("Chest") && !kingdomName.Equals("Kingdom Outskirts"))
+                if (notchName.Contains("Chest") && !kingdomName.Equals("Kingdom Outskirts") && !kingdomName.Equals("Crack in the Geode"))
                 {
                     notchName = " Chest";
                 }
@@ -1057,6 +1057,7 @@ namespace RnSArchipelago.Game
                 {
                     return "Shira";
                 }
+
                 return kingdomName + notchName;
             }
             return "";
@@ -1081,7 +1082,7 @@ namespace RnSArchipelago.Game
                 kingdomName = kingdomName.Replace(Environment.NewLine, " ");
 
 
-                for (var i = kingdomName.Equals("Kingdom Outskirts") ? 1 : 0; i < notchPos; i++)
+                for (var i = kingdomName.Equals("Kingdom Outskirts") || kingdomName.Equals("Crack in the Geode") ? 1 : 0; i < notchPos; i++)
                 {
                     if (GetLocationType(i) == notchType)
                     {
@@ -1184,7 +1185,7 @@ namespace RnSArchipelago.Game
                 var kingdomName = rnsReloaded.FindValue(self, "stageName")->ToString();
                 kingdomName = kingdomName.Replace(Environment.NewLine, " ");
 
-                if (kingdomName.Equals("Kingdom Outskirts"))
+                if (kingdomName.Equals("Kingdom Outskirts") || kingdomName.Equals("Crack in the Geode"))
                 {
                     for (int i = 0; i < this.inventoryUtil.AvailableTreasurespheres; i++)
                     {
