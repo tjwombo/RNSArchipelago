@@ -495,7 +495,7 @@ namespace RnSArchipelago.Game
                                 }
                             }
                         }
-                        else if (this.inventoryUtil.shuffleItemsets)
+                        else if (this.inventoryUtil.ItemSanity != InventoryUtil.ItemSetting.None)
                         {
                             if (this.inventoryUtil.AvailableItems.Count == 0)
                             {
@@ -606,7 +606,7 @@ namespace RnSArchipelago.Game
                     }
                     else if (location == LocationType.SpecialChest)
                     {
-                        if (this.inventoryUtil.shuffleItemsets)
+                        if (this.inventoryUtil.ItemSanity != InventoryUtil.ItemSetting.None)
                         {
                             if (this.inventoryUtil.AvailableItems.Count == 0)
                             {

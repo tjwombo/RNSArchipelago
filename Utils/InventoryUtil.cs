@@ -20,7 +20,7 @@ namespace RnSArchipelago.Utils
 
         internal bool isActive;
         internal bool isKingdomSanity;
-        //internal bool isOutskirtsShuffled;
+        internal RunTypeSetting run_type = RunTypeSetting.Kingdom;
         internal bool isProgressive;
         internal bool useKingdomOrderWithKingdomSanity;
         internal long maxKingdoms;
@@ -29,13 +29,14 @@ namespace RnSArchipelago.Utils
 
         internal bool isClassSanity;
         internal List<string> checksPerClass = [];
-        internal bool shuffleItemsets;
         private List<long> availableItems = [];
         internal bool checksPerItemInChest;
         private List<string> availablePotions = [];
         private GoalSetting goal = GoalSetting.Shira;
         internal long shiraKills;
-        private HashSet<string> victories = [];
+        internal long witchKills;
+        private HashSet<string> shira_victories = [];
+        private HashSet<string> witch_victories = [];
         private ShopSetting shop_sanity = ShopSetting.None;
 
         internal bool shouldUpdateKingdomRoute;
@@ -45,6 +46,25 @@ namespace RnSArchipelago.Utils
 
         internal delegate void SendGoalDelegate();
         internal event SendGoalDelegate? SendGoal;
+
+        internal enum RunTypeSetting
+        {
+            Kingdom = 0,
+            Extra = 1,
+            Either = 2,
+            Chaotic = 3
+        }
+
+        internal RunTypeSetting RunType => run_type;
+
+        internal enum ItemSetting
+        {
+            None = 0,
+            Itemset = 1,
+            Full = 2
+        }
+
+        internal ItemSetting ItemSanity { get; set; }
 
         internal enum UpgradeSetting
         {
@@ -66,7 +86,9 @@ namespace RnSArchipelago.Utils
 
         internal enum GoalSetting
         {
-            Shira = 1
+            Shira = 1,
+            Witch = 2,
+            Both = 3
         }
 
         internal GoalSetting Goal => goal;
@@ -83,6 +105,7 @@ namespace RnSArchipelago.Utils
         internal void Reset()
         {
             isActive = false;
+            run_type = RunTypeSetting.Kingdom;
             AvailableKingdoms = KingdomFlags.None;
             ProgressiveRegions = 0;
             kingdomOrder = [];
@@ -90,12 +113,15 @@ namespace RnSArchipelago.Utils
             checksPerClass = [];
             availableItems = [];
             AvailableTreasurespheres = 0;
+            ItemSanity = ItemSetting.None;
             UpgradeSanity = UpgradeSetting.None;
             PotionSanity = PotionSetting.None;
             availablePotions = [];
             goal = GoalSetting.Shira;
             shiraKills = 0;
-            victories = [];
+            witchKills = 0;
+            shira_victories = [];
+            witch_victories = [];
             shop_sanity = ShopSetting.None;
         }
 
@@ -105,6 +131,7 @@ namespace RnSArchipelago.Utils
             isActive = true;
 
             isKingdomSanity = data.options.Get<long>("kingdom_sanity") == 1;
+            run_type = (RunTypeSetting)data.options.Get<long>("run_type");
             isProgressive = data.options.Get<long>("progressive_regions") == 1;
             useKingdomOrderWithKingdomSanity = data.options.Get<long>("kingdom_sanity_kingdom_order") == 1;
             maxKingdoms = data.options.Get<long>("max_kingdoms_per_run");
@@ -147,7 +174,7 @@ namespace RnSArchipelago.Utils
             checksPerClass = data.options.Get<JArray>("checks_per_class")?.ToObject<List<string>>()!;
             this.logger.PrintMessage(String.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
 
-            shuffleItemsets = data.options.Get<long>("shuffle_item_sets") == 1;
+            ItemSanity = (ItemSetting)data.options.Get<long>("item_sanity");
             checksPerItemInChest = data.options.Get<long>("checks_per_item_in_chest") == 1;
 
             UpgradeSanity = (UpgradeSetting) data.options.Get<long>("upgrade_sanity");
@@ -160,6 +187,7 @@ namespace RnSArchipelago.Utils
             this.logger.PrintMessage(goal.ToString(), System.Drawing.Color.DarkOrange);
 
             shiraKills = data.options.Get<long>("shira_defeats")!;
+            witchKills = data.options.Get<long>("witch_defeats")!;
 
             shop_sanity = (ShopSetting)data.options.Get<long>("shop_sanity");
             this.logger.PrintMessage(shop_sanity.ToString(), System.Drawing.Color.DarkOrange);
@@ -168,23 +196,28 @@ namespace RnSArchipelago.Utils
         [Flags]
         internal enum KingdomFlags
         { 
-            None = 0b000000000000,
-            Outskirts = 0b000000000001,
-            Crack_in_the_Geode = 0b00000000010,
-            Scholars_Nest = 0b000000000100,
-            Kings_Arsenal = 0b000000001000,
-            Red_Darkhouse = 0b000000010000,
-            Churchmouse_Streets = 0b000000100000,
-            Emerald_Lakeside = 0b000001000000,
-            Darkhouse_Depths = 0b000010000000,
-            Atelier_Aurum = 0b000100000000,
-            Subterra_Sanctum = 0b001000000000,
-            The_Pale_Keep = 0b010000000000,
-            Moonlit_Pinnacle = 0b100000000000,
-            All = 0b111111111111
+            None = 0b00000000,
+            Kingdom_Outskirts = 0b00000001,
+            Scholars_Nest = 0b00000010,
+            Kings_Arsenal = 0b00000100,
+            Red_Darkhouse = 0b00001000,
+            Churchmouse_Streets = 0b00010000,
+            Emerald_Lakeside = 0b00100000,
+            The_Pale_Keep = 0b01000000,
+            Moonlit_Pinnacle = 0b10000000,
+            All_Base = 0b11111111,
+            Crack_In_The_Geode = 0b100000000,
+            Darkhouse_Depths = 0b1000000000,
+            Atelier_Aurum = 0b10000000000,
+            Subterra_Sanctum = 0b100000000000,
+            Looping_Hallway = 0b1000000000000,
+            Reflecting_Pool = 0b10000000000000,
+            All_Extra = 0b11111000000000,
+            All = 0b11111111111111
         }
 
-        private static readonly string[] KINGDOMS = ["Kingdom Outskirts", "Crack in the Geode", "Scholar's Nest", "King's Arsenal", "Red Darkhouse", "Churchmouse Streets", "Emerald Lakeside", "Darkhouse Depths", "Atelier Aurum", "Subterra Sanctum", "The Pale Keep", "Moonlit Pinnacle"];
+        private static readonly string[] KINGDOMS = ["Kingdom Outskirts", "Scholar's Nest", "King's Arsenal", "Red Darkhouse", "Churchmouse Streets", "Emerald Lakeside", "The Pale Keep", "Moonlit Pinnacle",
+                                                    "Crack In The Geode", "Darkhouse Depths", "Atelier Aurum", "Subterra Sanctum", "Looping Hallway", "Reflecting Pool"];
 
         internal KingdomFlags AvailableKingdoms { get; set; }
         internal int ProgressiveRegions { get; set; }
@@ -210,7 +243,8 @@ namespace RnSArchipelago.Utils
             All = 0b11111111111111
         }
 
-        private static readonly string[] CLASSES = ["Wizard", "Assassin", "Heavyblade", "Dancer", "Druid", "Spellsword", "Sniper", "Bruiser", "Defender", "Ancient", "Hammermaid", "Pyromancer", "Grenadier", "Shadow"];
+        internal static readonly string[] CLASSES = ["Wizard", "Assassin", "Heavyblade", "Dancer", "Druid", "Spellsword", "Sniper", "Bruiser", "Defender", "Ancient",
+                                                    "Hammermaid", "Pyromancer", "Grenadier", "Shadow"];
 
         internal ClassFlags AvailableClasses { get; set; }
 
@@ -503,7 +537,7 @@ namespace RnSArchipelago.Utils
         private static readonly long SHARPEDGED_SHIELD = itemId++;
         private static readonly long POINTED_RING = itemId++;
         private static readonly long CROWN_OF_SWORDS = itemId++;
-        private static readonly long BLADED_CLOAD = itemId++;
+        private static readonly long BLADED_CLOAK = itemId++;
         private static readonly long GREATSWORD_PENDANT = itemId++;
 
         private static readonly long RUSTED_GREATSWORD = itemId++;
@@ -541,6 +575,292 @@ namespace RnSArchipelago.Utils
         private static readonly long CARAMEL_TEA = itemId++;
         private static readonly long STRAWBERRY_CAKE = itemId++;
         private static readonly long SWEET_TAFFY = itemId++;
+
+        #region Item Dictionary
+        private static readonly Dictionary<String, long> ITEMS = new() {
+            ["Raven Grimoire"] = RAVEN_GRIMOIRE,
+            ["Blackwing Staff"] = BLACKWING_STAFF,
+            ["Curse Talon"] = CURSE_TALON,
+            ["Darkmagic Blade"] = DARKMAGIC_BLADE,
+            ["Witch's Cloak"] = WITCHS_CLOAK,
+            ["Crowfeather Hairpin"] = CROWFEATHER_HAIRPIN,
+            ["Redblack Ribbon"] = REDBLACK_RIBBON,
+            ["Opal Necklace"] = OPAL_NECKLACE,
+            ["Sleeping Greatbow"] = SLEEPING_GREATBOW,
+            ["Crescentmoon Dagger"] = CRESCENTMOON_DAGGER,
+            ["Lullaby Harp"] = LULLABY_HARP,
+            ["Nightstar Grimoire"] = NIGHTSTAR_GRIMOIRE,
+            ["Moon Pendant"] = MOON_PENDANT,
+            ["Pajama Hat"] = PAJAMA_HAT,
+            ["Stuffed Rabbit"] = STUFFED_RABBIT,
+            ["Nightingale Gown"] = NIGHTINGALE_GOWN,
+            ["Eternity Flute"] = ETERNITY_FLUTE,
+            ["Timewarp Wand"] = TIMEWARP_WAND,
+            ["Chrome Shield"] = CHROME_SHIELD,
+            ["Clockwork Tome"] = CLOCKWORK_TOME,
+            ["Metronome Boots"] = METRONOME_BOOTS,
+            ["Timemage Cap"] = TIMEMAGE_CAP,
+            ["Starry Cloak"] = STARRY_CLOAK,
+            ["Gemini Necklace"] = GEMINI_NECKLACE,
+            ["Hawkfeather Fan"] = HAWKFEATHER_FAN,
+            ["Windbite Dagger"] = WINDBITE_DAGGER,
+            ["Pidgeon Bow"] = PIDGEON_BOW,
+            ["Shinsoku Katana"] = SHINSOKU_KATANA,
+            ["Eaglewing Charm"] = EAGLEWING_CHARM,
+            ["Sparrow Feather"] = SPARROW_FEATHER,
+            ["Winged Cap"] = WINGED_CAP,
+            ["Thief's Coat"] = THIEFS_COAT,
+            ["Vampiric Dagger"] = VAMPRIC_DAGGER,
+            ["Bloody Bandage"] = BLOODY_BANDAGE,
+            ["Leech Staff"] = LEECH_STAFF,
+            ["Bloodhound Greatsword"] = BLOODHOUND_GREATSWORD,
+            ["Reaper Cloak"] = REAPER_CLOAK,
+            ["Bloodflower Brooch"] = BLOODFLOWER_BROOCH,
+            ["Wolf Hood"] = WOLF_HOOD,
+            ["Blood Vial"] = BLOOD_VIAL,
+            ["Black Wakizashi"] = BLACK_WAKIZASHI,
+            ["Throwing Dagger"] = THROWING_DAGGER,
+            ["Assassin's Knife"] = ASSASSINS_KNIFE,
+            ["Ninjutsu Scroll"] = NINJUTSU_SCROLL,
+            ["Shadow Bracelet"] = SHADOW_BRACELET,
+            ["Ninja Robe"] = NINJA_ROBE,
+            ["Kunoichi Hood"] = KUNOICHI_HOOD,
+            ["Shinobi Tabi"] = SHINOBI_TABI,
+            ["Dragonhead Spear"] = DRAGONHEAD_SPEAR,
+            ["Granite Greatsword"] = GRANITE_GREATSWORD,
+            ["Greysteel Shield"] = GREYSTEEL_SHIELD,
+            ["Stonebreaker Staff"] = STONEBREAKER_STAFF,
+            ["Tough Gauntlet"] = TOUGH_GAUNTLET,
+            ["Rockdragon Mail"] = ROCKDRAGON_MAIL,
+            ["Obsidian Hairpin"] = OBSIDIAN_HAIRPIN,
+            ["Iron Greaves"] = IRON_GREAVES,
+            ["Volcano Spear"] = VOLCANO_SPEAR,
+            ["Reddragon Blade"] = REDDRAGON_BLADE,
+            ["Flame Bow"] = FLAME_BOW,
+            ["Meteor Staff"] = METEOR_STAFF,
+            ["Phoenix Charm"] = PHOENIX_CHARM,
+            ["Firescale Corset"] = FIRESCALE_CORSET,
+            ["Demon Horns"] = DEMON_HORNS,
+            ["Flamewalker Boots"] = FLAMEWALKER_BOOTS,
+            ["Diamond Shield"] = DIAMOND_SHIELD,
+            ["Peridot Rapier"] = PERIDOT_RAPIER,
+            ["Garnet Staff"] = GARNET_STAFF,
+            ["Sapphire Violin"] = SAPPHIRE_VIOLIN,
+            ["Emerald Chestplate"] = EMERALD_CHESTPLATE,
+            ["Amethyst Bracelet"] = AMETHYST_BRACELET,
+            ["Topaz Charm"] = TOPAZ_CHARM,
+            ["Ruby Circlet"] = RUBY_CIRCLET,
+            ["Brightstorm Spear"] = BRIGHTSTORM_SPEAR,
+            ["Bolt Staff"] = BOLT_STAFF,
+            ["Lightning Bow"] = LIGHTNING_BOW,
+            ["Darkstorm Knife"] = DARKSTORM_KNIFE,
+            ["Darkcloud Necklace"] = DARKCLOUD_NECKLACE,
+            ["Crown of Storms"] = CROWN_OF_STORMS,
+            ["Thunderclap Gloves"] = THUNDERCLAP_GLOVES,
+            ["Storm Petticoat"] = STORM_PETTICOAT,
+            ["Holy Greatsword"] = HOLY_GREATSWORD,
+            ["Sacred Bow"] = SACRED_BOW,
+            ["Purification Rod"] = PURIFICATION_ROD,
+            ["Ornamental Bell"] = ORNAMENTAL_BELL,
+            ["Shrinemaiden's Kosode"] = SHRINEMAIDENS_KOSODE,
+            ["Redwhite Ribbon"] = REDWHITE_RIBBON,
+            ["Divine Mirror"] = DIVINE_MIRROR,
+            ["Golden Chime"] = GOLDEN_CHIME,
+            ["Book of Cheats"] = BOOK_OF_CHEATS,
+            ["Golden Katana"] = GOLDEN_KATANA,
+            ["Glittering Trumpet"] = GLITTERING_TRUMPET,
+            ["Royal Staff"] = ROYAL_STAFF,
+            ["Ballroom Gown"] = BALLROOM_GOWN,
+            ["Silver Coin"] = SILVER_COIN,
+            ["Queen's Crown"] = QUEENS_CROWN,
+            ["Mimick Rabbitfoot"] = MIMICK_RABBITFOOT,
+            ["Butterfly Ocarina"] = BUTTERFLY_OCARINA,
+            ["Fairy Spear"] = FAIRY_SPEAR,
+            ["Moss Shield"] = MOSS_SHIELD,
+            ["Floral Bow"] = FLORAL_BOW,
+            ["Blue Rose"] = BLUE_ROSE,
+            ["Sunflower Crown"] = SUNFLOWER_CROWN,
+            ["Midsummer Dress"] = MIDSUMMER_DRESS,
+            ["Grasswoven Bracelet"] = GRASSWOVEN_BRACELET,
+            ["Snakefang Dagger"] = SNAKEFANG_DAGGER,
+            ["Ivy Staff"] = IVY_STAFF,
+            ["Deathcap Tome"] = DEATHCAP_TOME,
+            ["Spiderbite Bow"] = SPIDERBITE_BOW,
+            ["Compound Gloves"] = COMPOUND_GLOVES,
+            ["Poisonfrog Charm"] = POISONFROG_CHARM,
+            ["Venom Hood"] = VENOM_HOOD,
+            ["Chemist's Coat"] = CHEMISTS_COAT,
+            ["Seashell Shield"] = SEASHEEL_SHIELD,
+            ["Necronomicon"] = NECRONOMICON,
+            ["Tidal Greatsword"] = TIDAL_GREATSWORD,
+            ["Occult Dagger"] = OCCULT_DAGGER,
+            ["Mermaid Scalemail"] = MERMAID_SCALEMAIL,
+            ["Hydrous Blob"] = HYDROUS_BLOB,
+            ["Abyss Artifact"] = ABYSS_ARTIFACT,
+            ["Lost Pendant"] = LOST_PENDANT,
+            ["Sawtooth Cleaver"] = SAWTOOTH_CLEAVER,
+            ["Raven's Dagger"] = RAVENS_DAGGER,
+            ["Killing Note"] = KILLING_NOTE,
+            ["Blacksteel Buckler"] = BLACKSTEEL_BUCKLER,
+            ["Nightguard Gloves"] = NIGHTGUARD_GLOVES,
+            ["Sniper's Eyeglasses"] = SNIPERS_EYEGLASSES,
+            ["Darkmage Charm"] = DARKMAGE_CHARM,
+            ["Firststrike Bracelet"] = FIRSTSTRIKE_BRACELET,
+            ["Obsidian Rod"] = OBSIDIAN_ROD,
+            ["Darkglass Spear"] = DARKGLASS_SPEAR,
+            ["Timespace Dagger"] = TIMESPACE_DAGGER,
+            ["Quartz Shield"] = QUARTZ_SHIELD,
+            ["Pocketwatch"] = POCKETWATCH,
+            ["Nova Crown"] = NOVA_CROWN,
+            ["Blackhole Charm"] = BLACKHOLE_CHARM,
+            ["Twinstar Earrings"] = TWINSTAR_EARRINGS,
+            ["Kyou No Omikuji"] = KYOU_NO_OMIKUJI,
+            ["Youkai Bracelet"] = YOUKAI_BRACELET,
+            ["Oni Staff"] = ONI_STAFF,
+            ["Kappa Shield"] = KAPPA_SHIELD,
+            ["Usagi Kamen"] = USAGI_KAMEN,
+            ["Red Tanzaku"] = RED_TANZAKU,
+            ["Vega Spear"] = VEGA_SPEAR,
+            ["Altair Dagger"] = ALTAI_DAGGER,
+            ["Ghost Spear"] = GHOST_SPEAR,
+            ["Phantom Dagger"] = PHANTOM_DAGGER,
+            ["Cursed Candlestaff"] = CURSED_CANDLESTAFF,
+            ["Haunted Gloves"] = HAUNTED_GLOVES,
+            ["Old Bonnet"] = OLD_BONNET,
+            ["Maid Outfit"] = MAID_OUTFIT,
+            ["Calling Bell"] = CALLING_BELL,
+            ["Smoke Shield"] = SMOKE_SHIELD,
+            ["Grandmaster Spear"] = GRANDMASTER_SPEAR,
+            ["Teacher Knife"] = TEACHER_KNIFE,
+            ["Tactician Rod"] = TACTICIAN_ROD,
+            ["Spiked Shield"] = SPIKED_SHIELD,
+            ["Battlemaiden Armor"] = BATTLEMAIDEN_ARMOR,
+            ["Gladiator Helmet"] = GLADIATOR_HELMET,
+            ["Lancer Gauntlets"] = LANCER_GAUNTLETS,
+            ["Lion Charm"] = LION_CHARM,
+            ["Bluebolt Staff"] = BLUEBOLT_STAFF,
+            ["Lapis Sword"] = LAPIS_SWORD,
+            ["Shockwave Tome"] = SHOCKWAVE_TOME,
+            ["Battery Shield"] = BATTERY_SHIELD,
+            ["Raiju Crown"] = RAIJU_CROWN,
+            ["Staticshock Earrings"] = STATICSHOCK_EARRINGS,
+            ["Stormdance Gown"] = STORMDANCE_GOWN,
+            ["Blackbolt Ribbon"] = BLACKBOLT_RIBBON,
+            ["Crane Katana"] = CRANE_KATANA,
+            ["Falconfeather Dagger"] = FALCONFEATHER_DAGGER,
+            ["Tornado Staff"] = TORNADO_STAFF,
+            ["Cloud Guard"] = CLOUD_GUARD,
+            ["Hermes Bow"] = HERMES_BOW,
+            ["Talon Charm"] = TALON_CHARM,
+            ["Tiny Wings"] = TINY_WINGS,
+            ["Feathered Overcoat"] = FEATHERED_OVERCOAT,
+            ["Sandpriestess Spear"] = SANDPRIESTESS_SPEAR,
+            ["Flamedancer Dagger"] = FLAMEDANCER_DAGGER,
+            ["Whiteflame Staff"] = WHITEFLAME_STAFF,
+            ["Sacred Shield"] = SACRED_SHIELD,
+            ["Marble Clasp"] = MARBLE_CLASP,
+            ["Sun Pendant"] = SUN_PENDANT,
+            ["Tiny Hourglass"] = TINY_HOURGLASS,
+            ["Desert Earrings"] = DESERT_EARRINGS,
+            ["Giant Stone Club"] = GIANT_STONE_CLUB,
+            ["Ruins Sword"] = RUINS_SWORD,
+            ["Mountain Staff"] = MOUNTAIN_STAFF,
+            ["Boulder Shield"] = BOULDER_SHIELD,
+            ["Golem's Claymore"] = GOLEMS_CLAYMORE,
+            ["Stoneplate Armor"] = STONEPLATE_ARMOR,
+            ["Sacredstone Charm"] = SACREDSTONE_CHARM,
+            ["Clay Rabbit"] = CLAY_RABBIT,
+            ["Waterfall Polearm"] = WATERFALL_POLEARM,
+            ["Vorpal Dao"] = VORPAL_DAO,
+            ["Jade Staff"] = JADE_STAFF,
+            ["Reflection Shield"] = REFLECTION_SHIELD,
+            ["Butterfly Hairpin"] = BUTTERFLY_HAIRPIN,
+            ["Watermage Pendant"] = WATERMAGE_PENDANT,
+            ["Raindrop Earrings"] = RAINDROP_EARRINGS,
+            ["Aquamarine Bracelet"] = AQUAMARINE_BRACELET,
+            ["Glacier Spear"] = GLACIER_SPEAR,
+            ["Frost Dagger"] = FROST_DAGGER,
+            ["Frozen Staff"] = FROZEN_STAFF,
+            ["Coldsteel Shield"] = COLDSTEEL_SHIELD,
+            ["Polar Coat"] = POLAR_COAT,
+            ["Icicle Earrings"] = ICICLE_EARRINGS,
+            ["Winter Hat"] = WINTER_HAT,
+            ["Snow Boots"] = SNOW_BOOTS,
+            ["Spear of Remorse"] = SPEAR_OF_REMORSE,
+            ["Memory Greatsword"] = MEMORY_GREATSWORD,
+            ["Staff of Sorrow"] = STAFF_OF_SORROW,
+            ["Shield of Smiles"] = SHIELD_OF_SMILES,
+            ["Lonesome Pendant"] = LONESOME_PENDANT,
+            ["Spark of Determination"] = SPARK_OF_DETERMINATION,
+            ["Crown of Love"] = CROWN_OF_LOVE,
+            ["Comforting Coat"] = COMFORTING_COAT,
+            ["Righthand Cast"] = RIGHTHAND_CAST,
+            ["Lefthand Cast"] = LEFTHAND_CAST,
+            ["Hexed Blindfold"] = HEXED_BLINDFOLD,
+            ["Angel's Halo"] = ANGELS_HALO,
+            ["Unsacred Pendant"] = UNSACRED_PENDANT,
+            ["Whitewing Bracelet"] = WHITEWING_BRACELET,
+            ["Darkcrystal Rose"] = DARKCRYSTAL_ROSE,
+            ["Dark Wings"] = DARK_WINGS,
+            ["Giant Paintbrush"] = GIANT_PAINTBRUSH,
+            ["Sewing Sword"] = SEWING_SWORD,
+            ["Sketchbook"] = SKETCHBOOK,
+            ["Palette Shield"] = PALETTE_SHIELD,
+            ["Handmade Charm"] = HANDMADE_CHARM,
+            ["Painter's Beret"] = PAINTERS_BERET,
+            ["Artist Smock"] = ARTIST_SMOCK,
+            ["Colorful Earrings"] = COLORFUL_EARRINGS,
+            ["Daylight Sword"] = DAYLIGHT_SWORD,
+            ["Nightgleam Sword"] = NIGHTGLEAM_SWORD,
+            ["Spear of Winds"] = SPEAR_OF_WINDS,
+            ["Spear of Rains"] = SPEAR_OF_RAINS,
+            ["Heaven's Codex"] = HEAVENS_CODEX,
+            ["Hell's Codex"] = HELLS_CODEX,
+            ["Robe of Light"] = ROBE_OF_LIGHTS,
+            ["Robe of Dark"] = ROBE_OF_DARK,
+            ["Hooked Staff"] = HOOKED_STAFF,
+            ["Springloaded Scythe"] = SPRINGLOADED_SCYTHE,
+            ["Hidden Blade"] = HIDDEN_BLADE,
+            ["Sharpedged Shield"] = SHARPEDGED_SHIELD,
+            ["Pointed Ring"] = POINTED_RING,
+            ["Crown of Swords"] = CROWN_OF_SWORDS,
+            ["Bladed Cloak"] = BLADED_CLOAK,
+            ["Greatsword Pendant"] = GREATSWORD_PENDANT,
+            ["Rusted Greatsword"] = RUSTED_GREATSWORD,
+            ["Sand Shovel"] = SAND_SHOVEL,
+            ["Saltwater Staff"] = SALTWATER_STAFF,
+            ["Large Umbrella"] = LARGE_UMBRELLA,
+            ["Onepiece Swimsuit"] = ONEPIECE_SWIMSUIT,
+            ["Straw Hat"] = STRAW_HAT,
+            ["Large Anchor"] = LARGE_ANCHOR,
+            ["Beach Sandals"] = BEACH_SANDALS,
+            ["Strongman's Bar"] = STRONGMANS_BARD,
+            ["Spinning Chakram"] = SPINNING_CHAKRAM,
+            ["Ribboned Staff"] = RIBBONED_STAFF,
+            ["Trick Shield"] = TRICK_SHIELD,
+            ["Rosered Leotard"] = ROSERED_LEOTARD,
+            ["Jester's Hat"] = JESTERS_HAT,
+            ["Rainbow Cape"] = RAINBOW_CAPE,
+            ["Performer's Shoes"] = PERFORMERS_SHOES,
+            ["Iron Pickaxe"] = IRON_PICKAXE,
+            ["Dynamite Staff"] = DYNAMITE_STAFF,
+            ["Fossil Dagger"] = FOSSIL_DAGGER,
+            ["Drill Shield"] = DRILL_SHIELD,
+            ["Canary Charm"] = CANARY_CHARM,
+            ["Pyrite Earrings"] = PYRITE_EARRINGS,
+            ["Caver's Cloak"] = CAVERS_CLOAK,
+            ["Miner's Headlamp"] = MINERS_HEADLAMP,
+            ["Tiny Fork"] = TINY_FORK,
+            ["Stirring Spoon"] = STIRRING_SPOON,
+            ["Fanciful Book"] = FANCIFUL_BOOK,
+            ["Apple Plate"] = APPLE_PLATE,
+            ["Vanilla Wafers"] = VANILLA_WAFERS,
+            ["Caramel Tea"] = CARAMEL_TEA,
+            ["Strawberry Cake"] = STRAWBERRY_CAKE,
+            ["Sweet Taffy"] = SWEET_TAFFY
+        };
+        #endregion
+
         #endregion
 
         #region Itemsets
@@ -604,7 +924,7 @@ namespace RnSArchipelago.Utils
 
         private static readonly long[] DAYNIGHT_SET = [DAYLIGHT_SWORD, NIGHTGLEAM_SWORD, SPEAR_OF_WINDS, SPEAR_OF_RAINS, HEAVENS_CODEX, HELLS_CODEX, ROBE_OF_LIGHTS, ROBE_OF_DARK];
 
-        private static readonly long[] SHARPEDGE_SET = [HOOKED_STAFF, SPRINGLOADED_SCYTHE, HIDDEN_BLADE, SHARPEDGED_SHIELD, POINTED_RING, CROWN_OF_SWORDS, BLADED_CLOAD, GREATSWORD_PENDANT];
+        private static readonly long[] SHARPEDGE_SET = [HOOKED_STAFF, SPRINGLOADED_SCYTHE, HIDDEN_BLADE, SHARPEDGED_SHIELD, POINTED_RING, CROWN_OF_SWORDS, BLADED_CLOAK, GREATSWORD_PENDANT];
 
         private static readonly long[] OCEANS_SET = [RUSTED_GREATSWORD, SAND_SHOVEL, SALTWATER_STAFF, LARGE_UMBRELLA, ONEPIECE_SWIMSUIT, STRAW_HAT, LARGE_ANCHOR, BEACH_SANDALS];
 
@@ -706,7 +1026,12 @@ namespace RnSArchipelago.Utils
                     {
                         AddItemsFromItemset(itemName);
                         this.logger.PrintMessage("Items: " + String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
-                    } 
+                    }
+                    else if (ITEMS.ContainsKey(itemName))
+                    {
+                        availableItems.Add(ITEMS[itemName]);
+                        this.logger.PrintMessage("Items: " + String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+                    }
                     else if (itemName == "Treasuresphere")
                     {
                         AddChest?.Invoke();
@@ -775,10 +1100,19 @@ namespace RnSArchipelago.Utils
                     {
                         AvailablePotions.Add(itemName);
                         this.logger.PrintMessage("Potions: " + String.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
-                    } else if (itemName.Contains("Victory"))
+                    } else if (itemName.Contains("Defeat"))
                     {
-                        victories.Add(itemName);
-                        this.logger.PrintMessage("Victories: " + String.Join(", ", victories), System.Drawing.Color.DarkOrange);
+                        if (itemName.Contains("Shira"))
+                        {
+                            shira_victories.Add(itemName);
+                            this.logger.PrintMessage("Shira Victories: " + String.Join(", ", shira_victories), System.Drawing.Color.DarkOrange);
+                        }
+                        else if (itemName.Contains("Witch"))
+                        {
+                            witch_victories.Add(itemName);
+                            this.logger.PrintMessage("Witch Victories: " + String.Join(", ", witch_victories), System.Drawing.Color.DarkOrange);
+                        }
+
                         if (CheckGoal())
                         {
                             SendGoal?.Invoke();
@@ -793,7 +1127,19 @@ namespace RnSArchipelago.Utils
         {
             if (goal == GoalSetting.Shira)
             {
-                if (victories.Count >= shiraKills)
+                if (shira_victories.Count >= shiraKills)
+                {
+                    return true;
+                }
+            } else if (goal == GoalSetting.Witch)
+            {
+                if (witch_victories.Count >= witchKills)
+                {
+                    return true;
+                }
+            } else if (goal == GoalSetting.Both)
+            {
+                if (shira_victories.Count >= shiraKills && witch_victories.Count >= witchKills)
                 {
                     return true;
                 }

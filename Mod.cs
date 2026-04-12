@@ -389,22 +389,10 @@ namespace RnSArchipelago
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
             
             // Visually lock characters not yet obtained
-            var lockVisualClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_update_chooseclass") - 100000);
-            classHandler.lockVisualClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockVisualClass, lockVisualClassScript->Functions->Function);
+            var lockVisualClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_draw_menu") - 100000);
+            classHandler.lockVisualClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.SetClassAvailability, lockVisualClassScript->Functions->Function);
             classHandler.lockVisualClassHook.Activate();
             classHandler.lockVisualClassHook.Enable();
-
-            // Prevent the drawing of colors if trying to select a locked class
-            var stopColorScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_setup_colors") - 100000);
-            classHandler.stopColorHook = hooks.CreateHook<ScriptDelegate>(classHandler.StopColorDraw, stopColorScript->Functions->Function);
-            classHandler.stopColorHook.Activate();
-            classHandler.stopColorHook.Enable();
-
-            // Actually lock characters not yet obtained
-            var lockClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_update_choosecolor") - 100000);
-            classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockClass, lockClassScript->Functions->Function);
-            classHandler.lockClassHook.Activate();
-            classHandler.lockClassHook.Enable();
         }
 
         // TODO: REMOVE Testing function for timing printing
