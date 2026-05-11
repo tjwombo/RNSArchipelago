@@ -23,6 +23,7 @@ namespace RnSArchipelago
         private HookUtil hookUtil = null!;
         private InventoryUtil inventoryUtil = null!;
         private ShopItemsUtil shopItemsUtil = null!;
+        private string modLocation;
 
         private Configurator configurator = null!;
         private Config.Config config = null!;
@@ -55,14 +56,18 @@ namespace RnSArchipelago
 
         public void StartEx(IModLoaderV1 loader, IModConfigV1 modConfig)
         {
-            this.rnsReloadedRef = loader.GetController<IRNSReloaded>();
-            this.hooksRef = loader.GetController<IReloadedHooks>();
+            var _loader = (IModLoader)loader;
+            this.rnsReloadedRef = _loader.GetController<IRNSReloaded>();
+            this.hooksRef = _loader.GetController<IReloadedHooks>();
 
             this.logger = (ILogger) loader.GetLogger();
 
             this.configurator = new Configurator(((IModLoader)loader).GetModConfigDirectory(modConfig.ModId));
             this.config = this.configurator.GetConfiguration<Config.Config>(0);
             this.config.ConfigurationUpdated += this.ConfigurationUpdated;
+
+
+            modLocation = _loader.GetDirectoryForModId("RnSArchipelago");
 
             if (!this.config.SkipItemCreation)
             {
@@ -658,8 +663,7 @@ namespace RnSArchipelago
         private void CopyItemModToRnSMod()
         {
             // Copy over item mod to game folder
-            // Assumes that this environment variable is actually correct
-            string path = Path.Combine(this.config.Mods, @"RnSArchipelago\ArchipelagoItems");
+            string path = Path.Combine(modLocation, "ArchipelagoItems");
             CopyDirectory(path, @".\Mods\ArchipelagoItems", true);
         }
 
