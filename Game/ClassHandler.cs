@@ -1,12 +1,8 @@
 ﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using RnSArchipelago.Utils;
-using System.Diagnostics.CodeAnalysis;
 using Reloaded.Mod.Interfaces;
-using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 
 namespace RnSArchipelago.Game
 {
@@ -18,8 +14,6 @@ namespace RnSArchipelago.Game
         private readonly InventoryUtil inventoryUtil;
 
         internal IHook<ScriptDelegate>? lockClassHook;
-        internal IHook<ScriptDelegate>? lockVisualClassHook;
-        internal IHook<ScriptDelegate>? stopColorHook;
 
         internal static long AbilityIdToBaseId(long abilityId)
         {
@@ -37,9 +31,9 @@ namespace RnSArchipelago.Game
         // Makes it so you can't progress in a class and remove the preview, and restore it in the palette selection
         internal RValue* SetClassAvailability(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.lockVisualClassHook != null)
+            if (this.lockClassHook != null)
             {
-                returnValue = this.lockVisualClassHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = this.lockClassHook.OriginalFunction(self, other, returnValue, argc, argv);
             } else
             {
                 this.logger.PrintMessage("Unable to call lock visual class hook", System.Drawing.Color.Red);

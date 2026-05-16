@@ -1,6 +1,5 @@
 ﻿using Archipelago.MultiClient.Net.MessageLog.Messages;
 using RNSReloaded.Interfaces.Structs;
-using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
@@ -8,7 +7,6 @@ using Archipelago.MultiClient.Net.Packets;
 using System.Drawing;
 using RnSArchipelago.Utils;
 using RnSArchipelago.Data;
-using System.Diagnostics.CodeAnalysis;
 using Reloaded.Hooks.Definitions;
 using System.Collections.Concurrent;
 using Reloaded.Mod.Interfaces;

@@ -1,5 +1,4 @@
 ﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using Archipelago.MultiClient.Net;
@@ -8,8 +7,6 @@ using Archipelago.MultiClient.Net.Packets;
 using Archipelago.MultiClient.Net.Models;
 using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
-using RnSArchipelago.Game;
-using System.Diagnostics.CodeAnalysis;
 using Reloaded.Mod.Interfaces;
 
 namespace RnSArchipelago.Connection
@@ -29,7 +26,7 @@ namespace RnSArchipelago.Connection
 
         internal ArchipelagoSession? session;
 
-        private static readonly NetworkVersion VERSION = new(0, 6, 3);
+        private static readonly NetworkVersion VERSION = new(0, 6, 7);
         private static readonly string GAME = "Rabbit and Steel";
 
         internal ArchipelagoConnection(

@@ -23,7 +23,7 @@ namespace RnSArchipelago
         private HookUtil hookUtil = null!;
         private InventoryUtil inventoryUtil = null!;
         private ShopItemsUtil shopItemsUtil = null!;
-        private string modLocation;
+        private string modLocation = "";
 
         private Configurator configurator = null!;
         private Config.Config config = null!;
@@ -34,6 +34,7 @@ namespace RnSArchipelago
 
         private readonly SharedData data = new();
 
+        // TODO: NOT ACTUALLY USED, JUST USED AS MY TESTING HOOK
         private IHook<ScriptDelegate>? setItemHook;
 
         private IHook<ScriptDelegate>? archipelagoWebsocketHook;
@@ -395,9 +396,9 @@ namespace RnSArchipelago
             
             // Visually lock characters not yet obtained
             var lockVisualClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_draw_menu") - 100000);
-            classHandler.lockVisualClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.SetClassAvailability, lockVisualClassScript->Functions->Function);
-            classHandler.lockVisualClassHook.Activate();
-            classHandler.lockVisualClassHook.Enable();
+            classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.SetClassAvailability, lockVisualClassScript->Functions->Function);
+            classHandler.lockClassHook.Activate();
+            classHandler.lockClassHook.Enable();
         }
 
         // TODO: REMOVE Testing function for timing printing
@@ -484,10 +485,7 @@ namespace RnSArchipelago
 
                 config.ArchipelagoName = lobby.ArchipelagoName;
                 config.ArchipelagoAddress = lobby.ArchipelagoAddress;
-                if (config.Save != null)
-                {
-                    config.Save.Invoke();
-                }
+                config.Save?.Invoke();
 
                 // Lock/Unlock things for the save file
                 unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
@@ -561,7 +559,7 @@ namespace RnSArchipelago
         private void SetupKingdomManagement()
         {
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-            
+
             // Create the planned route
             var chooseHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_choose_halls") - 100000);
             kingdom.chooseHallsHook = hooks.CreateHook<ScriptDelegate>(kingdom.CreateRoute, chooseHallsScript->Functions->Function);
@@ -569,7 +567,7 @@ namespace RnSArchipelago
             kingdom.chooseHallsHook.Enable();
 
             // Modify the icons on the route selection screen
-            var iconsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stagefirst_available") - 100000);
+            var iconsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stagefirst_get_subimg") - 100000);
             kingdom.fixChooseIconsHook = hooks.CreateHook<ScriptDelegate>(kingdom.ModifyRouteIcons, iconsScript->Functions->Function);
             kingdom.fixChooseIconsHook.Activate();
             kingdom.fixChooseIconsHook.Enable();

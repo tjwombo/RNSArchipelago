@@ -1,7 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
 using Newtonsoft.Json.Linq;
 using Reloaded.Mod.Interfaces;
-using Reloaded.Mod.Interfaces.Internal;
 using RnSArchipelago.Data;
 
 namespace RnSArchipelago.Utils
@@ -39,13 +38,14 @@ namespace RnSArchipelago.Utils
         private HashSet<string> witch_victories = [];
         private ShopSetting shop_sanity = ShopSetting.None;
 
-        internal bool shouldUpdateKingdomRoute;
-
         internal delegate void AddChestDelegate();
         internal event AddChestDelegate? AddChest;
 
         internal delegate void SendGoalDelegate();
         internal event SendGoalDelegate? SendGoal;
+
+        internal delegate void UpdateHallwayOnItemRecieveDelegate();
+        internal event UpdateHallwayOnItemRecieveDelegate? UpdateHallwayOnItemRecieve;
 
         internal enum RunTypeSetting
         {
@@ -206,18 +206,18 @@ namespace RnSArchipelago.Utils
             The_Pale_Keep = 0b01000000,
             Moonlit_Pinnacle = 0b10000000,
             All_Base = 0b11111111,
-            Crack_In_The_Geode = 0b100000000,
+            Crack_in_the_Geode = 0b100000000,
             Darkhouse_Depths = 0b1000000000,
             Atelier_Aurum = 0b10000000000,
             Subterra_Sanctum = 0b100000000000,
             Looping_Hallway = 0b1000000000000,
             Reflecting_Pool = 0b10000000000000,
-            All_Extra = 0b11111000000000,
+            All_Extra = 0b11111100000000,
             All = 0b11111111111111
         }
 
         private static readonly string[] KINGDOMS = ["Kingdom Outskirts", "Scholar's Nest", "King's Arsenal", "Red Darkhouse", "Churchmouse Streets", "Emerald Lakeside", "The Pale Keep", "Moonlit Pinnacle",
-                                                    "Crack In The Geode", "Darkhouse Depths", "Atelier Aurum", "Subterra Sanctum", "Looping Hallway", "Reflecting Pool"];
+                                                    "Crack in the Geode", "Darkhouse Depths", "Atelier Aurum", "Subterra Sanctum", "Looping Hallway", "Reflecting Pool"];
 
         internal KingdomFlags AvailableKingdoms { get; set; }
         internal int ProgressiveRegions { get; set; }
@@ -1009,13 +1009,13 @@ namespace RnSArchipelago.Utils
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
                         this.logger.PrintMessage("Kingdoms: " + AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
-                        shouldUpdateKingdomRoute = true;
+                        UpdateHallwayOnItemRecieve?.Invoke();
                     } 
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
                         this.logger.PrintMessage("Progressive Regions: " + ProgressiveRegions, System.Drawing.Color.DarkOrange);
-                        shouldUpdateKingdomRoute = true;
+                        UpdateHallwayOnItemRecieve?.Invoke();
                     } 
                     else if (CLASSES.Contains(itemName))
                     {
@@ -1027,9 +1027,9 @@ namespace RnSArchipelago.Utils
                         AddItemsFromItemset(itemName);
                         this.logger.PrintMessage("Items: " + String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     }
-                    else if (ITEMS.ContainsKey(itemName))
+                    else if (ITEMS.TryGetValue(itemName, out long individualItem))
                     {
-                        availableItems.Add(ITEMS[itemName]);
+                        availableItems.Add(individualItem);
                         this.logger.PrintMessage("Items: " + String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     }
                     else if (itemName == "Treasuresphere")
@@ -1150,6 +1150,10 @@ namespace RnSArchipelago.Utils
         // Get the notchname from a kingdoms full name
         internal static string KingdomNameToNotch(string name)
         {
+            if (name == "Kingdom Outskirts")
+            {
+                return "hw_outskirts";
+            }
             if (name == "Scholar's Nest")
             {
                 return "hw_nest";
@@ -1170,6 +1174,10 @@ namespace RnSArchipelago.Utils
             {
                 return "hw_lighthouse";
             }
+            if (name == "Crack in the Geode")
+            {
+                return "hw_geode";
+            }
             if (name == "Darkhouse Depths")
             {
                 return "hw_depths";
@@ -1185,212 +1193,198 @@ namespace RnSArchipelago.Utils
             return "";
         }
 
-        // Get all the kingdoms that are visitable at kingdom number n
-        internal List<string> GetKingdomsAvailableAtNthOrder(int n)
+        internal List<string> GetKingdomKingdomsAvailable(int n = 5)
         {
             var kingdoms = new List<string>();
 
-            if (isKingdomSanity && !useKingdomOrderWithKingdomSanity)
+            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kingdom_Outskirts) != 0)
             {
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                kingdoms.Add("hw_outskirts");
+            } else
+            {
+                return kingdoms;
+            }
+
+            for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
+            {
+                bool added = false;
+
+                for (var j = 0; j < kingdomOrder[i].Count; j++)
                 {
-                    kingdoms.Add("hw_nest");
+                    if (kingdomOrder[i][j] == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                    {
+                        kingdoms.Add("hw_nest");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                    {
+                        kingdoms.Add("hw_arsenal");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                    {
+                        kingdoms.Add("hw_lakeside");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                    {
+                        kingdoms.Add("hw_streets");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                    {
+                        kingdoms.Add("hw_lighthouse");
+                        added = true;
+                    }
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+
+                if (!added)
                 {
-                    kingdoms.Add("hw_arsenal");
+                    break;
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
-                {
-                    kingdoms.Add("hw_lakeside");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
-                {
-                    kingdoms.Add("hw_streets");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
-                {
-                    kingdoms.Add("hw_lighthouse");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
-                {
-                    kingdoms.Add("hw_depths");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
-                {
-                    kingdoms.Add("hw_aurum");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
-                {
-                    kingdoms.Add("hw_sanct");
-                }
+            }
+
+            kingdoms = GetProgressiveKingdomsAvailable(kingdoms);
+
+            return kingdoms;
+        }
+
+        internal List<string> GetExtraKingdomsAvailable(int n = 3)
+        {
+            var kingdoms = new List<string>();
+
+            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Crack_in_the_Geode) != 0)
+            {
+                kingdoms.Add("hw_geode");
             }
             else
             {
-                for (var i = 0; i < n; i++)
+                return kingdoms;
+            }
+
+            for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
+            {
+                bool added = false;
+
+                for (var j = 0; j < kingdomOrder[i].Count; j++)
                 {
-                    kingdoms = [.. kingdoms, .. GetNthOrderKingdoms(i + 1)];
+                    if (kingdomOrder[i][j] == "hw_depths" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                    {
+                        kingdoms.Add("hw_depths");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_aurum" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                    {
+                        kingdoms.Add("hw_aurum");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_sanct" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                    {
+                        kingdoms.Add("hw_sanct");
+                        added = true;
+                    }
+                }
+
+                if (!added)
+                {
+                    break;
                 }
             }
+
+            kingdoms = GetProgressiveKingdomsAvailable(kingdoms);
 
             return kingdoms;
         }
 
-        // Get the kingdoms that are of order n
-        internal List<string> GetNthOrderKingdoms(int n)
+        internal List<string> GetChaosKingdomsAvailable(int n = 8)
         {
-            if (n <= 0)
-            {
-                return [];
-            }
             var kingdoms = new List<string>();
-            if (isKingdomSanity && !useKingdomOrderWithKingdomSanity)
+
+            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kingdom_Outskirts) != 0)
             {
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                kingdoms.Add("hw_outskirts");
+            }
+
+            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Crack_in_the_Geode) != 0)
+            {
+                kingdoms.Add("hw_geode");
+            }
+
+            if (kingdoms.Count == 0)
+            {
+                return kingdoms;
+            }
+
+            for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
+            {
+                bool added = false;
+
+                for (var j = 0; j < kingdomOrder[i].Count; j++)
                 {
-                    kingdoms.Add("hw_nest");
+                    if (kingdomOrder[i][j] == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                    {
+                        kingdoms.Add("hw_nest");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                    {
+                        kingdoms.Add("hw_arsenal");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                    {
+                        kingdoms.Add("hw_lakeside");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                    {
+                        kingdoms.Add("hw_streets");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                    {
+                        kingdoms.Add("hw_lighthouse");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_depths" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                    {
+                        kingdoms.Add("hw_depths");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_aurum" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                    {
+                        kingdoms.Add("hw_aurum");
+                        added = true;
+                    }
+                    else if (kingdomOrder[i][j] == "hw_sanct" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                    {
+                        kingdoms.Add("hw_sanct");
+                        added = true;
+                    }
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+
+                if (!added)
                 {
-                    kingdoms.Add("hw_arsenal");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
-                {
-                    kingdoms.Add("hw_lakeside");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
-                {
-                    kingdoms.Add("hw_streets");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
-                {
-                    kingdoms.Add("hw_lighthouse");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
-                {
-                    kingdoms.Add("hw_depths");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
-                {
-                    kingdoms.Add("hw_aurum");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
-                {
-                    kingdoms.Add("hw_sanct");
+                    break;
                 }
             }
-            else if (isProgressive || (isKingdomSanity && useKingdomOrderWithKingdomSanity))
-            {
-                foreach (var kingdom in kingdomOrder[n - 1])
-                {
-                    if (kingdom == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                    if (kingdom == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                    if (kingdom == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                    if (kingdom == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                    if (kingdom == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                    if (kingdom == "hw_depths" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                    if (kingdom == "hw_aurum" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                    if (kingdom == "hw_sanct" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
-                    {
-                        kingdoms.Add(kingdom);
-                    }
-                }
-            } else
-            {
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
-                {
-                    kingdoms.Add("hw_nest");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
-                {
-                    kingdoms.Add("hw_arsenal");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
-                {
-                    kingdoms.Add("hw_lakeside");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
-                {
-                    kingdoms.Add("hw_streets");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
-                {
-                    kingdoms.Add("hw_lighthouse");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
-                {
-                    kingdoms.Add("hw_depths");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
-                {
-                    kingdoms.Add("hw_aurum");
-                }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
-                {
-                    kingdoms.Add("hw_sanct");
-                }
-            }
+
+            kingdoms = GetProgressiveKingdomsAvailable(kingdoms);
+
             return kingdoms;
         }
 
-        // Get the number of kingdoms that are visitable regardless of order
-        internal int AvailableKingdomsCount()
+        internal List<string> GetProgressiveKingdomsAvailable(List<string> kingdoms)
         {
-            int count = 0;
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+            if (isProgressive)
             {
-                count++;
+                for (var i = ProgressiveRegions; i < maxKingdoms; i++)
+                {
+                    kingdoms = kingdoms.Except(kingdomOrder[i]).ToList();
+                }
             }
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
-            {
-                count++;
-            }
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
-            {
-                count++;
-            }
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
-            {
-                count++;
-            }
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
-            {
-                count++;
-            }
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
-            {
-                count++;
-            }
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
-            {
-                count++;
-            }
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
-            {
-                count++;
-            }
-            return count;
+
+            return kingdoms;
         }
 
         internal bool isClassAvailable(int pos)

@@ -1056,6 +1056,9 @@ namespace RnSArchipelago.Game
                 else if (kingdomName.Equals("Moonlit Pinnacle"))
                 {
                     return "Shira";
+                } else if (kingdomName.Equals("Reflecting Pool"))
+                {
+                    return "Witch";
                 }
 
                 return kingdomName + notchName;

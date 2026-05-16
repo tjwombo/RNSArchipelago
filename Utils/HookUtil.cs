@@ -1,7 +1,6 @@
 ﻿using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using System.Runtime.InteropServices;
-using System.Diagnostics.CodeAnalysis;
 using Reloaded.Mod.Interfaces;
 
 namespace RnSArchipelago.Utils

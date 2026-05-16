@@ -1,5 +1,4 @@
 ﻿using Reloaded.Mod.Interfaces;
-using Reloaded.Mod.Interfaces.Internal;
 using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Utils
