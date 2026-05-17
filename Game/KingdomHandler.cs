@@ -42,26 +42,56 @@ namespace RnSArchipelago.Game
             {
                 return this.inventoryUtil.GetChaosKingdomsAvailable();
             }
-            else if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Kingdom || (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Either && lastVisitedRunType == "kingdom"))
+            else if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Kingdom)
             {
                 return this.inventoryUtil.GetKingdomKingdomsAvailable();
             }
-            else if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Extra || (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Either && lastVisitedRunType == "extra"))
+            else if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Extra)
             {
                 return this.inventoryUtil.GetExtraKingdomsAvailable();
             }
-            // Either use case for when connecting and not visitng the map selection
-            // Defaults to kingdom kingdoms, otherwise uses extra kingdoms
             else if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Either)
             {
-                var kingdoms = this.inventoryUtil.GetKingdomKingdomsAvailable();
-                if (kingdoms.Count > 0)
+                List<string> kingdoms;
+                // Try our tab and if nothing is found go to the other tab
+                if (lastVisitedRunType == "kingdom")
                 {
+                    kingdoms = this.inventoryUtil.GetKingdomKingdomsAvailable();
+                    if (kingdoms.Count > 0)
+                    {
+                        lastVisitedRunType = "kingdom";
+                        return kingdoms;
+                    }
+                    kingdoms = this.inventoryUtil.GetExtraKingdomsAvailable();
+                    lastVisitedRunType = "extra";
+                    return kingdoms;
+                } else if (lastVisitedRunType == "extra")
+                {
+                    kingdoms = this.inventoryUtil.GetExtraKingdomsAvailable();
+                    if (kingdoms.Count > 0)
+                    {
+                        lastVisitedRunType = "extra";
+                        return kingdoms;
+                    }
+
+                    kingdoms = this.inventoryUtil.GetKingdomKingdomsAvailable();
                     lastVisitedRunType = "kingdom";
                     return kingdoms;
                 }
-                lastVisitedRunType = "extra";
-                return this.inventoryUtil.GetExtraKingdomsAvailable();
+                // Otherwise default to assuming it was a kingdom tab
+                else
+                {
+                    kingdoms = this.inventoryUtil.GetKingdomKingdomsAvailable();
+                    if (kingdoms.Count > 0)
+                    {
+                        lastVisitedRunType = "kingdom";
+                        return kingdoms;
+                    }
+
+                    kingdoms = this.inventoryUtil.GetExtraKingdomsAvailable();
+                    lastVisitedRunType = "extra";
+                    return kingdoms;
+                }
             }
 
             return [];
@@ -336,7 +366,7 @@ namespace RnSArchipelago.Game
         }
 
         // Modify the hallseed and hallway icons for extra visitable kingdoms
-        private void ModifyHallSeedAndIcons(int maxCanRun)
+        private void ModifyHallSeedAndIconsLength(int maxCanRun)
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
@@ -368,7 +398,7 @@ namespace RnSArchipelago.Game
                                 }
                             }
 
-                            // Modify the icons
+                            // Modify the icons length
                             var img = instanceValue.Get("hallsubimg");
                             if (img != null && img->ToString() != "unset")
                             {
@@ -597,13 +627,14 @@ namespace RnSArchipelago.Game
                 var unplacedKingdoms = GetRunnableKingdoms();
 
                 var hallkey = rnsReloaded.FindValue(instance, "hallkey");
+                var hallsubimg = rnsReloaded.FindValue(instance, "hallsubimg");
                 var maxKingdoms = this.inventoryUtil.maxKingdoms;
 
                 var currentHallwayPos = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "hallwayPos"));
                 var currentPos = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
 
                 // Handle the 0th position
-                if (!currentHallwayPosAware || currentHallwayPos < 0 || (currentPos == 0 && currentHallwayPos == 0))
+                if (!currentHallwayPosAware || currentHallwayPos < 0 || (currentPos <= 0 && currentHallwayPos == 0))
                 {
                     if (unplacedKingdoms.Contains("hw_outskirts") && unplacedKingdoms.Contains("hw_geode"))
                     {
@@ -611,20 +642,36 @@ namespace RnSArchipelago.Game
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
 
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(7);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(0);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
+
                             rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
                         } else
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_geode");
+
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(9);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(13);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(13);
 
                             rnsReloaded.ExecuteScript("scr_hallwaygen_geode", instance, null, []);
                         }
                     } else if (unplacedKingdoms.Contains("hw_outskirts")) {
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
 
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(7);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(0);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
+
                         rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
                     } else if (unplacedKingdoms.Contains("hw_geode"))
                     {
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_geode");
+
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(9);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(13);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(13);
 
                         rnsReloaded.ExecuteScript("scr_hallwaygen_geode", instance, null, []);
                     }
@@ -825,7 +872,7 @@ namespace RnSArchipelago.Game
 
             this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.DarkOrange);
 
-            ModifyHallSeedAndIcons(maxCanRun);
+            ModifyHallSeedAndIconsLength(maxCanRun);
 
             ModifyRoute(maxCanRun, visitableKingdoms, currentHallwayPosAware);
         }
