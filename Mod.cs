@@ -1,15 +1,18 @@
-﻿using Reloaded.Hooks.Definitions;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
+
+using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
-using RNSReloaded.Interfaces;
-using RNSReloaded.Interfaces.Structs;
-using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
-using RnSArchipelago.Utils;
+
 using RnSArchipelago.Config;
 using RnSArchipelago.Connection;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
+using RnSArchipelago.Utils;
+
+using RNSReloaded.Interfaces;
+using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago
 {
@@ -61,7 +64,7 @@ namespace RnSArchipelago
             this.rnsReloadedRef = _loader.GetController<IRNSReloaded>();
             this.hooksRef = _loader.GetController<IReloadedHooks>();
 
-            this.logger = (ILogger) loader.GetLogger();
+            this.logger = (ILogger)loader.GetLogger();
 
             this.configurator = new Configurator(((IModLoader)loader).GetModConfigDirectory(modConfig.ModId));
             this.config = this.configurator.GetConfiguration<Config.Config>(0);
@@ -93,7 +96,7 @@ namespace RnSArchipelago
             )
             {
                 rand = new Random();
-                
+
                 hookUtil = new HookUtil(rnsReloadedRef, logger);
                 inventoryUtil = new InventoryUtil(logger, data);
                 shopItemsUtil = new ShopItemsUtil(rand, logger, inventoryUtil);
@@ -154,10 +157,10 @@ namespace RnSArchipelago
                 var defensiveId = -1;
                 while (primaryId < 370)
                 {
-                    availablePrimary.Add(primaryId+=28);
-                    availableSecondary.Add(secondaryId+=28);
-                    availableSpecial.Add(specialId+=28);
-                    availableDefensive.Add(defensiveId+=28);
+                    availablePrimary.Add(primaryId += 28);
+                    availableSecondary.Add(secondaryId += 28);
+                    availableSpecial.Add(specialId += 28);
+                    availableDefensive.Add(defensiveId += 28);
                 }
 
             }
@@ -260,7 +263,7 @@ namespace RnSArchipelago
         private void SetupArchipelagoWebsocket()
         {
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-            
+
             // Store the initial unlock keys configuration
             var saveId = rnsReloaded.ScriptFindId("scr_unlock_read_save");
             var saveScript = rnsReloaded.GetScriptData(saveId - 100000);
@@ -301,7 +304,7 @@ namespace RnSArchipelago
         private void SetupSendBattleAndChestLocations()
         {
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-            
+
             // Send out locations on encounter win
             var battleWonScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_notchexbattle_victory_transfer") - 100000);
             locationHandler.notchCompleteHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SendNotchComplete, battleWonScript->Functions->Function);
@@ -319,7 +322,7 @@ namespace RnSArchipelago
         private void SetupArchipelagoItems()
         {
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-            
+
             // Setup the mod items that corresponds to the items in CopyItemModToRnSMod()
             var setupItemsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_init_mods") - 100000);
             locationHandler.setupItemsHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetupArchipelagoItems, setupItemsScript->Functions->Function);
@@ -393,7 +396,7 @@ namespace RnSArchipelago
         private void SetupClassSanity()
         {
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-            
+
             // Visually lock characters not yet obtained
             var lockVisualClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_draw_menu") - 100000);
             classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.SetClassAvailability, lockVisualClassScript->Functions->Function);
@@ -414,7 +417,8 @@ namespace RnSArchipelago
                 if (this.setItemHook != null)
                 {
                     returnValue = this.setItemHook.OriginalFunction(self, other, returnValue, argc, argv);
-                } else
+                }
+                else
                 {
                     this.logger.PrintMessage("Unable to call set item hook", System.Drawing.Color.Red);
                 }
@@ -448,7 +452,7 @@ namespace RnSArchipelago
             }
 
             if (!IsReady(out var rnsReloaded, out _)) return returnValue;
-            
+
             unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
             var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
             if (keysLength.HasValue)
@@ -472,7 +476,7 @@ namespace RnSArchipelago
         )
         {
             if (!this.IsReady(out var rnsReloaded, out _)) return returnValue;
-            
+
             // If the lobby type is archipelago set up the websocket
             if (lobby != null && this.hookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
             {
@@ -491,7 +495,8 @@ namespace RnSArchipelago
                 unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
                 var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
 
-                if (keysLength.HasValue) {
+                if (keysLength.HasValue)
+                {
                     for (var i = 0; i < this.hookUtil.GetNumeric(keysLength.Value); i++)
                     {
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
@@ -508,7 +513,8 @@ namespace RnSArchipelago
                 if (lobby.ArchipelagoNum > 1)
                 {
                     *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
-                } else
+                }
+                else
                 {
                     // TODO: Fix this as there was errors stopping a single player lobby
                     //*rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(0);
@@ -517,14 +523,16 @@ namespace RnSArchipelago
                 if (this.archipelagoWebsocketHook != null)
                 {
                     returnValue = this.archipelagoWebsocketHook.OriginalFunction(self, other, returnValue, argc, argv);
-                } else
+                }
+                else
                 {
                     this.logger.PrintMessage("Unable to call archipelago websocket hook", System.Drawing.Color.Red);
                 }
 
                 // Return to archipelago lobby
                 *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
-            } else
+            }
+            else
             {
                 // Restore the save file
                 var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
@@ -669,7 +677,7 @@ namespace RnSArchipelago
         private void RandomizePlayerAbilities()
         {
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-            
+
             var createItemId = rnsReloaded.ScriptFindId("scr_itemsys_create_item");
             var createItemScript = rnsReloaded.GetScriptData(createItemId - 100000);
             this.selectCharacterAbilitiesHook = hooks.CreateHook<ScriptDelegate>(this.ChooseCharacterAbilities, createItemScript->Functions->Function);
@@ -689,21 +697,24 @@ namespace RnSArchipelago
                 {
                     //*argv[0] = new RValue(availablePrimary[random.Next(availablePrimary.Count)]);
                     *argv[0] = new RValue(67);
-                } else if (isSecondary(abilityId))
+                }
+                else if (isSecondary(abilityId))
                 {
                     //*argv[0] = new RValue(availableSecondary[random.Next(availableSecondary.Count)]);
                     *argv[0] = new RValue(72);
-                } else if (isSpecial(abilityId))
+                }
+                else if (isSpecial(abilityId))
                 {
                     //*argv[0] = new RValue(availableSpecial[random.Next(availableSpecial.Count)]);
-                } else if (isDefensive(abilityId))
+                }
+                else if (isDefensive(abilityId))
                 {
                     //*argv[0] = new RValue(availableDefensive[random.Next(availableDefensive.Count)]);
                 }
 
                 if (this.hookUtil.IsEqualToNumeric(argv[2], 1))
                 {
-                    
+
                     //*argv[0] = new(324);
                 }
             }
@@ -711,14 +722,15 @@ namespace RnSArchipelago
             if (this.selectCharacterAbilitiesHook != null)
             {
                 returnValue = this.selectCharacterAbilitiesHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call select character abilities hook", System.Drawing.Color.Red);
             }
             return returnValue;
         }
 
-        private bool isPrimary(int abilityId) 
+        private bool isPrimary(int abilityId)
         {
             return availablePrimary.Contains(abilityId);
         }

@@ -8,7 +8,7 @@ namespace RnSArchipelago.Data
 {
     internal abstract record DataStateKey
     {
-        private DataStateKey() {}
+        private DataStateKey() { }
 
         internal sealed record NoKey : DataStateKey;
 

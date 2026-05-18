@@ -1,15 +1,19 @@
-﻿using Archipelago.MultiClient.Net.MessageLog.Messages;
-using RNSReloaded.Interfaces.Structs;
-using RNSReloaded.Interfaces;
+﻿using System.Collections.Concurrent;
+using System.Drawing;
+
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Packets;
-using System.Drawing;
-using RnSArchipelago.Utils;
-using RnSArchipelago.Data;
+
 using Reloaded.Hooks.Definitions;
-using System.Collections.Concurrent;
 using Reloaded.Mod.Interfaces;
+
+using RnSArchipelago.Data;
+using RnSArchipelago.Utils;
+
+using RNSReloaded.Interfaces;
+using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Connection
 {
@@ -83,7 +87,7 @@ namespace RnSArchipelago.Connection
         internal void OnPacketReceived(ArchipelagoPacketBase packet)
         {
             if (!this.rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
-            
+
             switch (packet.PacketType)
             {
                 case ArchipelagoPacketType.RoomInfo:
@@ -95,7 +99,7 @@ namespace RnSArchipelago.Connection
                     var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
                     errorMessage = message;
                     this.logger.PrintMessage(message, Color.Red);
-                        
+
                     break;
                 case ArchipelagoPacketType.Connected: // Get the options the user selected
                     var connected = (ConnectedPacket)packet;
@@ -161,7 +165,7 @@ namespace RnSArchipelago.Connection
                     {
                         case ItemSendLogMessage itemSendLogMessage:
                             var messageToSend = itemSendLogMessage.ToString();
-                            
+
                             if (itemSendLogMessage.IsSenderTheActivePlayer)
                             {
                                 sourceId = 0;

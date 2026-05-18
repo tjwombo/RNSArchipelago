@@ -1,8 +1,10 @@
 ﻿using Reloaded.Hooks.Definitions;
-using RNSReloaded.Interfaces.Structs;
-using RNSReloaded.Interfaces;
-using RnSArchipelago.Utils;
 using Reloaded.Mod.Interfaces;
+
+using RnSArchipelago.Utils;
+
+using RNSReloaded.Interfaces;
+using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Game
 {
@@ -34,7 +36,8 @@ namespace RnSArchipelago.Game
             if (this.lockClassHook != null)
             {
                 returnValue = this.lockClassHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call lock visual class hook", System.Drawing.Color.Red);
             }

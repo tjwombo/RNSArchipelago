@@ -1,4 +1,5 @@
 ﻿using Reloaded.Mod.Interfaces;
+
 using RnSArchipelago.Config;
 
 namespace RnSArchipelago.Config;
@@ -23,7 +24,8 @@ public class Configurator : IConfiguratorV3
         for (var x = 0; x < this.Configurations.Length; x++)
         {
             var xCopy = x;
-            this.Configurations[x].ConfigurationUpdated += configurable => {
+            this.Configurations[x].ConfigurationUpdated += configurable =>
+            {
                 this.Configurations[xCopy] = configurable;
             };
         }

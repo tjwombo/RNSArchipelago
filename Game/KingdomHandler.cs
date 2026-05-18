@@ -1,8 +1,11 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
+
 using RnSArchipelago.Utils;
+
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+
 using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
@@ -65,7 +68,8 @@ namespace RnSArchipelago.Game
                     kingdoms = this.inventoryUtil.GetExtraKingdomsAvailable();
                     lastVisitedRunType = "extra";
                     return kingdoms;
-                } else if (lastVisitedRunType == "extra")
+                }
+                else if (lastVisitedRunType == "extra")
                 {
                     kingdoms = this.inventoryUtil.GetExtraKingdomsAvailable();
                     if (kingdoms.Count > 0)
@@ -162,7 +166,8 @@ namespace RnSArchipelago.Game
                                 if (this.fixEndIconsHook != null)
                                 {
                                     returnValue = this.fixEndIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                } else
+                                }
+                                else
                                 {
                                     this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
                                 }
@@ -224,7 +229,7 @@ namespace RnSArchipelago.Game
                         {
                             maxVisitableKingdoms--;
                         }
-                        maxVisitableKingdoms = (int) Math.Min(maxVisitableKingdoms, this.inventoryUtil.maxKingdoms);
+                        maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryUtil.maxKingdoms);
 
                         var hallwayNumber = this.hookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent")); // 0 is Kingdom Outskirts / Crack in the Geode
 
@@ -283,7 +288,7 @@ namespace RnSArchipelago.Game
                         {
                             maxCanRun--;
                         }
-                        maxCanRun = (int) Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
+                        maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
 
                         if (hallkey != null && hallkey->ToString() != "unset" && this.hookUtil.GetNumeric(instanceValue.Get("hallwayNumber")) != maxCanRun + 3)
                         {
@@ -329,7 +334,7 @@ namespace RnSArchipelago.Game
                         var hallwayPos = this.hookUtil.GetNumeric(instance.Get("hallwayPos"));
                         var index = this.hookUtil.GetNumeric(instance.Get("currentPos"));
                         // First check is to prevent shop, second is general transitions, and last is final boss
-                        if ((currentPos != 0 || hallwayPos != 0) && index != -1 && (hallwayPos != this.inventoryUtil.maxKingdoms+2 && currentPos == 0))
+                        if ((currentPos != 0 || hallwayPos != 0) && index != -1 && (hallwayPos != this.inventoryUtil.maxKingdoms + 2 && currentPos == 0))
                         {
                             locationHandler.SendNotchLoctaion(); // TODO: Will send a location even if we skip a chest. Unsure if I like that or not
                         }
@@ -490,7 +495,8 @@ namespace RnSArchipelago.Game
                 // Always disallow the extras
                 *(buttons->Get(6)) = new(0);
                 *(buttons->Get(7)) = new(0);
-            } else if (buttonCount == 4)
+            }
+            else if (buttonCount == 4)
             {
                 lastVisitedRunType = "extra";
                 List<string> kingdoms = GetRunnableKingdoms();
@@ -530,7 +536,8 @@ namespace RnSArchipelago.Game
                 {
                     *(buttons->Get(3)) = new(0);
                 }
-            } else if (buttonCount == 2)
+            }
+            else if (buttonCount == 2)
             {
                 //true random
                 *(buttons->Get(0)) = new(0);
@@ -540,7 +547,7 @@ namespace RnSArchipelago.Game
         }
 
         // If we are on the route selection screen, update it to match the available kingdoms
-        internal RValue* ModifyRouteIcons(CInstance* self,CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        internal RValue* ModifyRouteIcons(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
@@ -574,11 +581,11 @@ namespace RnSArchipelago.Game
 
                             var routeIcons = instanceValue.Get("buttonAvailable");
                             var buttonCount = rnsReloaded.ArrayGetLength(routeIcons);
-                                
+
                             if (routeIcons != null && routeIcons->ToString() != "unset" && buttonCount.HasValue)
                             {
                                 ModifyRouteIcons(routeIcons, (int)hookUtil.GetNumeric(buttonCount.Value));
-                                returnValue = routeIcons->Get((int)hookUtil.GetNumeric(buttonCount.Value)-1);
+                                returnValue = routeIcons->Get((int)hookUtil.GetNumeric(buttonCount.Value) - 1);
                                 if (modConfig.ExtraDebugMessages)
                                 {
                                     this.logger.PrintMessage("Before Return Update Route Icons", System.Drawing.Color.DarkOrange);
@@ -647,7 +654,8 @@ namespace RnSArchipelago.Game
                             *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
 
                             rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
-                        } else
+                        }
+                        else
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_geode");
 
@@ -657,7 +665,9 @@ namespace RnSArchipelago.Game
 
                             rnsReloaded.ExecuteScript("scr_hallwaygen_geode", instance, null, []);
                         }
-                    } else if (unplacedKingdoms.Contains("hw_outskirts")) {
+                    }
+                    else if (unplacedKingdoms.Contains("hw_outskirts"))
+                    {
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
 
                         *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(7);
@@ -665,7 +675,8 @@ namespace RnSArchipelago.Game
                         *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
 
                         rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
-                    } else if (unplacedKingdoms.Contains("hw_geode"))
+                    }
+                    else if (unplacedKingdoms.Contains("hw_geode"))
                     {
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_geode");
 
@@ -752,37 +763,45 @@ namespace RnSArchipelago.Game
                         if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0)
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_keep");
-                        } else
+                        }
+                        else
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
                         }
-                    } else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Extra || (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Either && lastVisitedRunType == "extra"))
+                    }
+                    else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Extra || (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Either && lastVisitedRunType == "extra"))
                     {
                         if ((visitableKingdoms & InventoryUtil.KingdomFlags.Looping_Hallway) != 0)
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_darkhall");
-                        } else
+                        }
+                        else
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
                         }
-                    } else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Chaotic)
+                    }
+                    else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Chaotic)
                     {
                         if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && (visitableKingdoms & InventoryUtil.KingdomFlags.Looping_Hallway) != 0)
                         {
                             if (rand.NextSingle() >= 0.5f)
                             {
                                 rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_keep");
-                            } else
+                            }
+                            else
                             {
                                 rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_darkhall");
                             }
-                        } else if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0)
+                        }
+                        else if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0)
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_keep");
-                        } else if ((visitableKingdoms & InventoryUtil.KingdomFlags.Looping_Hallway) != 0)
+                        }
+                        else if ((visitableKingdoms & InventoryUtil.KingdomFlags.Looping_Hallway) != 0)
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_darkhall");
-                        } else
+                        }
+                        else
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
                         }
@@ -868,7 +887,7 @@ namespace RnSArchipelago.Game
             {
                 maxCanRun--;
             }
-            maxCanRun = (int) Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
+            maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
 
             this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.DarkOrange);
 
@@ -901,7 +920,8 @@ namespace RnSArchipelago.Game
                         if (this.chooseHallsHook != null)
                         {
                             returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
-                        } else
+                        }
+                        else
                         {
                             this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
                         }

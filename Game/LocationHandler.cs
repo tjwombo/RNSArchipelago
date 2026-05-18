@@ -1,12 +1,15 @@
 ﻿using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
+
 using Reloaded.Hooks.Definitions;
+using Reloaded.Mod.Interfaces;
+
 using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
+
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using Reloaded.Mod.Interfaces;
 
 namespace RnSArchipelago.Game
 {
@@ -124,7 +127,8 @@ namespace RnSArchipelago.Game
             if (this.notchCompleteHook != null)
             {
                 returnValue = this.notchCompleteHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call notch complete hook", System.Drawing.Color.Red);
             }
@@ -153,7 +157,8 @@ namespace RnSArchipelago.Game
             if (this.chestOpenHook != null)
             {
                 returnValue = this.chestOpenHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call chest open hook", System.Drawing.Color.Red);
             }
@@ -182,7 +187,8 @@ namespace RnSArchipelago.Game
             if (this.setupItemsHook != null)
             {
                 returnValue = this.setupItemsHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call setup items hook", System.Drawing.Color.Red);
             }
@@ -242,7 +248,8 @@ namespace RnSArchipelago.Game
             if (this.enableModHook != null)
             {
                 returnValue = this.enableModHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call enable mod hook", System.Drawing.Color.Red);
             }
@@ -297,7 +304,8 @@ namespace RnSArchipelago.Game
             if (this.itemScoutChestHook != null)
             {
                 returnValue = this.itemScoutChestHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call item scout chest hook", System.Drawing.Color.Red);
             }
@@ -328,7 +336,8 @@ namespace RnSArchipelago.Game
                     if (this.itemScoutShopHook != null)
                     {
                         returnValue = this.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
-                    } else
+                    }
+                    else
                     {
                         this.logger.PrintMessage("Unable to call item scout shop hook", System.Drawing.Color.Red);
                     }
@@ -361,7 +370,8 @@ namespace RnSArchipelago.Game
             if (this.itemScoutShopHook != null)
             {
                 returnValue = this.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call item scout shop hook", System.Drawing.Color.Red); ;
             }
@@ -383,7 +393,8 @@ namespace RnSArchipelago.Game
             if (this.itemAmtHook != null)
             {
                 returnValue = this.itemAmtHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call item amount hook", System.Drawing.Color.Red);
             }
@@ -525,7 +536,8 @@ namespace RnSArchipelago.Game
                                         if (this.itemSetHook != null)
                                         {
                                             returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        } else
+                                        }
+                                        else
                                         {
                                             this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
                                         }
@@ -693,7 +705,8 @@ namespace RnSArchipelago.Game
             if (this.itemSetDescriptionHook != null)
             {
                 returnValue = this.itemSetDescriptionHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call item set description hook", System.Drawing.Color.Red);
             }
@@ -913,7 +926,8 @@ namespace RnSArchipelago.Game
                             if (this.takeItemHook != null)
                             {
                                 returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
-                            } else
+                            }
+                            else
                             {
                                 this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
                             }
@@ -990,7 +1004,8 @@ namespace RnSArchipelago.Game
                         this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
                     }
                 }
-            } else
+            }
+            else
             {
                 if (modConfig.ExtraDebugMessages)
                 {
@@ -1033,7 +1048,7 @@ namespace RnSArchipelago.Game
                         long[] locations = [conn.session.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(GAME, baseLocation + " - " + character)];
                         conn.session.Locations.CompleteLocationChecksAsync(locations);
                     }
-                }   
+                }
             }
         }
 
@@ -1056,10 +1071,13 @@ namespace RnSArchipelago.Game
                 else if (kingdomName.Equals("Moonlit Pinnacle"))
                 {
                     return "Shira";
-                } else if (kingdomName.Equals("Reflecting Pool"))
+                }
+                else if (kingdomName.Equals("Reflecting Pool"))
                 {
                     return "Witch";
                 }
+
+                this.logger.PrintMessage(notchName, System.Drawing.Color.Red);
 
                 return kingdomName + notchName;
             }
@@ -1173,7 +1191,8 @@ namespace RnSArchipelago.Game
             if (this.spawnTreasuresphereOnStartNHook != null)
             {
                 returnValue = this.spawnTreasuresphereOnStartNHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call spawn trasuresphere on start n hook", System.Drawing.Color.Red);
             }

@@ -1,13 +1,16 @@
-﻿using Reloaded.Hooks.Definitions;
-using RNSReloaded.Interfaces.Structs;
-using RNSReloaded.Interfaces;
-using Archipelago.MultiClient.Net;
+﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Packets;
 using Archipelago.MultiClient.Net.Models;
+using Archipelago.MultiClient.Net.Packets;
+
+using Reloaded.Hooks.Definitions;
+using Reloaded.Mod.Interfaces;
+
 using RnSArchipelago.Data;
 using RnSArchipelago.Utils;
-using Reloaded.Mod.Interfaces;
+
+using RNSReloaded.Interfaces;
+using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Connection
 {
@@ -87,7 +90,7 @@ namespace RnSArchipelago.Connection
                     }
                     logger.PrintMessage(errorMessage, System.Drawing.Color.Red);
 
-                    
+
                     if (returnToTitle)
                     {
                         this.messageHandler.errorMessage = "Could not connect to the multiworld";
@@ -190,7 +193,8 @@ namespace RnSArchipelago.Connection
                     await session.Socket.DisconnectAsync();
 
                 }
-                catch (Exception err) {
+                catch (Exception err)
+                {
                     logger.PrintMessage("Error in disconnecting: " + err, System.Drawing.Color.Red);
                     session = null;
                 }
@@ -225,7 +229,7 @@ namespace RnSArchipelago.Connection
             {
                 Games = ["Rabbit and Steel"]
             };
-            session?.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect}).Wait();
+            session?.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect }).Wait();
         }
     }
 }

@@ -1,6 +1,9 @@
 ﻿using Archipelago.MultiClient.Net.Packets;
+
 using Newtonsoft.Json.Linq;
+
 using Reloaded.Mod.Interfaces;
+
 using RnSArchipelago.Data;
 
 namespace RnSArchipelago.Utils
@@ -153,9 +156,9 @@ namespace RnSArchipelago.Utils
             kingdomOrder = [];
             foreach (var entry in kingdomOrderDict!)
             {
-                if (!kingdomOrder.ContainsKey(entry.Value-1))
+                if (!kingdomOrder.ContainsKey(entry.Value - 1))
                 {
-                    kingdomOrder[entry.Value-1] = [KingdomNameToNotch(entry.Key)];
+                    kingdomOrder[entry.Value - 1] = [KingdomNameToNotch(entry.Key)];
                 }
                 else
                 {
@@ -177,7 +180,7 @@ namespace RnSArchipelago.Utils
             ItemSanity = (ItemSetting)data.options.Get<long>("item_sanity");
             checksPerItemInChest = data.options.Get<long>("checks_per_item_in_chest") == 1;
 
-            UpgradeSanity = (UpgradeSetting) data.options.Get<long>("upgrade_sanity");
+            UpgradeSanity = (UpgradeSetting)data.options.Get<long>("upgrade_sanity");
             this.logger.PrintMessage(UpgradeSanity.ToString(), System.Drawing.Color.DarkOrange);
 
             PotionSanity = (PotionSetting)data.options.Get<long>("potion_sanity");
@@ -195,7 +198,7 @@ namespace RnSArchipelago.Utils
 
         [Flags]
         internal enum KingdomFlags
-        { 
+        {
             None = 0b00000000,
             Kingdom_Outskirts = 0b00000001,
             Scholars_Nest = 0b00000010,
@@ -577,7 +580,8 @@ namespace RnSArchipelago.Utils
         private static readonly long SWEET_TAFFY = itemId++;
 
         #region Item Dictionary
-        private static readonly Dictionary<String, long> ITEMS = new() {
+        private static readonly Dictionary<String, long> ITEMS = new()
+        {
             ["Raven Grimoire"] = RAVEN_GRIMOIRE,
             ["Blackwing Staff"] = BLACKWING_STAFF,
             ["Curse Talon"] = CURSE_TALON,
@@ -957,7 +961,8 @@ namespace RnSArchipelago.Utils
         internal PrimaryUpgradeFlags AvailablePrimaryUpgrades { get; set; }
 
         [Flags]
-        internal enum SecondaryUpgradeFlags {
+        internal enum SecondaryUpgradeFlags
+        {
             None = 0,
             SecondaryEmeraldGem = 0x00001,
             SecondaryGarnetGem = 0x00010,
@@ -969,7 +974,8 @@ namespace RnSArchipelago.Utils
         internal SecondaryUpgradeFlags AvailableSecondaryUpgrades { get; set; }
 
         [Flags]
-        internal enum SpecialUpgradeFlags {
+        internal enum SpecialUpgradeFlags
+        {
             None = 0,
             SpecialEmeraldGem = 0x00001,
             SpecialGarnetGem = 0x00010,
@@ -981,7 +987,8 @@ namespace RnSArchipelago.Utils
         internal SpecialUpgradeFlags AvailableSpecialUpgrades { get; set; }
 
         [Flags]
-        internal enum DefensiveUpgradeFlags { 
+        internal enum DefensiveUpgradeFlags
+        {
             None = 0,
             DefensiveEmeraldGem = 0x00001,
             DefensiveGarnetGem = 0x00010,
@@ -1010,18 +1017,18 @@ namespace RnSArchipelago.Utils
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
                         this.logger.PrintMessage("Kingdoms: " + AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
                         UpdateHallwayOnItemRecieve?.Invoke();
-                    } 
+                    }
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
                         this.logger.PrintMessage("Progressive Regions: " + ProgressiveRegions, System.Drawing.Color.DarkOrange);
                         UpdateHallwayOnItemRecieve?.Invoke();
-                    } 
+                    }
                     else if (CLASSES.Contains(itemName))
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
                         this.logger.PrintMessage("Classes: " + AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
-                    } 
+                    }
                     else if (ITEMSETS.Contains(itemName))
                     {
                         AddItemsFromItemset(itemName);
@@ -1037,7 +1044,7 @@ namespace RnSArchipelago.Utils
                         AddChest?.Invoke();
                         AvailableTreasurespheres++;
                         this.logger.PrintMessage("Treasuresphers: " + AvailableTreasurespheres, System.Drawing.Color.DarkOrange);
-                    } 
+                    }
                     else if (UPGRADES.Contains(itemName))
                     {
                         var enumName = itemName.Replace(" ", "");
@@ -1049,25 +1056,29 @@ namespace RnSArchipelago.Utils
                                 AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryEmeraldGem;
                                 AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialEmeraldGem;
                                 AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveEmeraldGem;
-                            } else if (enumName.Contains("Garnet"))
+                            }
+                            else if (enumName.Contains("Garnet"))
                             {
                                 AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimaryGarnetGem;
                                 AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryGarnetGem;
                                 AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialGarnetGem;
                                 AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveGarnetGem;
-                            } else if (enumName.Contains("Ruby"))
+                            }
+                            else if (enumName.Contains("Ruby"))
                             {
                                 AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimaryRubyGem;
                                 AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryRubyGem;
                                 AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialRubyGem;
                                 AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveRubyGem;
-                            } else if (enumName.Contains("Sapphire"))
+                            }
+                            else if (enumName.Contains("Sapphire"))
                             {
                                 AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimarySapphireGem;
                                 AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondarySapphireGem;
                                 AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialSapphireGem;
                                 AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveSapphireGem;
-                            } else if (enumName.Contains("Opal"))
+                            }
+                            else if (enumName.Contains("Opal"))
                             {
                                 AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | PrimaryUpgradeFlags.PrimaryOpalGem;
                                 AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | SecondaryUpgradeFlags.SecondaryOpalGem;
@@ -1078,29 +1089,34 @@ namespace RnSArchipelago.Utils
                             this.logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                             this.logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                             this.logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                        } else if (enumName.Contains("Primary"))
+                        }
+                        else if (enumName.Contains("Primary"))
                         {
                             AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | (PrimaryUpgradeFlags)Enum.Parse(typeof(PrimaryUpgradeFlags), enumName);
                             this.logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                        } else if (enumName.Contains("Secondary"))
+                        }
+                        else if (enumName.Contains("Secondary"))
                         {
                             AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | (SecondaryUpgradeFlags)Enum.Parse(typeof(SecondaryUpgradeFlags), enumName);
                             this.logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                        } else if (enumName.Contains("Special"))
+                        }
+                        else if (enumName.Contains("Special"))
                         {
                             AvailableSpecialUpgrades = AvailableSpecialUpgrades | (SpecialUpgradeFlags)Enum.Parse(typeof(SpecialUpgradeFlags), enumName);
                             this.logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                        } else if (enumName.Contains("Defensive"))
+                        }
+                        else if (enumName.Contains("Defensive"))
                         {
                             AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | (DefensiveUpgradeFlags)Enum.Parse(typeof(DefensiveUpgradeFlags), enumName);
                             this.logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
-                    } 
+                    }
                     else if (POTIONS.Contains(itemName))
                     {
                         AvailablePotions.Add(itemName);
                         this.logger.PrintMessage("Potions: " + String.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
-                    } else if (itemName.Contains("Defeat"))
+                    }
+                    else if (itemName.Contains("Defeat"))
                     {
                         if (itemName.Contains("Shira"))
                         {
@@ -1119,7 +1135,7 @@ namespace RnSArchipelago.Utils
                         }
                     }
                 }
-                
+
             }
         }
 
@@ -1131,13 +1147,15 @@ namespace RnSArchipelago.Utils
                 {
                     return true;
                 }
-            } else if (goal == GoalSetting.Witch)
+            }
+            else if (goal == GoalSetting.Witch)
             {
                 if (witch_victories.Count >= witchKills)
                 {
                     return true;
                 }
-            } else if (goal == GoalSetting.Both)
+            }
+            else if (goal == GoalSetting.Both)
             {
                 if (shira_victories.Count >= shiraKills && witch_victories.Count >= witchKills)
                 {
@@ -1200,7 +1218,8 @@ namespace RnSArchipelago.Utils
             if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kingdom_Outskirts) != 0)
             {
                 kingdoms.Add("hw_outskirts");
-            } else
+            }
+            else
             {
                 return kingdoms;
             }
@@ -1246,7 +1265,8 @@ namespace RnSArchipelago.Utils
                         break;
                     }
                 }
-            } else
+            }
+            else
             {
                 if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
                 {
@@ -1319,7 +1339,8 @@ namespace RnSArchipelago.Utils
                         break;
                     }
                 }
-            } else
+            }
+            else
             {
                 if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
                 {
@@ -1416,7 +1437,8 @@ namespace RnSArchipelago.Utils
                         break;
                     }
                 }
-            } else
+            }
+            else
             {
                 if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
                 {
@@ -1517,7 +1539,8 @@ namespace RnSArchipelago.Utils
 
         private void AddItemsFromItemset(string itemset)
         {
-            switch (itemset) {
+            switch (itemset)
+            {
                 case "Arcane Set":
                     availableItems.AddRange(ARCANE_SET);
                     break;

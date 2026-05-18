@@ -1,7 +1,9 @@
-﻿using RNSReloaded.Interfaces.Structs;
-using RNSReloaded.Interfaces;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+
 using Reloaded.Mod.Interfaces;
+
+using RNSReloaded.Interfaces;
+using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Utils
 {
@@ -9,13 +11,13 @@ namespace RnSArchipelago.Utils
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
-        
+
         public HookUtil(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
         }
-        
+
         internal enum ModificationType
         {
             ModifyLiteral,
@@ -29,7 +31,7 @@ namespace RnSArchipelago.Utils
         internal void ModifyElementVariable(CLayerElementBase* element, String variable, ModificationType modification, params RValue[] value)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
-            
+
             var instance = (CLayerInstanceElement*)element;
             var instanceValue = new RValue(instance->Instance);
             RValue* objectToModify = instanceValue.Get(variable);
@@ -65,7 +67,7 @@ namespace RnSArchipelago.Utils
         internal RValue CreateRArray(object[] values)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return null;
-            
+
             var array = rnsReloaded.ExecuteCodeFunction("array_create", null, null, [new(values.Length)]);
             if (array.HasValue)
             {
@@ -82,14 +84,15 @@ namespace RnSArchipelago.Utils
                     else if (values[i] is long l)
                     {
                         *arrayValues[i] = new RValue(l);
-                    } else if (values[i] is double d)
+                    }
+                    else if (values[i] is double d)
                     {
                         *arrayValues[i] = new RValue(d);
-                    } 
+                    }
                     else if (values[i] is int intValue)
                     {
                         *arrayValues[i] = new RValue(intValue);
-                    } 
+                    }
                     else
                     {
                         logger.PrintMessage(values[i] + " is not convertable", System.Drawing.Color.Red);
@@ -197,7 +200,7 @@ namespace RnSArchipelago.Utils
         {
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
-            
+
             // Find the element in the layer that is the lobby type selector, has name lobby
             FindLayer(layerName, out var layer);
             if (layer != null)
@@ -223,7 +226,7 @@ namespace RnSArchipelago.Utils
             layer = null;
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
-            
+
             // Find the element in the layer that is the lobby type selector, has name lobby
             FindLayer(layerName, out layer);
             if (layer != null)
@@ -247,7 +250,7 @@ namespace RnSArchipelago.Utils
         internal string FindLayerWithField(string field)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return "";
-            
+
             var room = rnsReloaded.GetCurrentRoom();
             // Find the layer in the room that contains the lobby type selector, RunMenu_Options
             var layer = room->Layers.First;
@@ -274,7 +277,7 @@ namespace RnSArchipelago.Utils
         internal string FindLayerWithField(string field, string value)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return "";
-            
+
             var room = rnsReloaded.GetCurrentRoom();
             // Find the layer in the room that contains the lobby type selector, RunMenu_Options
             var layer = room->Layers.First;
@@ -303,7 +306,7 @@ namespace RnSArchipelago.Utils
         {
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
-            
+
             var room = rnsReloaded.GetCurrentRoom();
             // Find the layer in the room that contains the lobby type selector, RunMenu_Options
             var layer = room->Layers.First;
@@ -331,7 +334,7 @@ namespace RnSArchipelago.Utils
         internal string PrintHook(string name, CInstance* self, RValue* returnValue, int argc, RValue** argv)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return $"Error in calling: {name}";
-            
+
             RValue a = new(self);
             var output = rnsReloaded.GetString(&a) + "\n";
             if (argc == 0)

@@ -1,4 +1,5 @@
 ﻿using Reloaded.Mod.Interfaces;
+
 using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Utils
@@ -8,14 +9,14 @@ namespace RnSArchipelago.Utils
         private readonly Random rand;
         private readonly ILogger logger;
         private readonly InventoryUtil inventoryUtil;
-        
+
         public ShopItemsUtil(Random rand, ILogger logger, InventoryUtil inventoryUtil)
         {
             this.rand = rand;
             this.logger = logger;
             this.inventoryUtil = inventoryUtil;
         }
-        
+
         private static readonly string[] SHOP_LOCATIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
@@ -50,17 +51,23 @@ namespace RnSArchipelago.Utils
             if (useArchipelago)
             {
                 *argv[0] = new RValue(archipelagoItemId);
-            } else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.None) {
+            }
+            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.None)
+            {
                 return;
-            } else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.Locked) {
+            }
+            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.Locked)
+            {
                 if (this.inventoryUtil.AvailablePotions.Contains("Full Heal Potion"))
                 {
                     *argv[0] = new RValue(PotionNameToId("Full Heal Potion"));
-                } else
+                }
+                else
                 {
                     *argv[0] = new RValue(0);
                 }
-            } else
+            }
+            else
             {
                 if (this.inventoryUtil.AvailablePotions.Count == 0)
                 {
@@ -119,7 +126,7 @@ namespace RnSArchipelago.Utils
             {
                 return;
             }
-            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.Locked) 
+            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.Locked)
             {
                 List<string> actualPotions = this.inventoryUtil.AvailablePotions.Where(potion => (potion != "Full Heal Potion" && potion != "Level Up Potion")).ToList();
                 logger.PrintMessage(String.Join(", ", actualPotions), System.Drawing.Color.DarkOrange);
@@ -132,7 +139,8 @@ namespace RnSArchipelago.Utils
                     string randomPotion = actualPotions[rand.Next(actualPotions.Count)];
                     *argv[0] = new RValue(PotionNameToId(randomPotion));
                 }
-            } else
+            }
+            else
             {
                 if (this.inventoryUtil.AvailablePotions.Count == 0)
                 {
@@ -152,9 +160,12 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            {
                 return;
-            } else {
+            }
+            else
+            {
 
                 if (this.inventoryUtil.AvailablePrimaryUpgrades == InventoryUtil.PrimaryUpgradeFlags.None)
                 {
@@ -173,21 +184,25 @@ namespace RnSArchipelago.Utils
                 if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryEmeraldGem)
                 {
                     *argv[0] = new RValue(713);
-                } else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryGarnetGem)
+                }
+                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryGarnetGem)
                 {
                     *argv[0] = new RValue(709);
-                } else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryRubyGem)
+                }
+                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryRubyGem)
                 {
                     *argv[0] = new RValue(705);
-                } else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimarySapphireGem)
+                }
+                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimarySapphireGem)
                 {
                     *argv[0] = new RValue(701);
-                } else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryOpalGem)
+                }
+                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryOpalGem)
                 {
                     *argv[0] = new RValue(697);
                 }
             }
-            
+
         }
 
         internal void SetSecondaryUpgrade(RValue** argv, long archipelagoItemId, bool useArchipelago)
@@ -196,9 +211,12 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            {
                 return;
-            } else {
+            }
+            else
+            {
                 if (this.inventoryUtil.AvailableSecondaryUpgrades == InventoryUtil.SecondaryUpgradeFlags.None)
                 {
                     *argv[0] = new RValue(0);
@@ -243,9 +261,12 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            {
                 return;
-            } else {
+            }
+            else
+            {
                 if (this.inventoryUtil.AvailableSpecialUpgrades == InventoryUtil.SpecialUpgradeFlags.None)
                 {
                     *argv[0] = new RValue(0);
@@ -290,9 +311,12 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None) {
+            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            {
                 return;
-            } else {
+            }
+            else
+            {
                 if (this.inventoryUtil.AvailableDefensiveUpgrades == InventoryUtil.DefensiveUpgradeFlags.None)
                 {
                     *argv[0] = new RValue(0);

@@ -5,12 +5,12 @@ namespace RnSArchipelago.Data
     internal class DataContext
     {
         private readonly ConcurrentDictionary<DataStateKey, object> _entries;
-        
+
         private readonly ConcurrentDictionary<DataStateKey, HashSet<IObserver<object>>> _observers;
 
         public DataContext()
         {
-            _entries = new ConcurrentDictionary<DataStateKey, object>();    
+            _entries = new ConcurrentDictionary<DataStateKey, object>();
             _observers = new ConcurrentDictionary<DataStateKey, HashSet<IObserver<object>>>();
         }
 

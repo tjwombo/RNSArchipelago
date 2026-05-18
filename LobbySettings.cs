@@ -1,10 +1,13 @@
 ﻿using Reloaded.Hooks.Definitions;
-using RNSReloaded.Interfaces.Structs;
-using RNSReloaded.Interfaces;
-using static RnSArchipelago.Utils.HookUtil;
-using RnSArchipelago.Utils;
 using Reloaded.Mod.Interfaces;
+
 using RnSArchipelago.Connection;
+using RnSArchipelago.Utils;
+
+using RNSReloaded.Interfaces;
+using RNSReloaded.Interfaces.Structs;
+
+using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago
 {
@@ -76,7 +79,8 @@ namespace RnSArchipelago
             if (this.archipelagoButtonHook != null)
             {
                 returnValue = this.archipelagoButtonHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call archipelago button hook", System.Drawing.Color.Red);
             }
@@ -145,7 +149,8 @@ namespace RnSArchipelago
             if (this.archipelagoOptionsHook != null)
             {
                 returnValue = this.archipelagoOptionsHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call archipelago options hook", System.Drawing.Color.Red);
             }
@@ -248,7 +253,7 @@ namespace RnSArchipelago
                                 }
                                 this.hookUtil.ModifyElementVariable(element, "cursorPos", ModificationType.ModifyLiteral, passVal);
                                 *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2) = passVal;
-                                
+
                                 rnsReloaded.ExecuteScript("scr_runmenu_lobbysettings_passwordlock", instance->Instance, other, 0, argv);
 
                                 break;
@@ -286,7 +291,8 @@ namespace RnSArchipelago
             if (this.archipelagoOptionsReturnHook != null)
             {
                 returnValue = this.archipelagoOptionsReturnHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call archipleago options return hook", System.Drawing.Color.Red);
             }
@@ -358,7 +364,8 @@ namespace RnSArchipelago
             if (this.lobbyTitleHook != null)
             {
                 returnValue = this.lobbyTitleHook.OriginalFunction(self, other, returnValue, argc, argv);
-            } else
+            }
+            else
             {
                 this.logger.PrintMessage("Unable to call lobby title hook", System.Drawing.Color.Red);
             }
