@@ -403,6 +403,17 @@ namespace RnSArchipelago
             classHandler.lockClassHook.Activate();
             classHandler.lockClassHook.Enable();
 
+            // Lock characters not yet obtained on mouse click
+            var lockClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_update_choosecolor") - 100000);
+            classHandler.mouseClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockClass, lockClassScript->Functions->Function);
+            classHandler.mouseClassHook.Activate();
+            classHandler.mouseClassHook.Enable();
+
+            // Prevent the drawing of colors if trying to select a locked class when doing a mouse click on a locked class
+            var stopColorScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_setup_colors") - 100000);
+            classHandler.stopColorHook = hooks.CreateHook<ScriptDelegate>(classHandler.StopColorDraw, stopColorScript->Functions->Function);
+            classHandler.stopColorHook.Activate();
+            classHandler.stopColorHook.Enable();
         }
 
         // TODO: REMOVE Testing function for timing printing
