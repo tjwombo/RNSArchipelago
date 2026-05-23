@@ -403,6 +403,7 @@ namespace RnSArchipelago
             classHandler.lockClassHook.Activate();
             classHandler.lockClassHook.Enable();
 
+            // Lock characters not yet obtained on mouse click
         }
 
         // TODO: REMOVE Testing function for timing printing
