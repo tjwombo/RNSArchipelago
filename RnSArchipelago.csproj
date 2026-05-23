@@ -32,7 +32,6 @@
     <None Remove="BuildLinked.ps1" />
     <None Remove="Reloaded.Trimming.targets" />
     <None Remove="Reloaded.Checks.targets" />
-    <None Remove="stylecop.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,18 +47,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="stylecop.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.2" />
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.1" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.8" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.5.0" ExcludeAssets="runtime" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.9.0" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
