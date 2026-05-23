@@ -16,6 +16,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch
 
 env: 
   PUBLISH_COMMON_PATH: ./Publish/ToUpload/
