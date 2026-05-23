@@ -19,6 +19,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? mouseClassHook;
         internal IHook<ScriptDelegate>? stopColorHook;
 
+        // TODO: Use with character ability rando in the future
         internal static long AbilityIdToBaseId(long abilityId)
         {
             return (long)(Math.Floor((abilityId + 1.0) / 7) * 7) - 1;
