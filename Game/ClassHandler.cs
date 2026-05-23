@@ -76,6 +76,8 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
+        // Below are mouse restrictions as they are operating at a different time than keyboard/controller, but the other controls should also be affected by below (they just get stopped earlier normally)
+
         // TODO: Find a better function to hook that actually changes the step, which will hopefully stop the flash unlock
         // When using a mouse, make it so that in the state machine if we select a locked class, instead of going to the next state, we loop back
         internal RValue* LockClass(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
