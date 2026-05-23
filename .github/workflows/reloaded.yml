@@ -16,7 +16,11 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch
+  workflow_dispatch:
+    tags:
+        description: 'Test scenario tags'
+        required: false
+        type: boolean
 
 env: 
   PUBLISH_COMMON_PATH: ./Publish/ToUpload/
