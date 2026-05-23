@@ -402,6 +402,7 @@ namespace RnSArchipelago
             classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.SetClassAvailability, lockVisualClassScript->Functions->Function);
             classHandler.lockClassHook.Activate();
             classHandler.lockClassHook.Enable();
+
         }
 
         // TODO: REMOVE Testing function for timing printing

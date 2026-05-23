@@ -424,7 +424,7 @@ namespace RnSArchipelago.Utils
         private static readonly long USAGI_KAMEN = itemId++;
         private static readonly long RED_TANZAKU = itemId++;
         private static readonly long VEGA_SPEAR = itemId++;
-        private static readonly long ALTAI_DAGGER = itemId++;
+        private static readonly long ALTAIR_DAGGER = itemId++;
 
         private static readonly long GHOST_SPEAR = itemId++;
         private static readonly long PHANTOM_DAGGER = itemId++;
@@ -725,7 +725,7 @@ namespace RnSArchipelago.Utils
             ["Usagi Kamen"] = USAGI_KAMEN,
             ["Red Tanzaku"] = RED_TANZAKU,
             ["Vega Spear"] = VEGA_SPEAR,
-            ["Altair Dagger"] = ALTAI_DAGGER,
+            ["Altair Dagger"] = ALTAIR_DAGGER,
             ["Ghost Spear"] = GHOST_SPEAR,
             ["Phantom Dagger"] = PHANTOM_DAGGER,
             ["Cursed Candlestaff"] = CURSED_CANDLESTAFF,
@@ -902,7 +902,7 @@ namespace RnSArchipelago.Utils
 
         private static readonly long[] TIMEGEM_SET = [OBSIDIAN_ROD, DARKGLASS_SPEAR, TIMESPACE_DAGGER, QUARTZ_SHIELD, POCKETWATCH, NOVA_CROWN, BLACKHOLE_CHARM, TWINSTAR_EARRINGS];
 
-        private static readonly long[] YOUKAI_SET = [KYOU_NO_OMIKUJI, YOUKAI_BRACELET, ONI_STAFF, KAPPA_SHIELD, USAGI_KAMEN, RED_TANZAKU, VEGA_SPEAR, ALTAI_DAGGER];
+        private static readonly long[] YOUKAI_SET = [KYOU_NO_OMIKUJI, YOUKAI_BRACELET, ONI_STAFF, KAPPA_SHIELD, USAGI_KAMEN, RED_TANZAKU, VEGA_SPEAR, ALTAIR_DAGGER];
 
         private static readonly long[] HAUNTED_SET = [GHOST_SPEAR, PHANTOM_DAGGER, CURSED_CANDLESTAFF, HAUNTED_GLOVES, OLD_BONNET, MAID_OUTFIT, CALLING_BELL, SMOKE_SHIELD];
 
