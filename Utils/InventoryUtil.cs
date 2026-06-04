@@ -1616,6 +1616,36 @@ namespace RnSArchipelago.Utils
                 case "Lakeshrine Set":
                     availableItems.AddRange(LAKESHRINE_SET);
                     break;
+                case "Glacier Set":
+                    availableItems.AddRange(GLACIER_SET);
+                    break;
+                case "Memory Set":
+                    availableItems.AddRange(MEMORY_SET);
+                    break;
+                case "Cultist Set":
+                    availableItems.AddRange(CULTIST_SET);
+                    break;
+                case "Painters Set":
+                    availableItems.AddRange(PAINTERS_SET);
+                    break;
+                case "Daynight Set":
+                    availableItems.AddRange(DAYNIGHT_SET);
+                    break;
+                case "Sharpedge Set":
+                    availableItems.AddRange(SHARPEDGE_SET);
+                    break;
+                case "Oceans Set":
+                    availableItems.AddRange(OCEANS_SET);
+                    break;
+                case "Performers Set":
+                    availableItems.AddRange(PERFORMERS_SET);
+                    break;
+                case "Miners Set":
+                    availableItems.AddRange(MINERS_SET);
+                    break;
+                case "Teaparty Set":
+                    availableItems.AddRange(TEAPARTY_SET);
+                    break;
             }
         }
     }
