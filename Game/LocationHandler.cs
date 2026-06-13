@@ -1077,8 +1077,6 @@ namespace RnSArchipelago.Game
                     return "Witch";
                 }
 
-                this.logger.PrintMessage(notchName, System.Drawing.Color.Red);
-
                 return kingdomName + notchName;
             }
             return "";
@@ -1184,13 +1182,29 @@ namespace RnSArchipelago.Game
         // On outskirts loading, besides loading into lobby, add the treasurespheres we have accumulated
         internal RValue* SpawnTreasuresphereOnStart(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
+            this.rnsReloadedRef.TryGetTarget(out var rnsReloaded);
+
             if (modConfig.ExtraDebugMessages)
             {
                 this.logger.PrintMessage("Before Original Function Try Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
             }
-            if (this.spawnTreasuresphereOnStartNHook != null)
+            // Perform normal action for menu / starting kingdom
+            if (this.spawnTreasuresphereOnStartNHook != null && (!inventoryUtil.isActive || (rnsReloaded != null && hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "hallwayPos"), 0))))
             {
                 returnValue = this.spawnTreasuresphereOnStartNHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            // Due to a bug on the 6th kingdom, manually call each kingdoms hallway gen and update the notch icons
+            else if (this.spawnTreasuresphereOnStartNHook != null)
+            {
+                if (rnsReloaded != null)
+                {
+                    string hallkey = rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "hallkey"), (int) hookUtil.GetNumeric(rnsReloaded.FindValue(self, "hallwayPos")))->ToString();
+
+                    GenerateHallway(self, hallkey);
+                    *rnsReloaded.FindValue(self, "stageNameRefresh") = new RValue(1);
+                    UpdateNotchIcons(self, hallkey);
+                    *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "hallsubimg"), (int)hookUtil.GetNumeric(rnsReloaded.FindValue(self, "hallwayPos"))) = new RValue(hookUtil.GetNumeric(rnsReloaded.FindValue(self, "stageKey"))); // Getting numberic here just in case
+                }
             }
             else
             {
@@ -1198,7 +1212,7 @@ namespace RnSArchipelago.Game
             }
 
 
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            if (rnsReloaded != null)
             {
                 if (modConfig.ExtraDebugMessages)
                 {
@@ -1222,6 +1236,97 @@ namespace RnSArchipelago.Game
             }
 
             return returnValue;
+        }
+
+        // Generate the notch data for the given hallway
+        internal void GenerateHallway(CInstance* self, string hallkey)
+        {
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                switch (hallkey)
+                {
+                    case "hw_nest":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_nest", self, null, []);
+                        break;
+                    case "hw_arsenal":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_arsenal", self, null, []);
+                        break;
+                    case "hw_lakeside":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_lakeside", self, null, []);
+                        break;
+                    case "hw_streets":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_streets", self, null, []);
+                        break;
+                    case "hw_lighthouse":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_lighthouse", self, null, []);
+                        break;
+                    case "hw_keep":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_keep", self, null, []);
+                        break;
+                    case "hw_pinnacle":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_pinnacle", self, null, []);
+                        break;
+                    case "hw_depths":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_depths", self, null, []);
+                        break;
+                    case "hw_aurum":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_aurum", self, null, []);
+                        break;
+                    case "hw_sanct":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_sanct", self, null, []);
+                        break;
+                    case "hw_darkhall":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_darkhall", self, null, []);
+                        break;
+                    case "hw_reflection":
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_reflection", self, null, []);
+                        break;
+                }
+                
+            }
+        }
+
+        // Set the notch icons for the given hallway
+        internal void UpdateNotchIcons(CInstance* self, string hallkey)
+        {
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                var icons = rnsReloaded.FindValue(self, "xSubimg");
+            switch (hallkey)
+                {
+                    case "hw_pinnacle":
+                    case "hw_reflection":
+                        *rnsReloaded.ArrayGetEntry(icons, 0) = new RValue(3);
+                        *rnsReloaded.ArrayGetEntry(icons, 1) = new RValue(4);
+                        *rnsReloaded.ArrayGetEntry(icons, 2) = new RValue(6);
+                        break;
+                    case "hw_nest":
+                    case "hw_arsenal":
+                    case "hw_lakeside":
+                    case "hw_streets":
+                    case "hw_lighthouse":
+                    case "hw_keep":
+                    case "hw_depths":
+                    case "hw_aurum":
+                    case "hw_sanct":
+                    case "hw_darkhall":
+                        *rnsReloaded.ArrayGetEntry(icons, 0) = new RValue(2);
+                        *rnsReloaded.ArrayGetEntry(icons, 1) = new RValue(0);
+                        *rnsReloaded.ArrayGetEntry(icons, 2) = new RValue(0);
+                        *rnsReloaded.ArrayGetEntry(icons, 3) = new RValue(0);
+                        *rnsReloaded.ArrayGetEntry(icons, 4) = new RValue(1);
+                        *rnsReloaded.ArrayGetEntry(icons, 5) = new RValue(4);
+                        break;
+                    default: // Default to the starting kingdom
+                        *rnsReloaded.ArrayGetEntry(icons, 0) = new RValue(3);
+                        *rnsReloaded.ArrayGetEntry(icons, 1) = new RValue(0);
+                        *rnsReloaded.ArrayGetEntry(icons, 2) = new RValue(1);
+                        *rnsReloaded.ArrayGetEntry(icons, 3) = new RValue(0);
+                        *rnsReloaded.ArrayGetEntry(icons, 4) = new RValue(1);
+                        *rnsReloaded.ArrayGetEntry(icons, 5) = new RValue(0);
+                        break;
+                }
+            }
         }
 
         internal RValue* StopReadyCheck(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)

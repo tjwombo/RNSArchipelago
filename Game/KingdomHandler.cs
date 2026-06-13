@@ -410,9 +410,16 @@ namespace RnSArchipelago.Game
                                 if (maxCanRun > 3)
                                 {
                                     var imgLength = rnsReloaded.ArrayGetLength(img);
-                                    if (imgLength.HasValue && this.hookUtil.GetNumeric(imgLength.Value) != maxCanRun + 3)
+                                    if (imgLength.HasValue && this.hookUtil.GetNumeric(imgLength.Value) < inventoryUtil.maxKingdoms)
                                     {
-                                        this.hookUtil.ModifyElementVariable(hallway, "hallsubimg", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(0)).ToArray());
+                                        this.hookUtil.ModifyElementVariable(hallway, "hallsubimg", ModificationType.InsertToArray, Enumerable.Range(1, (int)(inventoryUtil.maxKingdoms - this.hookUtil.GetNumeric(imgLength.Value)) + 3).Select(s => new RValue(0)).ToArray());
+
+                                        this.hookUtil.ModifyElementVariable(hallway, "hallkey", ModificationType.InsertToArray,
+                                            Enumerable.Range(1, (int)(inventoryUtil.maxKingdoms - this.hookUtil.GetNumeric(imgLength.Value)) + 1).Select(s => {
+                                                                                                                                                                RValue empty = new RValue();
+                                                                                                                                                                rnsReloaded.CreateString(&empty, "");
+                                                                                                                                                                return empty;
+                                                                                                                                                            }).ToArray());
                                     }
                                     for (var i = 0; i < maxCanRun - 3; i++)
                                     {
@@ -652,8 +659,6 @@ namespace RnSArchipelago.Game
                             *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(7);
                             *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(0);
                             *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
-
-                            rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
                         }
                         else
                         {
@@ -662,8 +667,6 @@ namespace RnSArchipelago.Game
                             *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(9);
                             *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(13);
                             *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(13);
-
-                            rnsReloaded.ExecuteScript("scr_hallwaygen_geode", instance, null, []);
                         }
                     }
                     else if (unplacedKingdoms.Contains("hw_outskirts"))
@@ -673,8 +676,6 @@ namespace RnSArchipelago.Game
                         *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(7);
                         *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(0);
                         *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
-
-                        rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
                     }
                     else if (unplacedKingdoms.Contains("hw_geode"))
                     {
@@ -683,9 +684,19 @@ namespace RnSArchipelago.Game
                         *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(9);
                         *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(13);
                         *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(13);
+                    }
 
+                    // Generate the hallway data
+                    if (rnsReloaded.ArrayGetEntry(hallkey, 0)->ToString().Equals("hw_outskirts"))
+                    {
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
+                    } else if (rnsReloaded.ArrayGetEntry(hallkey, 0)->ToString().Equals("hw_geode"))
+                    {
                         rnsReloaded.ExecuteScript("scr_hallwaygen_geode", instance, null, []);
                     }
+
+                    // Update the name
+                    *rnsReloaded.FindValue(instance, "stageNameRefresh") = new RValue(1);
                 }
 
                 unplacedKingdoms.Remove("hw_outskirts");
