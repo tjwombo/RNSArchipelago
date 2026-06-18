@@ -604,11 +604,25 @@ namespace RnSArchipelago
             kingdom.fixEndIconsHook.Activate();
             kingdom.fixEndIconsHook.Enable();
 
+            // WIP FUNCTION
+            /*// Modifys 
+            var iconsEndScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_change_stage") - 100000);
+            kingdom.fixEndIconsHook = hooks.CreateHook<ScriptDelegate>(kingdom.ModifyEndScreenIcons, iconsEndScript->Functions->Function);
+            kingdom.fixEndIconsHook.Activate();
+            kingdom.fixEndIconsHook.Enable();*/
+
+            // Changes the background of the starting kingdom on run start
+            var changeStartingKingdomBackgroundScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_start_run") - 100000);
+            kingdom.changeStartingKingdomBackgroundScriptHook = hooks.CreateHook<ScriptDelegate>(kingdom.ChangeStartingKingdom, changeStartingKingdomBackgroundScript->Functions->Function);
+            kingdom.changeStartingKingdomBackgroundScriptHook.Activate();
+            kingdom.changeStartingKingdomBackgroundScriptHook.Enable();
+
             var readyCheckScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_should_update") - 100000);
             locationHandler.readyCheckHook = hooks.CreateHook<ScriptDelegate>(locationHandler.StopReadyCheck, readyCheckScript->Functions->Function);
             locationHandler.readyCheckHook.Activate();
             locationHandler.readyCheckHook.Enable();
 
+            // Runs every frame checking to see if a treasuresphere is needed to be added
             var spawnTreasuresphereScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_input_check_p") - 100000);
             locationHandler.spawnTreasuresphereHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphere, spawnTreasuresphereScript->Functions->Function);
             locationHandler.spawnTreasuresphereHook.Activate();

@@ -23,6 +23,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? endHallsHook;
         internal IHook<ScriptDelegate>? fixChooseIconsHook;
         internal IHook<ScriptDelegate>? fixEndIconsHook;
+        internal IHook<ScriptDelegate>? changeStartingKingdomBackgroundScriptHook;
 
         private string lastVisitedRunType = "";
 
@@ -905,6 +906,35 @@ namespace RnSArchipelago.Game
             ModifyHallSeedAndIconsLength(maxCanRun);
 
             ModifyRoute(maxCanRun, visitableKingdoms, currentHallwayPosAware);
+        }
+
+        internal RValue* ChangeStartingKingdom(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                this.hookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+                var instance = ((CLayerInstanceElement*)element)->Instance;
+
+                rnsReloaded.ExecuteScript("scr_hallwayprogress_change_stage", instance, null, []);
+            }
+
+            if (modConfig.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Original Function Kingdom update", System.Drawing.Color.DarkOrange);
+            }
+            if (this.changeStartingKingdomBackgroundScriptHook != null)
+            {
+                returnValue = this.changeStartingKingdomBackgroundScriptHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call run start hook", System.Drawing.Color.Red);
+            }
+            if (modConfig.ExtraDebugMessages)
+            {
+                this.logger.PrintMessage("Before Return Kingdom update", System.Drawing.Color.DarkOrange);
+            }
+            return returnValue;
         }
 
         // Create the route such that you only visit kingdoms you are allowed to with your settings and items combo
