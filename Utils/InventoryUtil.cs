@@ -47,7 +47,7 @@ namespace RnSArchipelago.Utils
         internal delegate void SendGoalDelegate();
         internal event SendGoalDelegate? SendGoal;
 
-        internal delegate void UpdateHallwayOnItemRecieveDelegate();
+        internal delegate void UpdateHallwayOnItemRecieveDelegate(bool currentHallwayPosAware = true);
         internal event UpdateHallwayOnItemRecieveDelegate? UpdateHallwayOnItemRecieve;
 
         internal enum RunTypeSetting

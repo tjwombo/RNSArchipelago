@@ -230,6 +230,12 @@ namespace RnSArchipelago.Game
                         {
                             maxVisitableKingdoms--;
                         }
+
+                        if (this.inventoryUtil.isProgressive)
+                        {
+                            maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryUtil.ProgressiveRegions);
+                        }
+
                         maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryUtil.maxKingdoms);
 
                         var hallwayNumber = this.hookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent")); // 0 is Kingdom Outskirts / Crack in the Geode
@@ -291,6 +297,11 @@ namespace RnSArchipelago.Game
                         }
                         maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
 
+                        if (this.inventoryUtil.isProgressive)
+                        {
+                            maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.ProgressiveRegions);
+                        }
+
                         if (hallkey != null && hallkey->ToString() != "unset" && this.hookUtil.GetNumeric(instanceValue.Get("hallwayNumber")) != maxCanRun + 3)
                         {
                             // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
@@ -303,9 +314,9 @@ namespace RnSArchipelago.Game
             }
         }
 
-        internal void OnKingdomUpdate()
+        internal void OnKingdomUpdate(bool currentHallwayPosAware = true)
         {
-            UpdateRoute();
+            UpdateRoute(currentHallwayPosAware);
 
             UpdateRouteLength();
         }
@@ -884,7 +895,7 @@ namespace RnSArchipelago.Game
         }
 
         // Update the route from the start or from the current position + 1
-        internal void UpdateRoute(bool currentHallwayPosAware = true)
+        internal void UpdateRoute(bool currentHallwayPosAware)
         {
             this.logger.PrintMessage("updating route", System.Drawing.Color.DarkOrange);
             var visitableKingdoms = this.inventoryUtil.AvailableKingdoms;
@@ -900,6 +911,11 @@ namespace RnSArchipelago.Game
                 maxCanRun--;
             }
             maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
+
+            if (this.inventoryUtil.isProgressive)
+            {
+                maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.ProgressiveRegions);
+            }
 
             this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.DarkOrange);
 
@@ -967,7 +983,7 @@ namespace RnSArchipelago.Game
                             this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
                         }
                         this.logger.PrintMessage(this.hookUtil.PrintHook("create route", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
-                        UpdateRoute(false);
+                        OnKingdomUpdate(false);
 
                         if (modConfig.ExtraDebugMessages)
                         {

@@ -617,6 +617,7 @@ namespace RnSArchipelago
             kingdom.changeStartingKingdomBackgroundScriptHook.Activate();
             kingdom.changeStartingKingdomBackgroundScriptHook.Enable();
 
+            // Removes option to go to next stage if disconnected
             var readyCheckScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_should_update") - 100000);
             locationHandler.readyCheckHook = hooks.CreateHook<ScriptDelegate>(locationHandler.StopReadyCheck, readyCheckScript->Functions->Function);
             locationHandler.readyCheckHook.Activate();
