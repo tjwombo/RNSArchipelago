@@ -19,7 +19,6 @@ namespace RnSArchipelago.Connection
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
         private readonly InventoryUtil inventoryUtil;
-        private readonly Config.Config modConfig;
         private readonly SharedData data;
 
         internal readonly MessageHandler messageHandler;
@@ -42,7 +41,6 @@ namespace RnSArchipelago.Connection
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.inventoryUtil = inventoryUtil;
-            this.modConfig = config;
             this.data = data;
 
             this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryUtil, config, data);
@@ -51,12 +49,10 @@ namespace RnSArchipelago.Connection
         // Attempt to start a connection to archipelago with the given configs
         internal async Task StartConnection(bool returnToTitle = false)
         {
-
             var address = data.connection.Get<string>("address");
 
             if (session == null || !session.Socket.Connected)
             {
-
                 session = ArchipelagoSessionFactory.CreateSession(address);
 
                 if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
@@ -72,13 +68,10 @@ namespace RnSArchipelago.Connection
                 {
                     var roomInfo = await session.ConnectAsync();
                     JoinRoom(roomInfo!);
-
-                    return;
                 }
                 catch (Exception e)
                 {
-                    // TODO: gracefully handle bad connection, currently crashes
-                    LoginFailure failure = new LoginFailure(e.GetBaseException().Message);
+                    LoginFailure failure = new(e.GetBaseException().Message);
                     string errorMessage = $"Failed to Connect to {address}:";
                     foreach (string error in failure.Errors)
                     {
@@ -90,13 +83,10 @@ namespace RnSArchipelago.Connection
                     }
                     logger.PrintMessage(errorMessage, System.Drawing.Color.Red);
 
-
                     if (returnToTitle)
                     {
                         this.messageHandler.errorMessage = "Could not connect to the multiworld";
                     }
-
-                    return;
                 }
             }
         }
@@ -104,40 +94,34 @@ namespace RnSArchipelago.Connection
         // Return to the lobby settings
         internal unsafe RValue* ResetConn(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
+            if (this.resetConnHook != null)
             {
-                this.logger.PrintMessage("Before Original Function Reset Conn", System.Drawing.Color.DarkOrange);
+                this.resetConnHook?.OriginalFunction(self, other, returnValue, argc, argv);
             }
-            this.resetConnHook?.OriginalFunction(self, other, returnValue, argc, argv);
-            if (modConfig.ExtraDebugMessages)
+            else
             {
-                this.logger.PrintMessage("Rest Conn", System.Drawing.Color.DarkOrange);
+                this.logger.PrintMessage("Unable to call reset conn hook", System.Drawing.Color.Red);
             }
+
             ResetConn();
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Reset Conn", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
         // Return to the lobby settings, after a win/loss
         internal unsafe RValue* ResetConnEnd(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
+            if (this.resetConnEndHook != null)
             {
-                this.logger.PrintMessage("Before Original Function Reset Conn End", System.Drawing.Color.DarkOrange);
+                this.resetConnEndHook?.OriginalFunction(self, other, returnValue, argc, argv);
             }
-            this.resetConnEndHook?.OriginalFunction(self, other, returnValue, argc, argv);
-            if (modConfig.ExtraDebugMessages)
+            else
             {
-                this.logger.PrintMessage("Reset Conn End", System.Drawing.Color.DarkOrange);
+                this.logger.PrintMessage("Unable to call reset conn end hook", System.Drawing.Color.Red);
             }
+
             ResetConn();
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Reset Conn End", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
@@ -159,13 +143,14 @@ namespace RnSArchipelago.Connection
 
         internal void ConnectionOpened()
         {
-            this.logger.PrintMessage("connection opened", System.Drawing.Color.DarkOrange);
+            this.logger.PrintMessage("Connection opened", System.Drawing.Color.DarkOrange);
         }
 
         internal void ConnectionClosed(string reason)
         {
             logger.PrintMessage("Connection closed: " + reason, System.Drawing.Color.Red);
             this.messageHandler.errorMessage = "Disconnected from the multiworld";
+
             if (session != null && session.Socket != null)
             {
                 session.MessageLog.OnMessageReceived -= this.messageHandler.OnMessageReceived;
@@ -176,8 +161,7 @@ namespace RnSArchipelago.Connection
 
         internal async void ErrorReceived(Exception e, string message)
         {
-            logger.PrintMessage("Error: " + message, System.Drawing.Color.Red);
-            logger.PrintMessage(e + "", System.Drawing.Color.Red);
+            logger.PrintMessage(e + ": " + message, System.Drawing.Color.Red);
 
             if (message == "The remote party closed the WebSocket connection without completing the close handshake." ||
                 message.Contains("Unable to connect to the remote server"))
@@ -191,7 +175,6 @@ namespace RnSArchipelago.Connection
                 try
                 {
                     await session.Socket.DisconnectAsync();
-
                 }
                 catch (Exception err)
                 {
@@ -206,7 +189,6 @@ namespace RnSArchipelago.Connection
         // Attempt to join the archipelago room with the provided data
         internal void JoinRoom(RoomInfoPacket roomInfo)
         {
-
             var name = this.data.connection.Get<string>("name");
             var password = this.data.connection.Get<string>("password");
 

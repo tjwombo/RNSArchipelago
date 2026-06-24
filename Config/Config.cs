@@ -10,9 +10,6 @@ public class Config : Configurable<Config>
     [DisplayName("Archipelago Address")]
     public string ArchipelagoAddress { get; set; } = "localhost:38281";
 
-    [DisplayName("Enable Extra Debug Messages")]
-    public bool ExtraDebugMessages { get; set; } = false;
-
     [DisplayName("Skip ArchipelagoItem Folder Creation")]
     public bool SkipItemCreation { get; set; } = false;
 

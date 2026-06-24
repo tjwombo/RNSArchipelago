@@ -42,7 +42,7 @@ namespace RnSArchipelago.Game
         // Gets the kingdoms you can visit for your run, excluding the ending hallways
         internal List<string> GetRunnableKingdoms()
         {
-            if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Chaotic)
+            if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Combined)
             {
                 return this.inventoryUtil.GetChaosKingdomsAvailable();
             }
@@ -57,6 +57,7 @@ namespace RnSArchipelago.Game
             else if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Either)
             {
                 List<string> kingdoms;
+
                 // Try our tab and if nothing is found go to the other tab
                 if (lastVisitedRunType == "kingdom")
                 {
@@ -102,9 +103,10 @@ namespace RnSArchipelago.Game
             return [];
         }
 
+        // Gets the kingdoms you can visit for your run at a given kingdom order, excluding the ending hallways
         internal List<string> GetOrderedRunnableKingdoms(int n)
         {
-            if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Chaotic)
+            if (this.inventoryUtil.RunType == InventoryUtil.RunTypeSetting.Combined)
             {
                 return this.inventoryUtil.GetChaosKingdomsAvailable(n);
             }
@@ -127,10 +129,6 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Modify End Screen Icons", System.Drawing.Color.DarkOrange);
-                    }
                     var a = new RValue(self);
                     //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
 
@@ -160,10 +158,6 @@ namespace RnSArchipelago.Game
                                 //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
                                 //var b = new RValue(self);
                                 //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
-                                if (modConfig.ExtraDebugMessages)
-                                {
-                                    this.logger.PrintMessage("Before Original Function End Screen", System.Drawing.Color.DarkOrange);
-                                }
                                 if (this.fixEndIconsHook != null)
                                 {
                                     returnValue = this.fixEndIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -171,10 +165,6 @@ namespace RnSArchipelago.Game
                                 else
                                 {
                                     this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
-                                }
-                                if (modConfig.ExtraDebugMessages)
-                                {
-                                    this.logger.PrintMessage("Before Return End Screen", System.Drawing.Color.DarkOrange);
                                 }
                                 return returnValue;
                             }
@@ -185,10 +175,7 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function End Screen", System.Drawing.Color.DarkOrange);
-            }
+
             if (this.fixEndIconsHook != null)
             {
                 returnValue = this.fixEndIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -197,10 +184,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return End Screen", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
@@ -209,63 +193,63 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                this.hookUtil.FindLayer("RunMenu_Blocker", out var layer);
-                if (layer != null)
+
+                hookUtil.FindElementInLayer("RunMenu_Blocker", "hallkey", out var element);
+
+                if (element == null)
                 {
-                    var hallway = layer->Elements.First;
-                    while (hallway != null)
+                    return false;
+                }
+
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
+
+                var hallkey = instanceValue.Get("hallkey");
+
+                var kingdoms = GetRunnableKingdoms();
+                var maxVisitableKingdoms = kingdoms.Count;
+                if (kingdoms.Contains("hw_outskirts"))
+                {
+                    maxVisitableKingdoms--;
+                }
+                if (kingdoms.Contains("hw_geode"))
+                {
+                    maxVisitableKingdoms--;
+                }
+
+                if (this.inventoryUtil.isProgressive)
+                {
+                    maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryUtil.ProgressiveRegions);
+                }
+
+                maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryUtil.maxKingdoms);
+
+                var hallwayNumber = this.hookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent")); // 0 is Kingdom Outskirts / Crack in the Geode
+
+                if (hallwayNumber < maxVisitableKingdoms)
+                {
+                    return false;
+                }
+
+                var currentPos = instanceValue.Get("currentPos");
+                var notchNumber = instanceValue.Get("notchNumber");
+
+                if (currentPos != null && notchNumber != null)
+                {
+                    // Check to see if we are at the last notch in the hallway
+                    if (this.hookUtil.IsEqualToNumeric(currentPos, this.hookUtil.GetNumeric(notchNumber) - 1))
                     {
-                        var instance = (CLayerInstanceElement*)hallway;
-                        var instanceValue = new RValue(instance->Instance);
-
-                        var hallkey = instanceValue.Get("hallkey");
-
-                        var kingdoms = GetRunnableKingdoms();
-                        var maxVisitableKingdoms = kingdoms.Count;
-                        if (kingdoms.Contains("hw_outskirts"))
+                        if (hallwayNumber == maxVisitableKingdoms)
                         {
-                            maxVisitableKingdoms--;
+                            return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_keep" && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_darkhall";
                         }
-                        if (kingdoms.Contains("hw_geode"))
+                        else if (hallwayNumber == maxVisitableKingdoms + 1)
                         {
-                            maxVisitableKingdoms--;
+                            return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_pinnacle" && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_reflection";
                         }
-
-                        if (this.inventoryUtil.isProgressive)
-                        {
-                            maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryUtil.ProgressiveRegions);
-                        }
-
-                        maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryUtil.maxKingdoms);
-
-                        var hallwayNumber = this.hookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent")); // 0 is Kingdom Outskirts / Crack in the Geode
-
-                        if (hallwayNumber < maxVisitableKingdoms)
-                        {
-                            return false;
-                        }
-
-                        var currentPos = instanceValue.Get("currentPos");
-                        var notchNumber = instanceValue.Get("notchNumber");
-
-                        if (currentPos != null && notchNumber != null)
-                        {
-                            // Check to see if we are at the last notch in the hallway
-                            if (this.hookUtil.IsEqualToNumeric(currentPos, this.hookUtil.GetNumeric(notchNumber) - 1))
-                            {
-                                if (hallwayNumber == maxVisitableKingdoms)
-                                {
-                                    return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_keep" && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) != "hw_darkhall";
-                                }
-                                else if (hallwayNumber == maxVisitableKingdoms + 1)
-                                {
-                                    return rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_pinnacle" && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) != "hw_reflection";
-                                }
-                            }
-                        }
-                        hallway = hallway->Next;
                     }
                 }
+
             }
             return false;
         }
@@ -275,45 +259,44 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                this.hookUtil.FindLayer("RunMenu_Blocker", out var layer);
-                if (layer != null)
+                hookUtil.FindElementInLayer("RunMenu_Blocker", "hallkey", out var element);
+
+                if (element == null)
                 {
-                    var hallway = layer->Elements.First;
-                    while (hallway != null)
-                    {
-                        var instance = (CLayerInstanceElement*)hallway;
-                        var instanceValue = new RValue(instance->Instance);
-                        var hallkey = instanceValue.Get("hallkey");
+                   return;
+                }
 
-                        var kingdoms = GetRunnableKingdoms();
-                        var maxCanRun = kingdoms.Count;
-                        if (kingdoms.Contains("hw_outskirts"))
-                        {
-                            maxCanRun--;
-                        }
-                        if (kingdoms.Contains("hw_geode"))
-                        {
-                            maxCanRun--;
-                        }
-                        maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
 
-                        if (this.inventoryUtil.isProgressive)
-                        {
-                            maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.ProgressiveRegions);
-                        }
+                var hallkey = instanceValue.Get("hallkey");
 
-                        if (hallkey != null && hallkey->ToString() != "unset" && this.hookUtil.GetNumeric(instanceValue.Get("hallwayNumber")) != maxCanRun + 3)
-                        {
-                            // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
-                            this.hookUtil.ModifyElementVariable(hallway, "hallwayNumber", ModificationType.ModifyLiteral, [new(maxCanRun + 3)]);
-                            return;
-                        }
-                        hallway = hallway->Next;
-                    }
+                var kingdoms = GetRunnableKingdoms();
+                var maxCanRun = kingdoms.Count;
+                if (kingdoms.Contains("hw_outskirts"))
+                {
+                    maxCanRun--;
+                }
+                if (kingdoms.Contains("hw_geode"))
+                {
+                    maxCanRun--;
+                }
+                maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.maxKingdoms);
+
+                if (this.inventoryUtil.isProgressive)
+                {
+                    maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.ProgressiveRegions);
+                }
+
+                if (hallkey != null && hallkey->ToString() != "unset" && this.hookUtil.GetNumeric(instanceValue.Get("hallwayNumber")) != maxCanRun + 3)
+                {
+                    // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
+                    this.hookUtil.ModifyElementVariable(element, "hallwayNumber", ModificationType.ModifyLiteral, [new(maxCanRun + 3)]);
                 }
             }
         }
 
+        // Update the kingdoms we visit and the number of kingdoms we should be visiting
         internal void OnKingdomUpdate(bool currentHallwayPosAware = true)
         {
             UpdateRoute(currentHallwayPosAware);
@@ -322,50 +305,35 @@ namespace RnSArchipelago.Game
         }
 
         // Ends the route early if kingdom sanity is enabled, but not enough kingdoms are unlocked, or progressive kingdom count != maxKingdoms
-        internal RValue* ManageRouteLength(
-            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
-        )
+        internal RValue* ManageRouteLength(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (this.inventoryUtil.isActive)
                 {
-
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Manage Route Length", System.Drawing.Color.DarkOrange);
-                    }
-
                     // Backup send location in case they disconnected during the fight
                     this.hookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var element);
                     if (element != null)
                     {
                         var instance = new RValue(((CLayerInstanceElement*)element)->Instance);
-                        // Wasn't playing well with IsEqualToNumeric
-                        var currentPos = this.hookUtil.GetNumeric(instance.Get("currentPos"));
+                        var currentPos = this.hookUtil.GetNumeric(instance.Get("currentPos")); // Wasn't playing well with IsEqualToNumeric
                         var hallwayPos = this.hookUtil.GetNumeric(instance.Get("hallwayPos"));
                         var index = this.hookUtil.GetNumeric(instance.Get("currentPos"));
+
                         // First check is to prevent shop, second is general transitions, and last is final boss
                         if ((currentPos != 0 || hallwayPos != 0) && index != -1 && (hallwayPos != this.inventoryUtil.maxKingdoms + 2 && currentPos == 0))
                         {
-                            locationHandler.SendNotchLoctaion(); // TODO: Will send a location even if we skip a chest. Unsure if I like that or not
+                            locationHandler.SendNotchLoctaion();
                         }
                     }
 
                     if (EndRouteEarly())
                     {
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
-                        if (modConfig.ExtraDebugMessages)
-                        {
-                            this.logger.PrintMessage("Before Return Manage Route End", System.Drawing.Color.DarkOrange);
-                        }
+
                         return returnValue;
                     }
                 }
-            }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Manage Route Length", System.Drawing.Color.DarkOrange);
             }
             if (this.endHallsHook != null)
             {
@@ -375,10 +343,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call end halls hook", System.Drawing.Color.Red);
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Manage Route Length", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
@@ -387,63 +352,60 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                this.hookUtil.FindLayer("RunMenu_Blocker", out var layer);
-                if (layer != null)
+               hookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var element);
+
+                if (element == null)
                 {
-                    var hallway = layer->Elements.First;
-                    while (hallway != null)
+                    return;
+                }
+
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
+
+                if (instanceValue.Get("currentPos") != null && this.hookUtil.IsEqualToNumeric(instanceValue.Get("currentPos"), 0))
+                {
+                    // Modify the seed
+                    var seed = instanceValue.Get("hallseed");
+                    if (seed != null && seed->ToString() != "unset")
                     {
-                        var instance = (CLayerInstanceElement*)hallway;
-                        var instanceValue = new RValue(instance->Instance);
-
-                        if (instanceValue.Get("currentPos") != null &&
-                            (this.hookUtil.IsEqualToNumeric(instanceValue.Get("currentPos"), 0)))
+                        if (maxCanRun > 3)
                         {
-                            // Modify the seed
-                            var seed = instanceValue.Get("hallseed");
-                            if (seed != null && seed->ToString() != "unset")
+                            var seedLength = rnsReloaded.ArrayGetLength(seed);
+                            if (seedLength.HasValue && this.hookUtil.GetNumeric(seedLength.Value) != maxCanRun + 3)
                             {
-                                if (maxCanRun > 3)
-                                {
-                                    var seedLength = rnsReloaded.ArrayGetLength(seed);
-                                    if (seedLength.HasValue && this.hookUtil.GetNumeric(seedLength.Value) != maxCanRun + 3)
-                                    {
-                                        var rand = new Random(this.inventoryUtil.seed?.GetHashCode() ?? default);
-                                        //var rand = new Random();
-                                        this.hookUtil.ModifyElementVariable(hallway, "hallseed", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(rand.Next())).ToArray());
-                                    }
-                                }
+                                var rand = new Random(this.inventoryUtil.seed?.GetHashCode() ?? default);
+                                this.hookUtil.ModifyElementVariable(element, "hallseed", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(rand.Next())).ToArray());
                             }
-
-                            // Modify the icons length
-                            var img = instanceValue.Get("hallsubimg");
-                            if (img != null && img->ToString() != "unset")
-                            {
-                                if (maxCanRun > 3)
-                                {
-                                    var imgLength = rnsReloaded.ArrayGetLength(img);
-                                    if (imgLength.HasValue && this.hookUtil.GetNumeric(imgLength.Value) < inventoryUtil.maxKingdoms)
-                                    {
-                                        this.hookUtil.ModifyElementVariable(hallway, "hallsubimg", ModificationType.InsertToArray, Enumerable.Range(1, (int)(inventoryUtil.maxKingdoms - this.hookUtil.GetNumeric(imgLength.Value)) + 3).Select(s => new RValue(0)).ToArray());
-
-                                        this.hookUtil.ModifyElementVariable(hallway, "hallkey", ModificationType.InsertToArray,
-                                            Enumerable.Range(1, (int)(inventoryUtil.maxKingdoms - this.hookUtil.GetNumeric(imgLength.Value)) + 1).Select(s => {
-                                                                                                                                                                RValue empty = new RValue();
-                                                                                                                                                                rnsReloaded.CreateString(&empty, "");
-                                                                                                                                                                return empty;
-                                                                                                                                                            }).ToArray());
-                                    }
-                                    for (var i = 0; i < maxCanRun - 3; i++)
-                                    {
-                                        this.hookUtil.ModifyElementVariable(hallway, "hallsubimg", ModificationType.ModifyArray, [new(maxCanRun - 1 + i), new(6)]);
-                                    }
-                                }
-                            }
-
                         }
-                        hallway = hallway->Next;
                     }
-                    layer = layer->Next;
+
+                    // Modify the icons length
+                    var img = instanceValue.Get("hallsubimg");
+                    if (img != null && img->ToString() != "unset")
+                    {
+                        if (maxCanRun > 3)
+                        {
+                            var imgLength = rnsReloaded.ArrayGetLength(img);
+                            if (imgLength.HasValue && this.hookUtil.GetNumeric(imgLength.Value) < inventoryUtil.maxKingdoms)
+                            {
+                                this.hookUtil.ModifyElementVariable(element, "hallsubimg", ModificationType.InsertToArray, Enumerable.Range(1, (int)(inventoryUtil.maxKingdoms - this.hookUtil.GetNumeric(imgLength.Value)) + 3).Select(s => new RValue(0)).ToArray());
+
+                                this.hookUtil.ModifyElementVariable(element, "hallkey", ModificationType.InsertToArray,
+                                    Enumerable.Range(1, (int)(inventoryUtil.maxKingdoms - this.hookUtil.GetNumeric(imgLength.Value)) + 1)
+                                                .Select(s => {
+                                                    RValue empty = new();
+                                                    rnsReloaded.CreateString(&empty, "");
+                                                    return empty;
+                                                }).ToArray());
+                            }
+
+                            for (var i = 0; i < maxCanRun - 3; i++)
+                            {
+                                this.hookUtil.ModifyElementVariable(element, "hallsubimg", ModificationType.ModifyArray, [new(maxCanRun - 1 + i), new(6)]);
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -558,9 +520,9 @@ namespace RnSArchipelago.Game
             }
             else if (buttonCount == 2)
             {
-                //true random
+                // true random
                 *(buttons->Get(0)) = new(0);
-                //chaotic random
+                // chaotic random
                 *(buttons->Get(1)) = new(0);
             }
         }
@@ -570,10 +532,6 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Before Original Function Route Icons 1", System.Drawing.Color.DarkOrange);
-                }
                 if (this.fixChooseIconsHook != null)
                 {
                     returnValue = this.fixChooseIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -584,46 +542,29 @@ namespace RnSArchipelago.Game
                 }
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig.ExtraDebugMessages)
+                    hookUtil.FindElementInLayer("ItemExtra", "buttonAvailable", out var element);
+
+                    if (element == null)
                     {
-                        this.logger.PrintMessage("Update Route Icons", System.Drawing.Color.DarkOrange);
+                        return returnValue;
                     }
 
-                    this.hookUtil.FindLayer("ItemExtra", out var layer);
-                    if (layer != null)
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+
+                    var routeIcons = instanceValue.Get("buttonAvailable");
+                    var buttonCount = rnsReloaded.ArrayGetLength(routeIcons);
+
+                    if (routeIcons != null && routeIcons->ToString() != "unset" && buttonCount.HasValue)
                     {
-                        var hallway = layer->Elements.First;
-                        while (hallway != null)
-                        {
-                            var instance = (CLayerInstanceElement*)hallway;
-                            var instanceValue = new RValue(instance->Instance);
-
-                            var routeIcons = instanceValue.Get("buttonAvailable");
-                            var buttonCount = rnsReloaded.ArrayGetLength(routeIcons);
-
-                            if (routeIcons != null && routeIcons->ToString() != "unset" && buttonCount.HasValue)
-                            {
-                                ModifyRouteIcons(routeIcons, (int)hookUtil.GetNumeric(buttonCount.Value));
-                                returnValue = routeIcons->Get((int)hookUtil.GetNumeric(buttonCount.Value) - 1);
-                                if (modConfig.ExtraDebugMessages)
-                                {
-                                    this.logger.PrintMessage("Before Return Update Route Icons", System.Drawing.Color.DarkOrange);
-                                }
-                                return returnValue;
-                            }
-                            hallway = hallway->Next;
-                        }
+                        ModifyRouteIcons(routeIcons, (int)hookUtil.GetNumeric(buttonCount.Value));
+                        returnValue = routeIcons->Get((int)hookUtil.GetNumeric(buttonCount.Value) - 1);
                     }
-
                 }
                 return returnValue;
             }
             else
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Before Original Function Route Icons 2", System.Drawing.Color.DarkOrange);
-                }
                 if (this.fixChooseIconsHook != null)
                 {
                     returnValue = this.fixChooseIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -634,10 +575,6 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Route Icons", System.Drawing.Color.DarkOrange);
-            }
             return returnValue;
         }
 
@@ -648,20 +585,23 @@ namespace RnSArchipelago.Game
             {
                 this.hookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
 
-                var instance = ((CLayerInstanceElement*)element)->Instance;
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
 
                 var unplacedKingdoms = GetRunnableKingdoms();
 
-                var hallkey = rnsReloaded.FindValue(instance, "hallkey");
-                var hallsubimg = rnsReloaded.FindValue(instance, "hallsubimg");
+                var hallkey = instanceValue.Get("hallkey");
+                var hallsubimg = instanceValue.Get("hallsubimg");
                 var maxKingdoms = this.inventoryUtil.maxKingdoms;
 
-                var currentHallwayPos = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "hallwayPos"));
-                var currentPos = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
+                var currentHallwayPos = (int)this.hookUtil.GetNumeric(instanceValue.Get("hallwayPos"));
+                var currentPos = (int)this.hookUtil.GetNumeric(instanceValue.Get("currentPos"));
 
                 // Handle the 0th position
                 if (!currentHallwayPosAware || currentHallwayPos < 0 || (currentPos <= 0 && currentHallwayPos == 0))
                 {
+                    var hallsubimgValue = (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value);
+
                     if (unplacedKingdoms.Contains("hw_outskirts") && unplacedKingdoms.Contains("hw_geode"))
                     {
                         if (lastVisitedRunType == "kingdom")
@@ -669,16 +609,16 @@ namespace RnSArchipelago.Game
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
 
                             *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(7);
-                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(0);
-                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 2) = new(0);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 1) = new(0);
                         }
                         else
                         {
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_geode");
 
                             *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(9);
-                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(13);
-                            *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(13);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 2) = new(13);
+                            *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 1) = new(13);
                         }
                     }
                     else if (unplacedKingdoms.Contains("hw_outskirts"))
@@ -686,29 +626,29 @@ namespace RnSArchipelago.Game
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_outskirts");
 
                         *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(7);
-                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(0);
-                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(0);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 2) = new(0);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 1) = new(0);
                     }
                     else if (unplacedKingdoms.Contains("hw_geode"))
                     {
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 0), "hw_geode");
 
                         *rnsReloaded.ArrayGetEntry(hallsubimg, 0) = new(9);
-                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 2) = new(13);
-                        *rnsReloaded.ArrayGetEntry(hallsubimg, (int)hookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value) - 1) = new(13);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 2) = new(13);
+                        *rnsReloaded.ArrayGetEntry(hallsubimg, hallsubimgValue - 1) = new(13);
                     }
 
                     // Generate the hallway data
                     if (rnsReloaded.ArrayGetEntry(hallkey, 0)->ToString().Equals("hw_outskirts"))
                     {
-                        rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance, null, []);
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_outskirts", instance->Instance, null, []);
                     } else if (rnsReloaded.ArrayGetEntry(hallkey, 0)->ToString().Equals("hw_geode"))
                     {
-                        rnsReloaded.ExecuteScript("scr_hallwaygen_geode", instance, null, []);
+                        rnsReloaded.ExecuteScript("scr_hallwaygen_geode", instance->Instance, null, []);
                     }
 
                     // Update the name
-                    *rnsReloaded.FindValue(instance, "stageNameRefresh") = new RValue(1);
+                    *instanceValue.Get("stageNameRefresh") = new RValue(1);
                 }
 
                 unplacedKingdoms.Remove("hw_outskirts");
@@ -720,7 +660,6 @@ namespace RnSArchipelago.Game
                     return;
                 }
 
-                //var rand = new Random((int)(InventoryUtil.Instance.seed));
                 var rand = new Random();
 
                 // Handle the 1st position, trying to encorporate their request
@@ -755,19 +694,19 @@ namespace RnSArchipelago.Game
                     // Prioritize the kingdom of the correct order
                     if (availibleNthKingdoms.Count != 0)
                     {
-                        int randomIndex = rand.Next(availibleNthKingdoms.Count());
+                        int randomIndex = rand.Next(availibleNthKingdoms.Count);
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), availibleNthKingdoms[randomIndex]);
                         unplacedKingdoms.Remove(availibleNthKingdoms[randomIndex]);
                     }
                     else
                     {
-                        int randomIndex = rand.Next(unplacedKingdoms.Count());
+                        int randomIndex = rand.Next(unplacedKingdoms.Count);
                         rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), unplacedKingdoms[randomIndex]);
                         unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
                     }
                 }
 
-                // Always set the hallkey length to 9(?) just for easier managing, there are other variables to determine the actual number of runs
+                // Always set the hallkey length to 9 just for easier managing, there are other variables to determine the actual number of runs
                 var hallkeyLength = rnsReloaded.ArrayGetLength(hallkey);
                 if (hallkeyLength.HasValue && this.hookUtil.GetNumeric(hallkeyLength.Value) == 6)
                 {
@@ -803,7 +742,7 @@ namespace RnSArchipelago.Game
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
                         }
                     }
-                    else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Chaotic)
+                    else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Combined)
                     {
                         if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && (visitableKingdoms & InventoryUtil.KingdomFlags.Looping_Hallway) != 0)
                         {
@@ -829,12 +768,12 @@ namespace RnSArchipelago.Game
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
                         }
                     }
-
                 }
                 else
                 {
                     rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "");
                 }
+
                 if (maxCanRun == maxKingdoms && (!isProgressive || this.inventoryUtil.ProgressiveRegions >= maxKingdoms + 2))
                 {
                     if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Kingdom || (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Either && lastVisitedRunType == "kingdom"))
@@ -859,7 +798,7 @@ namespace RnSArchipelago.Game
                             rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "");
                         }
                     }
-                    else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Chaotic)
+                    else if (this.inventoryUtil.run_type == InventoryUtil.RunTypeSetting.Combined)
                     {
                         if ((visitableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle) != 0 && (visitableKingdoms & InventoryUtil.KingdomFlags.Reflecting_Pool) != 0)
                         {
@@ -897,7 +836,8 @@ namespace RnSArchipelago.Game
         // Update the route from the start or from the current position + 1
         internal void UpdateRoute(bool currentHallwayPosAware)
         {
-            this.logger.PrintMessage("updating route", System.Drawing.Color.DarkOrange);
+            this.logger.PrintMessage("Updating route", System.Drawing.Color.DarkOrange);
+
             var visitableKingdoms = this.inventoryUtil.AvailableKingdoms;
 
             var kingdoms = GetRunnableKingdoms();
@@ -917,13 +857,14 @@ namespace RnSArchipelago.Game
                 maxCanRun = (int)Math.Min(maxCanRun, this.inventoryUtil.ProgressiveRegions);
             }
 
-            this.logger.PrintMessage(maxCanRun + "", System.Drawing.Color.DarkOrange);
+            this.logger.PrintMessage("Route length: " + maxCanRun, System.Drawing.Color.DarkOrange);
 
             ModifyHallSeedAndIconsLength(maxCanRun);
 
             ModifyRoute(maxCanRun, visitableKingdoms, currentHallwayPosAware);
         }
 
+        // Update the background for the starting kingdom when the run starts
         internal RValue* ChangeStartingKingdom(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
@@ -934,10 +875,6 @@ namespace RnSArchipelago.Game
                 rnsReloaded.ExecuteScript("scr_hallwayprogress_change_stage", instance, null, []);
             }
 
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Kingdom update", System.Drawing.Color.DarkOrange);
-            }
             if (this.changeStartingKingdomBackgroundScriptHook != null)
             {
                 returnValue = this.changeStartingKingdomBackgroundScriptHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -946,34 +883,21 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call run start hook", System.Drawing.Color.Red);
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Kingdom update", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
         // Create the route such that you only visit kingdoms you are allowed to with your settings and items combo
-        internal RValue* CreateRoute(
-            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
-        )
+        internal RValue* CreateRoute(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Try Update Route", System.Drawing.Color.DarkOrange);
-                    }
                     var isKingdomSanity = this.inventoryUtil.isKingdomSanity;
                     var isProgressive = this.inventoryUtil.isProgressive;
                     if (isKingdomSanity || isProgressive)
                     {
-                        if (modConfig.ExtraDebugMessages)
-                        {
-                            this.logger.PrintMessage("Before Original Function Update Route", System.Drawing.Color.DarkOrange);
-                        }
                         if (this.chooseHallsHook != null)
                         {
                             returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -982,20 +906,12 @@ namespace RnSArchipelago.Game
                         {
                             this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
                         }
-                        this.logger.PrintMessage(this.hookUtil.PrintHook("create route", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
+
                         OnKingdomUpdate(false);
 
-                        if (modConfig.ExtraDebugMessages)
-                        {
-                            this.logger.PrintMessage("Before Return Update Route", System.Drawing.Color.DarkOrange);
-                        }
                         return returnValue;
                     }
                 }
-            }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Update Route", System.Drawing.Color.DarkOrange);
             }
             if (this.chooseHallsHook != null)
             {
@@ -1005,10 +921,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Update Route", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
     }

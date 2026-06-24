@@ -42,6 +42,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? readyCheckHook;
 
         private long baseItemId = -1;
+        private int treasurespheresToSpawn = 0;
 
         private static readonly string GAME = "Rabbit and Steel";
         private static readonly string[] STARTING_LOCATIONS = ["Starting Class", "Starting Kingdom", "Starting Primary", "Starting Secondary", "Starting Special", "Starting Defensive"];
@@ -51,8 +52,6 @@ namespace RnSArchipelago.Game
 
         private Task<Dictionary<long, ScoutedItemInfo>> chestContents = null!;
         private Task<Dictionary<long, ScoutedItemInfo>> shopContents = null!;
-
-        private int treasurespheresToSpawn = 0;
 
         internal LocationHandler(WeakReference<IRNSReloaded> rnsReloadedRef, Random rand, ILogger logger, HookUtil hookUtil, InventoryUtil inventoryUtil, ShopItemsUtil shopItemsUtil, Config.Config modConfig, ArchipelagoConnection conn)
         {
@@ -87,10 +86,12 @@ namespace RnSArchipelago.Game
             {
                 this.hookUtil.FindElementInLayer("RunMenu_Blocker", "xSubimg", out var element);
                 var instance = ((CLayerInstanceElement*)element)->Instance;
+
                 if (index == -1)
                 {
                     index = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
                 }
+
                 var currentXImg = rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "xSubimg"), index);
 
                 if (this.hookUtil.IsEqualToNumeric(currentXImg, 1))
@@ -120,10 +121,6 @@ namespace RnSArchipelago.Game
         // Send the location for completing an encounter
         internal RValue* SendNotchComplete(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Send Locaiton Check", System.Drawing.Color.DarkOrange);
-            }
             if (this.notchCompleteHook != null)
             {
                 returnValue = this.notchCompleteHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -132,17 +129,10 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call notch complete hook", System.Drawing.Color.Red);
             }
+
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Sending Location Check", System.Drawing.Color.DarkOrange);
-                }
                 SendNotchLoctaion();
-            }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Send Location Check", System.Drawing.Color.DarkOrange);
             }
             return returnValue;
         }
@@ -150,10 +140,6 @@ namespace RnSArchipelago.Game
         // Send the location for opening a chest
         internal RValue* SendChestOpen(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Send Chest Open Check", System.Drawing.Color.DarkOrange);
-            }
             if (this.chestOpenHook != null)
             {
                 returnValue = this.chestOpenHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -162,28 +148,18 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call chest open hook", System.Drawing.Color.Red);
             }
+
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Sending Chest Open Check", System.Drawing.Color.DarkOrange);
-                }
                 SendNotchLoctaion();
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Send Chest Open Check", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
         // Update the archipelago items mod data
         internal RValue* SetupArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Set Up Item Mod", System.Drawing.Color.DarkOrange);
-            }
             if (this.setupItemsHook != null)
             {
                 returnValue = this.setupItemsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -192,12 +168,9 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call setup items hook", System.Drawing.Color.Red);
             }
+
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Set Up Item Mod", System.Drawing.Color.DarkOrange);
-                }
                 var modInfo = rnsReloaded.utils.GetGlobalVar("modInfo");
                 var foundMod = false;
                 var modInfoLength = rnsReloaded.ArrayGetLength(modInfo);
@@ -231,20 +204,13 @@ namespace RnSArchipelago.Game
                     this.logger.PrintMessage("Unable to find archipelago items mod", System.Drawing.Color.Red);
                 }
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Set Up Item Mod", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
         // After applying mod settings in game, ensure the archipelago items mod is enabled
         internal RValue* EnableArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Item Mod Enable", System.Drawing.Color.DarkOrange);
-            }
             if (this.enableModHook != null)
             {
                 returnValue = this.enableModHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -256,10 +222,6 @@ namespace RnSArchipelago.Game
 
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Ensure Item Mod Is Enabled", System.Drawing.Color.DarkOrange);
-                }
                 var modInfo = rnsReloaded.utils.GetGlobalVar("modInfo");
                 var modInfoLength = rnsReloaded.ArrayGetLength(modInfo);
                 if (modInfoLength.HasValue)
@@ -270,19 +232,13 @@ namespace RnSArchipelago.Game
                         if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
                         {
                             *rnsReloaded.ArrayGetEntry(entry, 8) = new(1); // Enabled
-                            if (modConfig.ExtraDebugMessages)
-                            {
-                                this.logger.PrintMessage("Before Return Item Mod Enable", System.Drawing.Color.DarkOrange);
-                            }
+
                             return returnValue;
                         }
                     }
                 }
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Item Mod Enable", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
@@ -291,16 +247,9 @@ namespace RnSArchipelago.Game
         {
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Scouting Chest Items", System.Drawing.Color.DarkOrange);
-                }
                 GetArchipelagoChestItemInfo();
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Scout Chest", System.Drawing.Color.DarkOrange);
-            }
+
             if (this.itemScoutChestHook != null)
             {
                 returnValue = this.itemScoutChestHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -309,10 +258,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item scout chest hook", System.Drawing.Color.Red);
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Scout Chest", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
@@ -323,16 +269,8 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Scouting Chest Items", System.Drawing.Color.DarkOrange);
-                    }
                     GetArchipelagoShopItemInfo();
 
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Before Original Function Scout Chest Item", System.Drawing.Color.DarkOrange);
-                    }
                     if (this.itemScoutShopHook != null)
                     {
                         returnValue = this.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -356,17 +294,11 @@ namespace RnSArchipelago.Game
                             *rnsReloaded.ArrayGetEntry(instance["storeSlotUpgrade"], j) = new RValue(0);
                         }
                     }
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Before Return Scout Shop", System.Drawing.Color.DarkOrange);
-                    }
+
                     return returnValue;
                 }
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Scout Shop", System.Drawing.Color.DarkOrange);
-            }
+
             if (this.itemScoutShopHook != null)
             {
                 returnValue = this.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -375,21 +307,13 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item scout shop hook", System.Drawing.Color.Red); ;
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Scout Shop", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
-        //TODO: Actually determine what amount it should be
-        // Set the amount of items in the chest to corrospond to the amount it should be
+        // Set the amount of items in the chest to be 5
         internal RValue* SetAmountOfItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Set Chest Amount", System.Drawing.Color.DarkOrange);
-            }
             if (this.itemAmtHook != null)
             {
                 returnValue = this.itemAmtHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -400,19 +324,13 @@ namespace RnSArchipelago.Game
             }
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Setting Chest Amount", System.Drawing.Color.DarkOrange);
-                }
                 returnValue->Real = 5;
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Set Chest Amount", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
+        // Get the item info of AP shop items
         internal void GetUnclaimedShopItems(int position, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem)
         {
             if (conn.session != null)
@@ -470,11 +388,8 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Set Items", System.Drawing.Color.DarkOrange);
-                    }
                     var location = GetLocationType();
+
                     // If the item that is being created is a chest loot item
                     if (location == LocationType.Chest)
                     {
@@ -533,83 +448,43 @@ namespace RnSArchipelago.Game
                                 {
                                     case 0:
                                         this.shopItemsUtil.SetHpPotion(argv, archipelagoItem, useArchipelagoItem);
-                                        if (this.itemSetHook != null)
-                                        {
-                                            returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        }
-                                        else
-                                        {
-                                            this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
-                                        }
+  
                                         break;
                                     case 1:
                                         this.shopItemsUtil.SetLevelPotion(argv, archipelagoItem, useArchipelagoItem);
-                                        if (this.itemSetHook != null)
-                                        {
-                                            returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        }
-                                        else
-                                        {
-                                            this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
-                                        }
+ 
                                         break;
                                     case 2:
                                     case 3:
                                     case 4:
                                         this.shopItemsUtil.SetPotion(argv, archipelagoItem, useArchipelagoItem);
-                                        if (this.itemSetHook != null)
-                                        {
-                                            returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        }
-                                        else
-                                        {
-                                            this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
-                                        }
+    
                                         break;
                                     case 5:
                                         this.shopItemsUtil.SetPrimaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
-                                        if (this.itemSetHook != null)
-                                        {
-                                            returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        }
-                                        else
-                                        {
-                                            this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
-                                        }
+
                                         break;
                                     case 6:
                                         this.shopItemsUtil.SetSecondaryUpgrade(argv, archipelagoItem, useArchipelagoItem);
-                                        if (this.itemSetHook != null)
-                                        {
-                                            returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        }
-                                        else
-                                        {
-                                            this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
-                                        }
+  
                                         break;
                                     case 7:
                                         this.shopItemsUtil.SetSpecialUpgrade(argv, archipelagoItem, useArchipelagoItem);
-                                        if (this.itemSetHook != null)
-                                        {
-                                            returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        }
-                                        else
-                                        {
-                                            this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
-                                        }
+  
                                         break;
                                     case 8:
                                         this.shopItemsUtil.SetDefensiveUpgrade(argv, archipelagoItem, useArchipelagoItem);
-                                        if (this.itemSetHook != null)
-                                        {
-                                            returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
-                                        }
-                                        else
-                                        {
-                                            this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
-                                        }
+
                                         break;
+                                }
+
+                                if (this.itemSetHook != null)
+                                {
+                                    returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
+                                }
+                                else
+                                {
+                                    this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
                                 }
 
                                 return returnValue;
@@ -642,10 +517,6 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Set Item", System.Drawing.Color.DarkOrange);
-            }
             if (this.itemSetHook != null)
             {
                 returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -654,10 +525,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Set Item", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
@@ -666,20 +534,12 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Get AP Item Mod", System.Drawing.Color.DarkOrange);
-                }
                 if (rnsReloaded.GetString(argv[0]).Contains("ArchipelagoItems"))
                 {
                     baseItemId = this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "item_data_entry_max")) + 1;
                 }
             }
 
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Get AP Item Mod", System.Drawing.Color.DarkOrange);
-            }
             if (this.itemGetHook != null)
             {
                 returnValue = this.itemGetHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -688,20 +548,13 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call item get hook", System.Drawing.Color.Red);
             }
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Get AP Item Mod", System.Drawing.Color.DarkOrange);
-            }
+
             return returnValue;
         }
 
         // Set the description for archipelago items to reflect their actual item
         internal RValue* SetItemsDescription(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Item Descriptions", System.Drawing.Color.DarkOrange);
-            }
             if (this.itemSetDescriptionHook != null)
             {
                 returnValue = this.itemSetDescriptionHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -713,10 +566,7 @@ namespace RnSArchipelago.Game
 
             if (this.inventoryUtil.isActive)
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Set Item Descriptions", System.Drawing.Color.DarkOrange);
-                }
+
                 //if an archipelago item, set the description to the real item
                 if (this.hookUtil.IsEqualToNumeric(argv[0], baseItemId) || this.hookUtil.IsEqualToNumeric(argv[0], baseItemId + 1) || this.hookUtil.IsEqualToNumeric(argv[0], baseItemId + 2))
                 {
@@ -757,11 +607,6 @@ namespace RnSArchipelago.Game
                         }
                     }
                 }
-            }
-
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Return Item Descriptions", System.Drawing.Color.DarkOrange);
             }
 
             return returnValue;
@@ -845,8 +690,8 @@ namespace RnSArchipelago.Game
                 case 2: return " Middle";
                 case 3: return " Bottom Right";
                 case 4: return " Top Right";
+                default: return "";
             }
-            return "";
         }
 
         // Get the archipelago location id for the current chest's item at chestPos
@@ -887,7 +732,6 @@ namespace RnSArchipelago.Game
                 }
 
                 shopContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, locations);
-                this.logger.PrintMessage("shop pos id: " + string.Join(", ", shopContents.Result.Select(pair => $"{pair.Key} => {pair.Value.ItemName}\n")), System.Drawing.Color.DarkOrange);
             }
         }
 
@@ -898,12 +742,9 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.isActive)
                 {
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Prepare Take Item", System.Drawing.Color.DarkOrange);
-                    }
                     var itemPos = this.hookUtil.GetNumeric(argv[2]);
                     CLayerElementBase* instance = null;
+
                     if (GetLocationType() == LocationType.Chest)
                     {
                         this.hookUtil.FindElementInLayer("LootInfo", "slotId", itemPos + "", out instance);
@@ -912,17 +753,15 @@ namespace RnSArchipelago.Game
                     {
                         this.hookUtil.FindElementInLayer("InventoryInfo", "slotId", itemPos + "", out instance);
                     }
+
                     if (instance != null)
                     {
                         var element = ((CLayerInstanceElement*)instance)->Instance;
                         var itemId = rnsReloaded.FindValue(element, "itemId");
 
+                        // Take the item if its not an ap item
                         if (!this.hookUtil.IsEqualToNumeric(itemId, baseItemId) && !this.hookUtil.IsEqualToNumeric(itemId, baseItemId + 1) && !this.hookUtil.IsEqualToNumeric(itemId, baseItemId + 2))
                         {
-                            if (modConfig.ExtraDebugMessages)
-                            {
-                                this.logger.PrintMessage("Before Original Function Take Item 1", System.Drawing.Color.DarkOrange);
-                            }
                             if (this.takeItemHook != null)
                             {
                                 returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -931,15 +770,11 @@ namespace RnSArchipelago.Game
                             {
                                 this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
                             }
-                            if (modConfig.ExtraDebugMessages)
-                            {
-                                this.logger.PrintMessage("Return From Take Item 1", System.Drawing.Color.DarkOrange);
-                            }
+
                             return returnValue;
                         }
 
-                        this.logger.PrintMessage(this.hookUtil.PrintHook("take", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
-
+                        // Send the AP item
                         if (this.inventoryUtil.checksPerItemInChest && GetLocationType() == LocationType.Chest)
                         {
                             var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(element, "slotId"))))] };
@@ -972,58 +807,18 @@ namespace RnSArchipelago.Game
                             // TODO: Subtract user gold, and set price of AP items
                         }
 
+                        return returnValue;
                     }
-                    else
-                    {
-                        if (modConfig.ExtraDebugMessages)
-                        {
-                            this.logger.PrintMessage("Before Original Function Take Item 2", System.Drawing.Color.DarkOrange);
-                        }
-                        if (this.takeItemHook != null)
-                        {
-                            returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
-                        }
-                        else
-                        {
-                            this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
-                        }
-                    }
-                }
-                else
-                {
-                    if (modConfig.ExtraDebugMessages)
-                    {
-                        this.logger.PrintMessage("Before Original Function Take Item 3", System.Drawing.Color.DarkOrange);
-                    }
-                    if (this.takeItemHook != null)
-                    {
-                        returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
-                    }
-                    else
-                    {
-                        this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
-                    }
-                }
-            }
-            else
-            {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Before Original Function Take Item 4", System.Drawing.Color.DarkOrange);
-                }
-                if (this.takeItemHook != null)
-                {
-                    returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
-                }
-                else
-                {
-                    this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
                 }
             }
 
-            if (modConfig.ExtraDebugMessages)
+            if (this.takeItemHook != null)
             {
-                this.logger.PrintMessage("Return From Take Item 2", System.Drawing.Color.DarkOrange);
+                returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
             }
 
             return returnValue;
@@ -1137,10 +932,6 @@ namespace RnSArchipelago.Game
         // On outskirts loading, besides loading into lobby, add the treasurespheres we have accumulated
         internal RValue* SpawnTreasuresphere(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Try Spawn Treasuresphere", System.Drawing.Color.DarkOrange);
-            }
             if (this.spawnTreasuresphereHook != null)
             {
                 returnValue = this.spawnTreasuresphereHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -1152,7 +943,6 @@ namespace RnSArchipelago.Game
 
             if (treasurespheresToSpawn > 0)
             {
-
                 if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
                 {
                     this.hookUtil.FindElementInLayer("RunMenu_Blocker", "xSubimg", out var element);
@@ -1172,7 +962,6 @@ namespace RnSArchipelago.Game
                     rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
 
                     treasurespheresToSpawn--;
-
                 }
             }
 
@@ -1184,10 +973,6 @@ namespace RnSArchipelago.Game
         {
             this.rnsReloadedRef.TryGetTarget(out var rnsReloaded);
 
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Before Original Function Try Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
-            }
             // Perform normal action for menu / starting kingdom
             if (this.spawnTreasuresphereOnStartNHook != null && (!inventoryUtil.isActive || (rnsReloaded != null && hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "hallwayPos"), 0))))
             {
@@ -1211,13 +996,8 @@ namespace RnSArchipelago.Game
                 this.logger.PrintMessage("Unable to call spawn trasuresphere on start n hook", System.Drawing.Color.Red);
             }
 
-
             if (rnsReloaded != null)
             {
-                if (modConfig.ExtraDebugMessages)
-                {
-                    this.logger.PrintMessage("Try Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
-                }
                 var kingdomName = rnsReloaded.FindValue(self, "stageName")->ToString();
                 kingdomName = kingdomName.Replace(Environment.NewLine, " ");
 
@@ -1228,11 +1008,6 @@ namespace RnSArchipelago.Game
                         treasurespheresToSpawn++;
                     }
                 }
-            }
-
-            if (modConfig.ExtraDebugMessages)
-            {
-                this.logger.PrintMessage("Return From Spawn Start Treasuresphere", System.Drawing.Color.DarkOrange);
             }
 
             return returnValue;
@@ -1292,7 +1067,7 @@ namespace RnSArchipelago.Game
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 var icons = rnsReloaded.FindValue(self, "xSubimg");
-            switch (hallkey)
+                switch (hallkey)
                 {
                     case "hw_pinnacle":
                     case "hw_reflection":
@@ -1329,9 +1104,9 @@ namespace RnSArchipelago.Game
             }
         }
 
+        // Remove the go to next screen loader if disconnected
         internal RValue* StopReadyCheck(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (!this.inventoryUtil.isActive && this.hookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
@@ -1345,14 +1120,15 @@ namespace RnSArchipelago.Game
                 }
             }
 
-
             if (this.readyCheckHook != null)
             {
                 returnValue = this.readyCheckHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
+
             return returnValue;
         }
 
+        // Send the goal packet
         private void SendGoal()
         {
             conn.session?.SetGoalAchieved();

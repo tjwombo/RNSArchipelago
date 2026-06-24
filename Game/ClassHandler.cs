@@ -45,34 +45,36 @@ namespace RnSArchipelago.Game
                 this.logger.PrintMessage("Unable to call lock visual class hook", System.Drawing.Color.Red);
             }
 
-            if (!this.rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return returnValue;
-
-            if (this.inventoryUtil.isActive && this.inventoryUtil.isClassSanity)
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                for (var i = 0; i < InventoryUtil.CLASSES.Length; i++)
+                if (this.inventoryUtil.isActive && this.inventoryUtil.isClassSanity)
                 {
-                    // Character selection
-                    if (hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
+                    for (var i = 0; i < InventoryUtil.CLASSES.Length; i++)
                     {
-                        if (inventoryUtil.isClassAvailable(i))
+                        // Character selection
+                        if (hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
+                        {
+                            if (inventoryUtil.isClassAvailable(i))
+                            {
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
+                            }
+                            else
+                            {
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(0);
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(0);
+                            }
+                        }
+                        // Palette selection
+                        else if (hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 2))
                         {
                             *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
                             *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
                         }
-                        else
-                        {
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(0);
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(0);
-                        }
-                    }
-                    // Palette selection
-                    else if (hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 2))
-                    {
-                        *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
-                        *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
                     }
                 }
             }
+
             return returnValue;
         }
 
@@ -91,20 +93,20 @@ namespace RnSArchipelago.Game
                 this.logger.PrintMessage("Unable to call lock class hook", System.Drawing.Color.Red);
             }
 
-            if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return returnValue;
-
-            if (this.inventoryUtil.isActive)
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (this.inventoryUtil.isClassSanity && !this.inventoryUtil.isClassAvailable((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                if (this.inventoryUtil.isActive)
                 {
-                    var chars = rnsReloaded.FindValue(self, "step");
-                    *chars = new(1);
-                    var previous = rnsReloaded.FindValue(self, "previousStep");
-                    *previous = new(1);
-
-                    //rnsReloaded.ExecuteScript("scr_charselect2_update_chooseclass", self, other, []);
+                    if (this.inventoryUtil.isClassSanity && !this.inventoryUtil.isClassAvailable((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    {
+                        var chars = rnsReloaded.FindValue(self, "step");
+                        *chars = new(1);
+                        var previous = rnsReloaded.FindValue(self, "previousStep");
+                        *previous = new(1);
+                    }
                 }
             }
+
             return returnValue;
         }
 
@@ -117,12 +119,11 @@ namespace RnSArchipelago.Game
                 {
                     if (this.inventoryUtil.isClassSanity && !this.inventoryUtil.isClassAvailable((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                     {
-
                         return returnValue;
-
                     }
                 }
             }
+
             if (this.stopColorHook != null)
             {
                 returnValue = this.stopColorHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -131,6 +132,7 @@ namespace RnSArchipelago.Game
             {
                 this.logger.PrintMessage("Unable to call stop color hook", System.Drawing.Color.Red);
             }
+
             return returnValue;
         }
     }

@@ -55,7 +55,7 @@ namespace RnSArchipelago.Utils
             Kingdom = 0,
             Extra = 1,
             Either = 2,
-            Chaotic = 3
+            Combined = 3
         }
 
         internal RunTypeSetting RunType => run_type;

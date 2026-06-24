@@ -46,6 +46,7 @@ namespace RnSArchipelago.Connection
         private static readonly string GAME = "Rabbit and Steel";
         internal int slot = 0;
 
+        // Handle messages that are shown to the user
         internal void OnMessageReceived(LogMessage message)
         {
             switch (message)
@@ -84,16 +85,16 @@ namespace RnSArchipelago.Connection
             }
         }
 
+        // Handle incomming packets
         internal void OnPacketReceived(ArchipelagoPacketBase packet)
         {
-            if (!this.rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
-
             switch (packet.PacketType)
             {
                 case ArchipelagoPacketType.RoomInfo:
                     // Save the seed so we can have a static random
                     var room = (RoomInfoPacket)packet;
                     this.data.options.Set("seed", room.SeedName);
+
                     break;
                 case ArchipelagoPacketType.ConnectionRefused:
                     var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
@@ -101,28 +102,35 @@ namespace RnSArchipelago.Connection
                     this.logger.PrintMessage(message, Color.Red);
 
                     break;
-                case ArchipelagoPacketType.Connected: // Get the options the user selected
+                case ArchipelagoPacketType.Connected:
+                    // Get the options the user selected
                     var connected = (ConnectedPacket)packet;
                     slot = connected.Slot;
+
                     foreach (var option in connected.SlotData)
                     {
                         this.logger.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
                         this.data.options.Set<object>(option.Key, option.Value);
                     }
+
                     this.inventoryUtil.GetOptions();
+
                     break;
-                case ArchipelagoPacketType.ReceivedItems: // Actual printing message handled through OnMessageReceived, but actual mod use of items will be handled here
+                case ArchipelagoPacketType.ReceivedItems:
+                    // Actual printing message handled through OnMessageReceived, but actual mod use of items will be handled here
                     var itemPacket = (ReceivedItemsPacket)packet;
                     this.inventoryUtil.ReceiveItem(itemPacket);
-                    // Maybe have a subscriber pattern here or in inventoryutil to invoke a method for each received item type
+
                     break;
                 case ArchipelagoPacketType.LocationInfo:
                 case ArchipelagoPacketType.RoomUpdate:
-                    break;
                 case ArchipelagoPacketType.PrintJSON: // Handled through OnMessageReceived, so will likely never use
                     break;
                 case ArchipelagoPacketType.DataPackage:
-                    if (((DataPackagePacket)packet).DataPackage.Games.TryGetValue(GAME, out var gameData))
+                    // Get the ids for the items
+                    var dataPacket = (DataPackagePacket)packet;
+
+                    if (dataPacket.DataPackage.Games.TryGetValue(GAME, out var gameData))
                     {
                         var itemId = gameData.ItemLookup;
                         foreach (var item in itemId)
@@ -130,6 +138,7 @@ namespace RnSArchipelago.Connection
                             this.data.idToItem.Set<string>(item.Value, item.Key);
                         }
                     }
+
                     break;
                 case ArchipelagoPacketType.Bounced:
                 case ArchipelagoPacketType.InvalidPacket:
@@ -139,6 +148,7 @@ namespace RnSArchipelago.Connection
             }
         }
 
+        // Add a message in game
         internal unsafe RValue* AddMessage(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
@@ -195,6 +205,7 @@ namespace RnSArchipelago.Connection
             {
                 this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
             }
+
             return returnValue;
         }
     }
