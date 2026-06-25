@@ -65,8 +65,9 @@ namespace RnSArchipelago
             this.inventoryUtil = inventoryUtil;
             this.conn = conn;
 
-            ArchipelagoName = modConfig.ArchipelagoName;
-            ArchipelagoAddress = modConfig.ArchipelagoAddress;
+            ArchipelagoName = modConfig.StartUpConfig.ArchipelagoName;
+            ArchipelagoAddress = modConfig.StartUpConfig.ArchipelagoAddress;
+            ArchipelagoPassword = modConfig.StartUpConfig.ArchipelagoPassword;
         }
 
         // TODO: ENSURE THIS DOESN'T APPEAR IN THE TOYBOX LOBBY

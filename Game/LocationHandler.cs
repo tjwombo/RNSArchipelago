@@ -10,6 +10,7 @@ using RnSArchipelago.Utils;
 
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using static RnSArchipelago.Config.Config;
 
 namespace RnSArchipelago.Game
 {
@@ -331,13 +332,13 @@ namespace RnSArchipelago.Game
         }
 
         // Get the item info of AP shop items
-        internal void GetUnclaimedShopItems(int position, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem)
+        internal void GetUnclaimedShopItems(int position, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem, out long id)
         {
             if (conn.session != null)
             {
                 if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                 {
-                    long id = conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[position]);
+                    id = conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
                     {
                         info = shopContents.Result[id];
@@ -356,7 +357,7 @@ namespace RnSArchipelago.Game
                 }
                 else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                 {
-                    long id = conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[position]);
+                    id = conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
                     {
                         info = shopContents.Result[id];
@@ -379,6 +380,7 @@ namespace RnSArchipelago.Game
             info = null;
             archipelagoItem = baseItemId;
             useArchipelagoItem = false;
+            id = -1;
         }
 
         // Set the item inside the chest to the proper item
@@ -401,10 +403,16 @@ namespace RnSArchipelago.Game
                                 // Determine which slot item we are at, which should be the first -1
                                 if (this.hookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 1), i), 1), -1))
                                 {
-                                    var info = chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos(i))];
+                                    var locationId = GetChestPositionLocationId(SlotIdToChestPos(i));
+                                    var info = chestContents.Result[locationId];
+
+                                    if (conn.session != null && MessageHandler.HintConfigIsOn(modConfig, info.Flags))
+                                    {
+                                        conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, locationId);
+                                    }
 
                                     // If the location is checked
-                                    if (conn.session != null && conn.session.Locations.AllLocationsChecked.Contains(GetChestPositionLocationId(SlotIdToChestPos(i))))
+                                    if (conn.session != null && conn.session.Locations.AllLocationsChecked.Contains(locationId))
                                     {
                                         *argv[0] = new RValue(baseItemId + 2);
                                     }
@@ -442,7 +450,12 @@ namespace RnSArchipelago.Game
                         {
                             if (this.hookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 2), i), 1), -1))
                             {
-                                GetUnclaimedShopItems(i, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem);
+                                GetUnclaimedShopItems(i, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem, out long locationId);
+
+                                if (conn.session != null && info != null && MessageHandler.HintConfigIsOn(modConfig, info.Flags))
+                                {
+                                    conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, locationId);
+                                }
 
                                 switch (i)
                                 {
@@ -711,7 +724,7 @@ namespace RnSArchipelago.Game
             {
                 var locations = CHEST_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + x)).ToArray();
 
-                chestContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, locations);
+                chestContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
             }
         }
 
@@ -731,7 +744,7 @@ namespace RnSArchipelago.Game
                     locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + x)).ToArray();
                 }
 
-                shopContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, locations);
+                shopContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
             }
         }
 

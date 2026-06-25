@@ -73,7 +73,7 @@ namespace RnSArchipelago
 
             modLocation = _loader.GetDirectoryForModId("RnSArchipelago");
 
-            if (!this.config.SkipItemCreation)
+            if (!this.config.StartUpConfig.SkipItemCreation)
             {
                 CopyItemModToRnSMod();
             }
@@ -499,8 +499,9 @@ namespace RnSArchipelago
                 this.data.connection.Set<string>("password", lobby.ArchipelagoPassword);
                 _ = conn.StartConnection(true);
 
-                config.ArchipelagoName = lobby.ArchipelagoName;
-                config.ArchipelagoAddress = lobby.ArchipelagoAddress;
+                config.StartUpConfig.ArchipelagoName = lobby.ArchipelagoName;
+                config.StartUpConfig.ArchipelagoAddress = lobby.ArchipelagoAddress;
+                config.StartUpConfig.ArchipelagoPassword = lobby.ArchipelagoPassword;
                 config.Save?.Invoke();
 
                 // Lock/Unlock things for the save file

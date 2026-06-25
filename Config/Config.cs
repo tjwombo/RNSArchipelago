@@ -4,31 +4,21 @@ namespace RnSArchipelago.Config;
 
 public class Config : Configurable<Config>
 {
-    [DisplayName("Archipelago Name")]
-    public string ArchipelagoName { get; set; } = "Player1";
+    public enum ItemType
+    {
+        All = 0x111,
+        Progressive_Usefull = 0x011,
+        Progressive = 0x001,
+        None = 0x000
+    }
 
-    [DisplayName("Archipelago Address")]
-    public string ArchipelagoAddress { get; set; } = "localhost:38281";
+    [DisplayName("Starting Configs")]
+    public StartUpConfig StartUpConfig { get; set; } = new StartUpConfig();
 
-    [DisplayName("Skip ArchipelagoItem Folder Creation")]
-    public bool SkipItemCreation { get; set; } = false;
+    [DisplayName("Hint Configs")]
+    public HintConfig HintConfig { get; set; } = new HintConfig();
 
-    [DisplayName("Show System Message In Game")]
-    public bool SystemLog { get; set; } = false;
-
-    [DisplayName("Show Item Messages That Don't Involve You In Game, Uses The Following Flags Too")]
-    public bool OtherLog { get; set; } = true;
-
-    [DisplayName("Show Items That Are Progressive In Game")]
-    public bool ProgressionLog { get; set; } = true;
-
-    [DisplayName("Show Items That Are Useful In Game")]
-    public bool UsefulLog { get; set; } = true;
-
-    [DisplayName("Show Items That Are Filler In Game")]
-    public bool FillerLog { get; set; } = true;
-
-    [DisplayName("Show Items That Are Traps In Game")]
-    public bool TrapLog { get; set; } = true;
+    [DisplayName("Archipelago In Game Messages Configs")]
+    public MessageConfig MessageConfig { get; set; } = new MessageConfig();
 
 }

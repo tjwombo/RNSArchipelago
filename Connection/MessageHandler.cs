@@ -14,6 +14,7 @@ using RnSArchipelago.Utils;
 
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using static RnSArchipelago.Config.Config;
 
 namespace RnSArchipelago.Connection
 {
@@ -52,18 +53,14 @@ namespace RnSArchipelago.Connection
             switch (message)
             {
                 case HintItemSendLogMessage hintLogMessage:
-                    if (modConfig.SystemLog)
+                    if (modConfig.HintConfig.HintLog && hintLogMessage.IsRelatedToActivePlayer && HintConfigIsOn(modConfig, hintLogMessage.Item.Flags))
                     {
                         messages.Enqueue(hintLogMessage);
                     }
                     logger.PrintMessage(hintLogMessage.ToString(), System.Drawing.Color.Cyan);
                     break;
                 case ItemSendLogMessage itemSendLogMessage:
-                    if ((modConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
-                        ((modConfig.ProgressionLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
-                        (modConfig.UsefulLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
-                        (modConfig.FillerLog && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
-                        (modConfig.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap))))
+                    if (MessageConfigIsOn(itemSendLogMessage))
                     {
                         messages.Enqueue(itemSendLogMessage);
                     }
@@ -76,13 +73,32 @@ namespace RnSArchipelago.Connection
                 case ServerChatLogMessage:
                 case TutorialLogMessage:
                 default:
-                    if (modConfig.SystemLog)
+                    if (modConfig.MessageConfig.SystemLog)
                     {
                         messages.Enqueue(message);
                     }
                     logger.PrintMessage(message.ToString(), System.Drawing.Color.White);
                     break;
             }
+        }
+
+        // Use message configs to determine if the item should send a message in game
+        internal static bool HintConfigIsOn(Config.Config modConfig, ItemFlags item)
+        {
+            return 
+                (((modConfig.HintConfig.HintSetting & ItemType.Progressive) != 0) && item.HasFlag(ItemFlags.Advancement)) ||
+                (((modConfig.HintConfig.HintSetting & ItemType.Progressive_Usefull) == ItemType.Progressive_Usefull) && item.HasFlag(ItemFlags.NeverExclude)) ||
+                ((modConfig.HintConfig.HintSetting == ItemType.All) && (item.HasFlag(ItemFlags.None) || item.HasFlag(ItemFlags.Trap)));
+        }
+
+        // Use message configs to determine if the item should send a message in game
+        internal bool MessageConfigIsOn(ItemSendLogMessage itemSendLogMessage)
+        {
+            return (modConfig.MessageConfig.OtherLog || itemSendLogMessage.IsRelatedToActivePlayer) &&
+                ((((modConfig.MessageConfig.MessageSetting & ItemType.Progressive) != 0) && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Advancement)) ||
+                (((modConfig.MessageConfig.MessageSetting & ItemType.Progressive_Usefull) == ItemType.Progressive_Usefull) && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.NeverExclude)) ||
+                ((modConfig.MessageConfig.MessageSetting == ItemType.All) && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.None) && !itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)) ||
+                (modConfig.MessageConfig.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)));
         }
 
         // Handle incomming packets
@@ -186,7 +202,7 @@ namespace RnSArchipelago.Connection
 
                             break;
                         default:
-                            if (modConfig.SystemLog)
+                            if (modConfig.MessageConfig.SystemLog)
                             {
                                 rnsReloaded.CreateString(&typedMessage, message.ToString());
                             }
