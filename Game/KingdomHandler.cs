@@ -1,6 +1,6 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
-
+using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 
 using RNSReloaded.Interfaces;
@@ -18,6 +18,7 @@ namespace RnSArchipelago.Game
         private readonly InventoryUtil inventoryUtil;
         private readonly Config.Config modConfig;
         private readonly LocationHandler locationHandler;
+        private readonly ArchipelagoConnection conn;
 
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
@@ -27,7 +28,7 @@ namespace RnSArchipelago.Game
 
         private string lastVisitedRunType = "";
 
-        internal KingdomHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookUtil hookUtil, InventoryUtil inventoryUtil, Config.Config modConfig, LocationHandler locationHandler)
+        internal KingdomHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookUtil hookUtil, InventoryUtil inventoryUtil, Config.Config modConfig, LocationHandler locationHandler, ArchipelagoConnection conn)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
@@ -35,6 +36,7 @@ namespace RnSArchipelago.Game
             this.inventoryUtil = inventoryUtil;
             this.modConfig = modConfig;
             this.locationHandler = locationHandler;
+            this.conn = conn;
 
             this.inventoryUtil.UpdateHallwayOnItemRecieve += OnKingdomUpdate;
         }
@@ -578,6 +580,78 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
+        private readonly string[] locationSuffix = [" Battle 1", " Battle 2", " Battle 3", " Chest", " Boss"];
+
+        // Return the index of the kingdom that is chosen weighted randomly prioritizing kingdoms with more checks remaining
+        private int GetWeightedKingdom(List<string> kingdoms)
+        {
+            if (conn.session != null) {
+                var locations = conn.session.Locations.AllMissingLocations;
+                var character = this.hookUtil.GetClass();
+
+                var weights = new int[kingdoms.Count];
+                double sum = 0;
+
+                // Assign weights for each kingdom
+                for (var i = 0; i < kingdoms.Count; i++)
+                {
+                    weights[i] = 1;
+                    sum += 1;
+
+                    var kingdom = InventoryUtil.KingdomNotchToLocationName(kingdoms[i]);
+
+                    // Add weights for each of the standard locations
+                    for (var j = 0; j < locationSuffix.Length; j++)
+                    {
+                        if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + locationSuffix[j])))
+                        {
+                            weights[i] += 1;
+                            sum += 1;
+                        }
+
+                        if (character != "")
+                        {
+                            if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + locationSuffix[j] + " - " + character)))
+                            {
+                                weights[i] += 2;
+                                sum += 2;
+                            }
+                        }
+                    }
+
+                    // TODO: ADD WEIGHTS FOR TREASURESPHERE/SHOP ITEM PURCHASES
+
+                    // Check for Shira/Witch
+                    if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom)))
+                    {
+                        weights[i] += 5;
+                        sum += 5;
+                    }
+
+                    if (character != "")
+                    {
+                        if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + " - " + character)))
+                        {
+                            weights[i] += 10;
+                            sum += 10;
+                        }
+                    }
+                }
+
+                var rand = new Random();
+                double value = rand.NextDouble();
+
+                for (var i = 0; i < kingdoms.Count; i++)
+                {
+                    if (weights.Take(i+1).Sum() / sum >= value)
+                    {
+                        return i;
+                    } 
+                }
+            }
+            return 0;
+        }
+
         // Modify the route to take a route that corresponds to the kingdom order
         internal void ModifyRoute(int maxCanRun, InventoryUtil.KingdomFlags visitableKingdoms, bool currentHallwayPosAware)
         {
@@ -660,14 +734,12 @@ namespace RnSArchipelago.Game
                     return;
                 }
 
-                var rand = new Random();
-
                 // Handle the 1st position, trying to encorporate their request
                 if (!unplacedKingdoms.Contains(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1))))
                 {
-                    int randomIndex = rand.Next(unplacedKingdoms.Count());
-                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 1), unplacedKingdoms[randomIndex]);
-                    unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
+                    int selectedIndex = GetWeightedKingdom(unplacedKingdoms);
+                    rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, 1), unplacedKingdoms[selectedIndex]);
+                    unplacedKingdoms.Remove(unplacedKingdoms[selectedIndex]);
                 }
                 else
                 {
@@ -694,15 +766,15 @@ namespace RnSArchipelago.Game
                     // Prioritize the kingdom of the correct order
                     if (availibleNthKingdoms.Count != 0)
                     {
-                        int randomIndex = rand.Next(availibleNthKingdoms.Count);
-                        rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), availibleNthKingdoms[randomIndex]);
-                        unplacedKingdoms.Remove(availibleNthKingdoms[randomIndex]);
+                        int selectedIndex = GetWeightedKingdom(availibleNthKingdoms);
+                        rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), availibleNthKingdoms[selectedIndex]);
+                        unplacedKingdoms.Remove(availibleNthKingdoms[selectedIndex]);
                     }
                     else
                     {
-                        int randomIndex = rand.Next(unplacedKingdoms.Count);
-                        rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), unplacedKingdoms[randomIndex]);
-                        unplacedKingdoms.Remove(unplacedKingdoms[randomIndex]);
+                        int selectedIndex = GetWeightedKingdom(unplacedKingdoms);
+                        rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, i), unplacedKingdoms[selectedIndex]);
+                        unplacedKingdoms.Remove(unplacedKingdoms[selectedIndex]);
                     }
                 }
 
@@ -746,14 +818,9 @@ namespace RnSArchipelago.Game
                     {
                         if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0 && (visitableKingdoms & InventoryUtil.KingdomFlags.Looping_Hallway) != 0)
                         {
-                            if (rand.NextSingle() >= 0.5f)
-                            {
-                                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_keep");
-                            }
-                            else
-                            {
-                                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), "hw_darkhall");
-                            }
+                            List<string> kingdoms = ["hw_keep", "hw_darkhall"];
+                            int selectedIndex = GetWeightedKingdom(kingdoms);
+                            rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), kingdoms[selectedIndex]);
                         }
                         else if ((visitableKingdoms & InventoryUtil.KingdomFlags.The_Pale_Keep) != 0)
                         {
@@ -802,14 +869,9 @@ namespace RnSArchipelago.Game
                     {
                         if ((visitableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle) != 0 && (visitableKingdoms & InventoryUtil.KingdomFlags.Reflecting_Pool) != 0)
                         {
-                            if (rand.NextSingle() >= 0.5f)
-                            {
-                                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "hw_pinnacle");
-                            }
-                            else
-                            {
-                                rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 2), "hw_reflection");
-                            }
+                            List<string> kingdoms = ["hw_pinnacle", "hw_reflection"];
+                            int selectedIndex = GetWeightedKingdom(kingdoms);
+                            rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, maxCanRun + 1), kingdoms[selectedIndex]);
                         }
                         else if ((visitableKingdoms & InventoryUtil.KingdomFlags.Moonlit_Pinnacle) != 0)
                         {

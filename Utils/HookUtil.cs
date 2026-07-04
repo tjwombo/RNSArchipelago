@@ -28,7 +28,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Helper function to easily modify variables of an element
-        internal void ModifyElementVariable(CLayerElementBase* element, String variable, ModificationType modification, params RValue[] value)
+        internal void ModifyElementVariable(CLayerElementBase* element, string variable, ModificationType modification, params RValue[] value)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
 
@@ -122,6 +122,24 @@ namespace RnSArchipelago.Utils
         internal long GetNumeric(RValue value)
         {
             return (int)value.Real | value.Int32;
+        }
+
+        // TODO: MAKE THIS WORK FOR MULTIPLAYER
+        internal string GetClass()
+        {
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                
+                FindElementInLayer("Ally", "allyId", out var instance);
+                if (instance != null)
+                {
+                    var element = ((CLayerInstanceElement*)instance)->Instance;
+                    var characterId = (int)GetNumeric(rnsReloaded.FindValue(element, "allyId"));
+                    var character = InventoryUtil.GetClass(characterId);
+                    return character;
+                }
+            }
+            return "";
         }
 
         // Find a given layer in the room
@@ -273,6 +291,7 @@ namespace RnSArchipelago.Utils
             }
             return "";
         }
+
         // Helper function to find a layer with a given field and value, so we can use the other ones 
         internal string FindLayerWithField(string field, string value)
         {
@@ -301,6 +320,7 @@ namespace RnSArchipelago.Utils
             }
             return "";
         }
+
         // Find an element knowing only a field name and its expected value
         internal void FindElement(string field, string value, out CLayerElementBase* element)
         {
@@ -330,6 +350,51 @@ namespace RnSArchipelago.Utils
                 layer = layer->Next;
             }
         }
+
+        // Find an element knowing multiple field names and its expected value
+        internal void FindElement(out CLayerElementBase* element, List<string> args)
+        {
+            element = null;
+            if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
+
+            var room = rnsReloaded.GetCurrentRoom();
+            // Find the layer in the room that contains the lobby type selector, RunMenu_Options
+            var layer = room->Layers.First;
+            while (layer != null)
+            {
+                // Find the element in the layer that is the lobby type selector, has name lobby
+                element = layer->Elements.First;
+                while (element != null)
+                {
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+
+                    var found = true;
+
+                    for (var i = 0; i < args.Count / 2; i++)
+                    {
+                        if (rnsReloaded.GetString(instanceValue.Get(args[i*2])) == null || rnsReloaded.GetString(instanceValue.Get(args[i*2])) == "unset"
+                            || rnsReloaded.GetString(instanceValue.Get(args[i*2])) != args[(i*2)+1])
+                        {
+                            element = element->Next;
+                            found = false;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        continue;
+                    }
+
+                    this.logger.PrintMessage("good: " + (element != null), System.Drawing.Color.Red);
+                    return;
+                    
+                }
+                element = null;
+                layer = layer->Next;
+            }
+        }
+
         // Return a string that contains information about the function that is getting hooked, namely the amount of arguments and their values
         internal string PrintHook(string name, CInstance* self, RValue* returnValue, int argc, RValue** argv)
         {

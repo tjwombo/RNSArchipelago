@@ -844,18 +844,12 @@ namespace RnSArchipelago.Game
             {
                 var baseLocation = GetBaseLocation();
 
-                this.hookUtil.FindElementInLayer("Ally", "allyId", out var instance);
-                if (instance != null)
-                {
-                    var element = ((CLayerInstanceElement*)instance)->Instance;
-                    var characterId = (int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(element, "allyId"));
-                    var character = this.inventoryUtil.GetClass(characterId);
+                var character = this.hookUtil.GetClass();
 
-                    if (conn.session != null)
-                    {
-                        long[] locations = [conn.session.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(GAME, baseLocation + " - " + character)];
-                        conn.session.Locations.CompleteLocationChecksAsync(locations);
-                    }
+                if (conn.session != null)
+                {
+                    long[] locations = [conn.session.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(GAME, baseLocation + " - " + character)];
+                    conn.session.Locations.CompleteLocationChecksAsync(locations);
                 }
             }
         }

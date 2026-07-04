@@ -135,7 +135,6 @@ namespace RnSArchipelago
                         {
                             this.hookUtil.ModifyElementVariable(element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
                         }
-                        return returnValue;
                     }
                 }
             }
@@ -283,7 +282,6 @@ namespace RnSArchipelago
             return returnValue;
         }
 
-        // TODO: MAKE LOBBY SETTINGS NOT CHANGEABLE DURING RUNS AND INSTEAD REPLACE IT WITH A SUDO INGAME TRACKER
         // Update lobby settings such that archipelago and normal lobby settings are not coupled
         internal RValue* UpdateLobbySettings(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
@@ -387,8 +385,33 @@ namespace RnSArchipelago
                     // Banner in the main lobby screen
                     if (layer->Elements.Count == 8)
                     {
+                        // Update the selectable kingdoms
+                        this.hookUtil.FindElementInLayer("RunMenu_Options", out var layer2, "name", "PLAN ROUTE", out var element);
+                        if (element != null && this.hookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                        {
+                            for (var i = 0; i < 10; i++)
+                            {
+                                this.hookUtil.ModifyElementVariable(element, "diffAvailable", ModificationType.ModifyArray, [new(i), new(0)]);
+                            }
+                            for (var i = 10; i < 11; i++)
+                            {
+                                this.hookUtil.ModifyElementVariable(element, "diffAvailable", ModificationType.ModifyArray, [new(i), new(1)]);
+                            }
+
+                            var instance = (CLayerInstanceElement*)element;
+                            var instanceValue = new RValue(instance->Instance);
+                            var currentPos = instanceValue.Get("cursorPos");
+                            if (!this.hookUtil.IsEqualToNumeric(currentPos, 10) && !this.hookUtil.IsEqualToNumeric(currentPos, 11)) {
+                                *currentPos = new(10);
+                            }
+                        }
+
                         // Update the text on the banner
-                        this.hookUtil.FindElementInLayer("name", "click to edit", layer, out var lobbyButton);
+                        this.hookUtil.FindElementInLayer("name", "click to edit lobby settings", layer, out var lobbyButton);
+                        if (lobbyButton == null)
+                        {
+                            this.hookUtil.FindElementInLayer("name", "click to edit archipelago settings", layer, out lobbyButton);
+                        }
                         if (lobbyButton != null)
                         {
                             if (this.hookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))

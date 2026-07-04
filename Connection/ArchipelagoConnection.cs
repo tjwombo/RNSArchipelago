@@ -29,7 +29,7 @@ namespace RnSArchipelago.Connection
         internal ArchipelagoSession? session;
 
         private static readonly NetworkVersion VERSION = new(0, 6, 7);
-        private static readonly string GAME = "Rabbit and Steel";
+        internal static readonly string GAME = "Rabbit and Steel";
 
         internal ArchipelagoConnection(
             WeakReference<IRNSReloaded> rnsReloadedRef,

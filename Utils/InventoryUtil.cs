@@ -175,7 +175,7 @@ namespace RnSArchipelago.Utils
             }
 
             checksPerClass = data.options.Get<JArray>("checks_per_class")?.ToObject<List<string>>()!;
-            this.logger.PrintMessage(String.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
+            this.logger.PrintMessage(string.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
 
             ItemSanity = (ItemSetting)data.options.Get<long>("item_sanity");
             checksPerItemInChest = data.options.Get<long>("checks_per_item_in_chest") == 1;
@@ -580,7 +580,7 @@ namespace RnSArchipelago.Utils
         private static readonly long SWEET_TAFFY = itemId++;
 
         #region Item Dictionary
-        private static readonly Dictionary<String, long> ITEMS = new()
+        private static readonly Dictionary<string, long> ITEMS = new()
         {
             ["Raven Grimoire"] = RAVEN_GRIMOIRE,
             ["Blackwing Staff"] = BLACKWING_STAFF,
@@ -1032,12 +1032,12 @@ namespace RnSArchipelago.Utils
                     else if (ITEMSETS.Contains(itemName))
                     {
                         AddItemsFromItemset(itemName);
-                        this.logger.PrintMessage("Items: " + String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+                        this.logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     }
                     else if (ITEMS.TryGetValue(itemName, out long individualItem))
                     {
                         availableItems.Add(individualItem);
-                        this.logger.PrintMessage("Items: " + String.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+                        this.logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     }
                     else if (itemName == "Treasuresphere")
                     {
@@ -1114,19 +1114,19 @@ namespace RnSArchipelago.Utils
                     else if (POTIONS.Contains(itemName))
                     {
                         AvailablePotions.Add(itemName);
-                        this.logger.PrintMessage("Potions: " + String.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
+                        this.logger.PrintMessage("Potions: " + string.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
                     }
                     else if (itemName.Contains("Defeat"))
                     {
                         if (itemName.Contains("Shira"))
                         {
                             shira_victories.Add(itemName);
-                            this.logger.PrintMessage("Shira Victories: " + String.Join(", ", shira_victories), System.Drawing.Color.DarkOrange);
+                            this.logger.PrintMessage("Shira Victories: " + string.Join(", ", shira_victories), System.Drawing.Color.DarkOrange);
                         }
                         else if (itemName.Contains("Witch"))
                         {
                             witch_victories.Add(itemName);
-                            this.logger.PrintMessage("Witch Victories: " + String.Join(", ", witch_victories), System.Drawing.Color.DarkOrange);
+                            this.logger.PrintMessage("Witch Victories: " + string.Join(", ", witch_victories), System.Drawing.Color.DarkOrange);
                         }
 
                         if (CheckGoal())
@@ -1207,6 +1207,67 @@ namespace RnSArchipelago.Utils
             if (name == "Subterra Sanctum")
             {
                 return "hw_sanct";
+            }
+            return "";
+        }
+
+        internal static string KingdomNotchToLocationName(string name)
+        {
+            if (name == "hw_outskirts")
+            {
+                return "Kingdom Outskirts";
+            }
+            if (name == "hw_nest")
+            {
+                return "Scholar's Nest";
+            }
+            if (name == "hw_arsenal")
+            {
+                return "King's Arsenal";
+            }
+            if (name == "hw_lakeside")
+            {
+                return "Emerald Lakeside";
+            }
+            if (name == "hw_streets")
+            {
+                return "Churchmouse Streets";
+            }
+            if (name == "hw_lighthouse")
+            {
+                return "Red Darkhouse";
+            }
+            if (name == "hw_keep")
+            {
+                return "The Pale Keep";
+            }
+            if (name == "hw_pinnacle")
+            {
+                return "Shira";
+            }
+            if (name == "hw_geode")
+            {
+                return "Crack in the Geode";
+            }
+            if (name == "hw_depths")
+            {
+                return "Darkhouse Depths";
+            }
+            if (name == "hw_aurum")
+            {
+                return "Atelier Aurum";
+            }
+            if (name == "hw_sanct")
+            {
+                return "Subterra Sanctum";
+            }
+            if (name == "hw_darkhall")
+            {
+                return "Looping Hallway";
+            }
+            if (name == "hw_reflection")
+            {
+                return "Witch";
             }
             return "";
         }
@@ -1528,7 +1589,7 @@ namespace RnSArchipelago.Utils
             return false;
         }
 
-        internal string GetClass(int pos)
+        internal static string GetClass(int pos)
         {
             if (CLASSES.Length <= pos)
             {

@@ -104,7 +104,7 @@ namespace RnSArchipelago
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, inventoryUtil, this.config, data);
                 locationHandler = new LocationHandler(rnsReloadedRef, rand, logger, hookUtil, inventoryUtil, shopItemsUtil, this.config, conn);
                 lobby = new LobbySettings(rnsReloadedRef, logger, hookUtil, inventoryUtil, conn, this.config);
-                kingdom = new KingdomHandler(rnsReloadedRef, logger, hookUtil, inventoryUtil, this.config, locationHandler);
+                kingdom = new KingdomHandler(rnsReloadedRef, logger, hookUtil, inventoryUtil, this.config, locationHandler, conn);
                 classHandler = new ClassHandler(rnsReloadedRef, logger, hookUtil, inventoryUtil);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
