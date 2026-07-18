@@ -14,7 +14,7 @@ But if you insist you did, please report it in the Archipelago discord server [h
 
 ## Installation
 
-**Note Reloaded-II is having trouble finding the updated version automatically, it is recommended to install manually for the time being**
+**Note Reloaded-II can have some trouble downloading/updating, so it is reccomended to make sure you are using the correct version before starting a multiworld**
 
 This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II)
 
@@ -30,19 +30,25 @@ Alternatively, it can be downloaded manually by
 
 Then on the "Configure Mods" screen make sure the mod is active, box should be red and have a + instead of -
 - RNSReloaded should have a filled in red box
+
 And then hit "Launch Application"
 
+## Dependencies
 This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded (along with their dependencies) which should be installed automatically regardless of which instalation method you choose.
+- If RNSReloaded does not appear in the mods list you can download it manually at [RNSReloaded](https://packages.sewer56.moe/packages/rnsreloaded).
+  1. Download package on the right side
+  2. Unzip the .nupkg file
+  3. Move the files in \contentFiles\any\Sewer56.Update to a folder called RNSReloaded in your reloaded2 mods folder
 
 ## Configuration
 
 If you right click the mod in R2Reloaded, there is a Configure button.
-That is mainly in charge of controlling the in game messages that mimic a text client.
+There are various settings you can set to fine-tune archipelago settings.
 Sending commands to the server is not currently supported.
 
-The other part is for the location of Reloaded-II for the purposes of creating the item mods. You will need to set this if the automatically set Mods folder doesn't match.
-The correct directory should be where Reloaded-II is installed + \Mods. For example, mine is C:\Reloaded-II\Mods
-If setting this directory doesn't work, then turn on the Skip Item Creation config and you will need to manually install the items mod.
+If for some reason, the AP item mod isn't installed automatically, you will need to turn on the "Skip ArchipelagoItem Folder Creation" configuration and install it manually.
+- With the config on, anytime the AP item mod has an update, you will need to update it yourself
+
 To do so, download the ArchipelagoItems.zip file in the releases tab and extract it into your Rabbit and Steel mods folder like so steamapps\common\Rabbit and Steel\mods\ArchipelagoItems
 
 ## Kudos
