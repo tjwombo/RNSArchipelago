@@ -45,10 +45,8 @@ namespace RnSArchipelago.Game
         private long baseItemId = -1;
         private int treasurespheresToSpawn = 0;
 
-        private static readonly string GAME = "Rabbit and Steel";
-        private static readonly string[] STARTING_LOCATIONS = ["Starting Class", "Starting Kingdom", "Starting Primary", "Starting Secondary", "Starting Special", "Starting Defensive"];
-        private static readonly string[] CHEST_POSITIONS = ["Top Left", "Bottom Left", "Middle", "Bottom Right", "Top Right"];
-        private static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
+        internal static readonly string[] CHEST_POSITIONS = ["Top Left", "Bottom Left", "Middle", "Bottom Right", "Top Right"];
+        internal static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
         private Task<Dictionary<long, ScoutedItemInfo>> chestContents = null!;
@@ -285,7 +283,7 @@ namespace RnSArchipelago.Game
                     long? id = -1;
                     for (var j = 0; j < 9; j++)
                     {
-                        id = this.conn.session?.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[j]);
+                        id = this.conn.session?.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[j]);
 
                         // TODO: RE-TURN THIS ON WHEN THE AP ITEM HAS BEEN BOUGHT
                         // if the item is an archipelago item, disable the purchase condition, mainly applies to hp and upgrades
@@ -338,7 +336,7 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                 {
-                    id = conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[position]);
+                    id = conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
                     {
                         info = shopContents.Result[id];
@@ -357,7 +355,7 @@ namespace RnSArchipelago.Game
                 }
                 else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                 {
-                    id = conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[position]);
+                    id = conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, GetBaseLocation() + " " + SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
                     {
                         info = shopContents.Result[id];
@@ -597,11 +595,11 @@ namespace RnSArchipelago.Game
                         {
                             if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                             {
-                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(safeSelf["slotId"])])];
+                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(safeSelf["slotId"])])];
                             }
                             else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                             {
-                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(safeSelf["slotId"])])];
+                                info = shopContents.Result[conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(safeSelf["slotId"])])];
                             }
                         }
                     }
@@ -712,7 +710,7 @@ namespace RnSArchipelago.Game
         {
             if (conn.session != null)
             {
-                return conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + chestPos);
+                return conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, GetBaseLocation() + chestPos);
             }
             return -1;
         }
@@ -722,7 +720,7 @@ namespace RnSArchipelago.Game
         {
             if (conn.session != null)
             {
-                var locations = CHEST_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + x)).ToArray();
+                var locations = CHEST_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, GetBaseLocation() + " " + x)).ToArray();
 
                 chestContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
             }
@@ -737,11 +735,11 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                 {
-                    locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(GAME, x)).ToArray();
+                    locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, x)).ToArray();
                 }
                 else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                 {
-                    locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + x)).ToArray();
+                    locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, GetBaseLocation() + " " + x)).ToArray();
                 }
 
                 shopContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
@@ -799,12 +797,12 @@ namespace RnSArchipelago.Game
                             {
                                 if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Global)
                                 {
-                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(GAME, SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(argv[2])])] };
+                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(argv[2])])] };
                                     conn.session?.Socket.SendPacketAsync(locationPacket);
                                 }
                                 else if (this.inventoryUtil.ShopSanity == InventoryUtil.ShopSetting.Regional)
                                 {
-                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(argv[2])])] };
+                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, GetBaseLocation() + " " + SHOP_POSITIONS[(int)this.hookUtil.GetNumeric(argv[2])])] };
                                     conn.session?.Socket.SendPacketAsync(locationPacket);
                                 }
                             }
@@ -848,7 +846,7 @@ namespace RnSArchipelago.Game
 
                 if (conn.session != null)
                 {
-                    long[] locations = [conn.session.Locations.GetLocationIdFromName(GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(GAME, baseLocation + " - " + character)];
+                    long[] locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation + " - " + character)];
                     conn.session.Locations.CompleteLocationChecksAsync(locations);
                 }
             }

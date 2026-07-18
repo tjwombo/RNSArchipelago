@@ -619,7 +619,25 @@ namespace RnSArchipelago.Game
                         }
                     }
 
-                    // TODO: ADD WEIGHTS FOR TREASURESPHERE/SHOP ITEM PURCHASES
+                    // Chest for chest item positions
+                    for (var j = 0; j < LocationHandler.CHEST_POSITIONS.Length; j++)
+                    {
+                        if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + " Chest " + LocationHandler.CHEST_POSITIONS[j])))
+                        {
+                            weights[i] += 1;
+                            sum += 1;
+                        }
+                    }
+
+                    // Check for regional shop item positions
+                    for (var j = 0; j < LocationHandler.SHOP_POSITIONS.Length; j++)
+                    {
+                        if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + " Chest " + LocationHandler.SHOP_POSITIONS[j])))
+                        {
+                            weights[i] += 1;
+                            sum += 1;
+                        }
+                    }
 
                     // Check for Shira/Witch
                     if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom)))
