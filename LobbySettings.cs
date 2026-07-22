@@ -385,27 +385,6 @@ namespace RnSArchipelago
                     // Banner in the main lobby screen
                     if (layer->Elements.Count == 8)
                     {
-                        // Update the selectable kingdoms
-                        this.hookUtil.FindElementInLayer("RunMenu_Options", out var layer2, "name", "PLAN ROUTE", out var element);
-                        if (element != null && this.hookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
-                        {
-                            for (var i = 0; i < 10; i++)
-                            {
-                                this.hookUtil.ModifyElementVariable(element, "diffAvailable", ModificationType.ModifyArray, [new(i), new(0)]);
-                            }
-                            for (var i = 10; i < 11; i++)
-                            {
-                                this.hookUtil.ModifyElementVariable(element, "diffAvailable", ModificationType.ModifyArray, [new(i), new(1)]);
-                            }
-
-                            var instance = (CLayerInstanceElement*)element;
-                            var instanceValue = new RValue(instance->Instance);
-                            var currentPos = instanceValue.Get("cursorPos");
-                            if (!this.hookUtil.IsEqualToNumeric(currentPos, 10) && !this.hookUtil.IsEqualToNumeric(currentPos, 11)) {
-                                *currentPos = new(10);
-                            }
-                        }
-
                         // Update the text on the banner
                         this.hookUtil.FindElementInLayer("name", "click to edit lobby settings", layer, out var lobbyButton);
                         if (lobbyButton == null)
@@ -640,7 +619,7 @@ namespace RnSArchipelago
                     {
                         rnsReloaded.CreateString(&boxTitle, "disconencted - click to reconnect");
 
-                        *instance.Get("spr") = new(284);
+                        *instance.Get("spr") = new(285);
                         *instance.Get("subimg") = new(10);
                         *instance.Get("spriteOffsetX") = new(-525);
                     }

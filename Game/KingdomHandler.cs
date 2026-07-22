@@ -581,6 +581,11 @@ namespace RnSArchipelago.Game
         }
 
         private readonly string[] locationSuffix = [" Battle 1", " Battle 2", " Battle 3", " Chest", " Boss"];
+        private readonly int baseLocationWeight = 1;
+        private readonly int finalBossLocationWeight = 5;
+        private readonly int chestLocationWeight = 1;
+        private readonly int shopLocationWeight = 1;
+        private readonly int classLocationModifier = 3;
 
         // Return the index of the kingdom that is chosen weighted randomly prioritizing kingdoms with more checks remaining
         private int GetWeightedKingdom(List<string> kingdoms)
@@ -595,6 +600,7 @@ namespace RnSArchipelago.Game
                 // Assign weights for each kingdom
                 for (var i = 0; i < kingdoms.Count; i++)
                 {
+                    // Each kingdom always has a chance to appear
                     weights[i] = 1;
                     sum += 1;
 
@@ -605,16 +611,16 @@ namespace RnSArchipelago.Game
                     {
                         if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + locationSuffix[j])))
                         {
-                            weights[i] += 1;
-                            sum += 1;
+                            weights[i] += baseLocationWeight;
+                            sum += baseLocationWeight;
                         }
 
                         if (character != "")
                         {
                             if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + locationSuffix[j] + " - " + character)))
                             {
-                                weights[i] += 2;
-                                sum += 2;
+                                weights[i] += baseLocationWeight * classLocationModifier;
+                                sum += baseLocationWeight * classLocationModifier;
                             }
                         }
                     }
@@ -624,8 +630,8 @@ namespace RnSArchipelago.Game
                     {
                         if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + " Chest " + LocationHandler.CHEST_POSITIONS[j])))
                         {
-                            weights[i] += 1;
-                            sum += 1;
+                            weights[i] += chestLocationWeight;
+                            sum += chestLocationWeight;
                         }
                     }
 
@@ -634,24 +640,24 @@ namespace RnSArchipelago.Game
                     {
                         if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + " Chest " + LocationHandler.SHOP_POSITIONS[j])))
                         {
-                            weights[i] += 1;
-                            sum += 1;
+                            weights[i] += shopLocationWeight;
+                            sum += shopLocationWeight;
                         }
                     }
 
                     // Check for Shira/Witch
                     if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom)))
                     {
-                        weights[i] += 5;
-                        sum += 5;
+                        weights[i] += finalBossLocationWeight;
+                        sum += finalBossLocationWeight;
                     }
 
                     if (character != "")
                     {
                         if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + " - " + character)))
                         {
-                            weights[i] += 10;
-                            sum += 10;
+                            weights[i] += finalBossLocationWeight * classLocationModifier;
+                            sum += finalBossLocationWeight * classLocationModifier;
                         }
                     }
                 }
