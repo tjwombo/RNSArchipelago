@@ -68,6 +68,7 @@ namespace RnSArchipelago
             ArchipelagoName = modConfig.StartUpConfig.ArchipelagoName;
             ArchipelagoAddress = modConfig.StartUpConfig.ArchipelagoAddress;
             ArchipelagoPassword = modConfig.StartUpConfig.ArchipelagoPassword;
+            archipelagoPassSet = ArchipelagoPassword != "";
         }
 
         // TODO: ENSURE THIS DOESN'T APPEAR IN THE TOYBOX LOBBY
