@@ -9,12 +9,11 @@ The APWorld can be found in the releases tab [here](https://github.com/tjwombo/R
 
 ## Bug Reports
 
-If you found any bugs, no you didn't.
-But if you insist you did, please report it in the Archipelago discord server [here](https://discord.com/channels/731205301247803413/1241105661425877194)
+If you found any bugs, please report it in the Archipelago discord server in the Rabbit and Steel channel [here](https://discord.com/channels/731205301247803413/1241105661425877194)
 
 ## Installation
 
-**Note Reloaded-II can have some trouble downloading/updating, so it is reccomended to make sure you are using the correct version before starting a multiworld**
+**Note Reloaded-II can have some trouble downloading/updating, so it is recommended to make sure you are using the correct version before starting a multiworld**
 
 This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II)
 
@@ -32,6 +31,18 @@ Then on the "Configure Mods" screen make sure the mod is active, box should be r
 - RNSReloaded should have a filled in red box
 
 And then hit "Launch Application"
+
+## Connecting to Archipelago
+After launching the game through reloaded, a new lobby tab "ARCHIPELAGO" should appear. You must create the lobby under this tab in order to connect to Archipelago
+
+You can enter your archipelago address, player name, and password by clicking on the edit lobby settings while on the AP tab.
+- This is prefilled with the data in the mod conifg and automaitically updates the mod config with your most recent settings after leaving an AP lobby
+- **Note if the game closes before returning to this lobby setting screen, the new info may not get saved correctly, and the original lobby settings may not get restored correctly.**
+
+If you get disconnected mid run, the "ONWARD" loading area will not appear.
+You can reconnect by pausing the game and hit the reconnect button at the top to try reconnecting
+- Upon reconnection, the loading area should reappear.
+- Any checks obtained while disconnected will not be sent. This will eventually be updated.
 
 ## Dependencies
 This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded (along with their dependencies) which should be installed automatically regardless of which instalation method you choose.
