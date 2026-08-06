@@ -44,6 +44,8 @@ You can reconnect by pausing the game and hit the reconnect button at the top to
 - Upon reconnection, the loading area should reappear.
 - Any checks obtained while disconnected will not be sent. This will eventually be updated.
 
+It is recommended to pick your starting kingdom through the map inside the lobby rather than when creating the lobby, as the mod does not know which kingdoms you have access to until you've connected
+
 ## Dependencies
 This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded (along with their dependencies) which should be installed automatically regardless of which instalation method you choose.
 - If RNSReloaded does not appear in the mods list you can download it manually at [RNSReloaded](https://packages.sewer56.moe/packages/rnsreloaded).
