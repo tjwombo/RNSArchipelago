@@ -29,6 +29,7 @@ namespace RnSArchipelago.Connection
         internal string errorMessage = "";
 
         private static readonly string GAME = "Rabbit and Steel";
+        private readonly string[] ignoreSlotdataOptions = ["starting_class_name", "starting_hallway_name"];
         internal int slot = 0;
 
         public MessageHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, Config.Config modConfig, SharedData data)
@@ -118,6 +119,10 @@ namespace RnSArchipelago.Connection
 
                     foreach (var option in connected.SlotData)
                     {
+                        if (ignoreSlotdataOptions.Contains(option.Key)) {
+                            continue;
+                        }
+
                         logger.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
                         data.options.Set<object>(option.Key, option.Value);
                     }
