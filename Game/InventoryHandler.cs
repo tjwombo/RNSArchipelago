@@ -3,17 +3,16 @@
 using Newtonsoft.Json.Linq;
 
 using Reloaded.Mod.Interfaces;
-
 using RnSArchipelago.Data;
 
-namespace RnSArchipelago.Utils
+namespace RnSArchipelago.Game
 {
-    internal class InventoryUtil
+    internal class InventoryHandler
     {
         private readonly ILogger logger;
         private readonly SharedData data;
 
-        public InventoryUtil(ILogger logger, SharedData data)
+        public InventoryHandler(ILogger logger, SharedData data)
         {
             this.logger = logger;
             this.data = data;
@@ -175,25 +174,25 @@ namespace RnSArchipelago.Utils
             }
 
             checksPerClass = data.options.Get<JArray>("checks_per_class")?.ToObject<List<string>>()!;
-            this.logger.PrintMessage(string.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
+            logger.PrintMessage(string.Join(", ", checksPerClass), System.Drawing.Color.DarkOrange);
 
             ItemSanity = (ItemSetting)data.options.Get<long>("item_sanity");
             checksPerItemInChest = data.options.Get<long>("checks_per_item_in_chest") == 1;
 
             UpgradeSanity = (UpgradeSetting)data.options.Get<long>("upgrade_sanity");
-            this.logger.PrintMessage(UpgradeSanity.ToString(), System.Drawing.Color.DarkOrange);
+            logger.PrintMessage(UpgradeSanity.ToString(), System.Drawing.Color.DarkOrange);
 
             PotionSanity = (PotionSetting)data.options.Get<long>("potion_sanity");
-            this.logger.PrintMessage(PotionSanity.ToString(), System.Drawing.Color.DarkOrange);
+            logger.PrintMessage(PotionSanity.ToString(), System.Drawing.Color.DarkOrange);
 
             goal = (GoalSetting)data.options.Get<long>("goal_condition");
-            this.logger.PrintMessage(goal.ToString(), System.Drawing.Color.DarkOrange);
+            logger.PrintMessage(goal.ToString(), System.Drawing.Color.DarkOrange);
 
             shiraKills = data.options.Get<long>("shira_defeats")!;
             witchKills = data.options.Get<long>("witch_defeats")!;
 
             shop_sanity = (ShopSetting)data.options.Get<long>("shop_sanity");
-            this.logger.PrintMessage(shop_sanity.ToString(), System.Drawing.Color.DarkOrange);
+            logger.PrintMessage(shop_sanity.ToString(), System.Drawing.Color.DarkOrange);
         }
 
         [Flags]
@@ -1015,40 +1014,40 @@ namespace RnSArchipelago.Utils
                     if (KINGDOMS.Contains(itemName))
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
-                        this.logger.PrintMessage("Kingdoms: " + AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
+                        logger.PrintMessage("Kingdoms: " + AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
                         UpdateHallwayOnItemRecieve?.Invoke();
                     }
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
-                        this.logger.PrintMessage("Progressive Regions: " + ProgressiveRegions, System.Drawing.Color.DarkOrange);
+                        logger.PrintMessage("Progressive Regions: " + ProgressiveRegions, System.Drawing.Color.DarkOrange);
                         UpdateHallwayOnItemRecieve?.Invoke();
                     }
                     else if (CLASSES.Contains(itemName))
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
-                        this.logger.PrintMessage("Classes: " + AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
+                        logger.PrintMessage("Classes: " + AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
                     }
                     else if (ITEMSETS.Contains(itemName))
                     {
                         AddItemsFromItemset(itemName);
-                        this.logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+                        logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     }
                     else if (ITEMS.TryGetValue(itemName, out long individualItem))
                     {
                         availableItems.Add(individualItem);
-                        this.logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+                        logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     }
                     else if (itemName == "Treasuresphere")
                     {
                         AddChest?.Invoke();
                         AvailableTreasurespheres++;
-                        this.logger.PrintMessage("Treasuresphers: " + AvailableTreasurespheres, System.Drawing.Color.DarkOrange);
+                        logger.PrintMessage("Treasuresphers: " + AvailableTreasurespheres, System.Drawing.Color.DarkOrange);
                     }
                     else if (UPGRADES.Contains(itemName))
                     {
                         var enumName = itemName.Replace(" ", "");
-                        if (this.UpgradeSanity == InventoryUtil.UpgradeSetting.Simple)
+                        if (UpgradeSanity == UpgradeSetting.Simple)
                         {
                             if (enumName.Contains("Emerald"))
                             {
@@ -1085,48 +1084,48 @@ namespace RnSArchipelago.Utils
                                 AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialOpalGem;
                                 AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveOpalGem;
                             }
-                            this.logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                            this.logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                            this.logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                            this.logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
                         else if (enumName.Contains("Primary"))
                         {
                             AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | (PrimaryUpgradeFlags)Enum.Parse(typeof(PrimaryUpgradeFlags), enumName);
-                            this.logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
                         else if (enumName.Contains("Secondary"))
                         {
                             AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | (SecondaryUpgradeFlags)Enum.Parse(typeof(SecondaryUpgradeFlags), enumName);
-                            this.logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
                         else if (enumName.Contains("Special"))
                         {
                             AvailableSpecialUpgrades = AvailableSpecialUpgrades | (SpecialUpgradeFlags)Enum.Parse(typeof(SpecialUpgradeFlags), enumName);
-                            this.logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
                         else if (enumName.Contains("Defensive"))
                         {
                             AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | (DefensiveUpgradeFlags)Enum.Parse(typeof(DefensiveUpgradeFlags), enumName);
-                            this.logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
                         }
                     }
                     else if (POTIONS.Contains(itemName))
                     {
                         AvailablePotions.Add(itemName);
-                        this.logger.PrintMessage("Potions: " + string.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
+                        logger.PrintMessage("Potions: " + string.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
                     }
                     else if (itemName.Contains("Defeat"))
                     {
                         if (itemName.Contains("Shira"))
                         {
                             shira_victories.Add(itemName);
-                            this.logger.PrintMessage("Shira Victories: " + string.Join(", ", shira_victories), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Shira Victories: " + string.Join(", ", shira_victories), System.Drawing.Color.DarkOrange);
                         }
                         else if (itemName.Contains("Witch"))
                         {
                             witch_victories.Add(itemName);
-                            this.logger.PrintMessage("Witch Victories: " + string.Join(", ", witch_victories), System.Drawing.Color.DarkOrange);
+                            logger.PrintMessage("Witch Victories: " + string.Join(", ", witch_victories), System.Drawing.Color.DarkOrange);
                         }
 
                         if (CheckGoal())
@@ -1276,7 +1275,7 @@ namespace RnSArchipelago.Utils
         {
             var kingdoms = new List<string>();
 
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kingdom_Outskirts) != 0)
+            if ((AvailableKingdoms & KingdomFlags.Kingdom_Outskirts) != 0)
             {
                 kingdoms.Add("hw_outskirts");
             }
@@ -1286,7 +1285,7 @@ namespace RnSArchipelago.Utils
             }
 
             // Do we make use of kingdom order at all
-            if ((isKingdomSanity && useKingdomOrderWithKingdomSanity) || (!isKingdomSanity && isProgressive))
+            if (isKingdomSanity && useKingdomOrderWithKingdomSanity || !isKingdomSanity && isProgressive)
             {
                 for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
                 {
@@ -1294,27 +1293,27 @@ namespace RnSArchipelago.Utils
 
                     for (var j = 0; j < kingdomOrder[i].Count; j++)
                     {
-                        if (kingdomOrder[i][j] == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                        if (kingdomOrder[i][j] == "hw_nest" && (AvailableKingdoms & KingdomFlags.Scholars_Nest) != 0)
                         {
                             kingdoms.Add("hw_nest");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                        else if (kingdomOrder[i][j] == "hw_arsenal" && (AvailableKingdoms & KingdomFlags.Kings_Arsenal) != 0)
                         {
                             kingdoms.Add("hw_arsenal");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                        else if (kingdomOrder[i][j] == "hw_lakeside" && (AvailableKingdoms & KingdomFlags.Emerald_Lakeside) != 0)
                         {
                             kingdoms.Add("hw_lakeside");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                        else if (kingdomOrder[i][j] == "hw_streets" && (AvailableKingdoms & KingdomFlags.Churchmouse_Streets) != 0)
                         {
                             kingdoms.Add("hw_streets");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                        else if (kingdomOrder[i][j] == "hw_lighthouse" && (AvailableKingdoms & KingdomFlags.Red_Darkhouse) != 0)
                         {
                             kingdoms.Add("hw_lighthouse");
                             added = true;
@@ -1329,23 +1328,23 @@ namespace RnSArchipelago.Utils
             }
             else
             {
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Scholars_Nest) != 0)
                 {
                     kingdoms.Add("hw_nest");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Kings_Arsenal) != 0)
                 {
                     kingdoms.Add("hw_arsenal");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Emerald_Lakeside) != 0)
                 {
                     kingdoms.Add("hw_lakeside");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Churchmouse_Streets) != 0)
                 {
                     kingdoms.Add("hw_streets");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Red_Darkhouse) != 0)
                 {
                     kingdoms.Add("hw_lighthouse");
                 }
@@ -1360,7 +1359,7 @@ namespace RnSArchipelago.Utils
         {
             var kingdoms = new List<string>();
 
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Crack_in_the_Geode) != 0)
+            if ((AvailableKingdoms & KingdomFlags.Crack_in_the_Geode) != 0)
             {
                 kingdoms.Add("hw_geode");
             }
@@ -1370,7 +1369,7 @@ namespace RnSArchipelago.Utils
             }
 
             // Do we make use of kingdom order at all
-            if ((isKingdomSanity && useKingdomOrderWithKingdomSanity) || (!isKingdomSanity && isProgressive))
+            if (isKingdomSanity && useKingdomOrderWithKingdomSanity || !isKingdomSanity && isProgressive)
             {
                 for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
                 {
@@ -1378,17 +1377,17 @@ namespace RnSArchipelago.Utils
 
                     for (var j = 0; j < kingdomOrder[i].Count; j++)
                     {
-                        if (kingdomOrder[i][j] == "hw_depths" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                        if (kingdomOrder[i][j] == "hw_depths" && (AvailableKingdoms & KingdomFlags.Darkhouse_Depths) != 0)
                         {
                             kingdoms.Add("hw_depths");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_aurum" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                        else if (kingdomOrder[i][j] == "hw_aurum" && (AvailableKingdoms & KingdomFlags.Atelier_Aurum) != 0)
                         {
                             kingdoms.Add("hw_aurum");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_sanct" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                        else if (kingdomOrder[i][j] == "hw_sanct" && (AvailableKingdoms & KingdomFlags.Subterra_Sanctum) != 0)
                         {
                             kingdoms.Add("hw_sanct");
                             added = true;
@@ -1403,15 +1402,15 @@ namespace RnSArchipelago.Utils
             }
             else
             {
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Darkhouse_Depths) != 0)
                 {
                     kingdoms.Add("hw_depths");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Atelier_Aurum) != 0)
                 {
                     kingdoms.Add("hw_aurum");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Subterra_Sanctum) != 0)
                 {
                     kingdoms.Add("hw_sanct");
                 }
@@ -1427,12 +1426,12 @@ namespace RnSArchipelago.Utils
         {
             var kingdoms = new List<string>();
 
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kingdom_Outskirts) != 0)
+            if ((AvailableKingdoms & KingdomFlags.Kingdom_Outskirts) != 0)
             {
                 kingdoms.Add("hw_outskirts");
             }
 
-            if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Crack_in_the_Geode) != 0)
+            if ((AvailableKingdoms & KingdomFlags.Crack_in_the_Geode) != 0)
             {
                 kingdoms.Add("hw_geode");
             }
@@ -1443,7 +1442,7 @@ namespace RnSArchipelago.Utils
             }
 
             // Do we make use of kingdom order at all
-            if ((isKingdomSanity && useKingdomOrderWithKingdomSanity) || (!isKingdomSanity && isProgressive))
+            if (isKingdomSanity && useKingdomOrderWithKingdomSanity || !isKingdomSanity && isProgressive)
             {
                 for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
                 {
@@ -1451,42 +1450,42 @@ namespace RnSArchipelago.Utils
 
                     for (var j = 0; j < kingdomOrder[i].Count; j++)
                     {
-                        if (kingdomOrder[i][j] == "hw_nest" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                        if (kingdomOrder[i][j] == "hw_nest" && (AvailableKingdoms & KingdomFlags.Scholars_Nest) != 0)
                         {
                             kingdoms.Add("hw_nest");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_arsenal" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                        else if (kingdomOrder[i][j] == "hw_arsenal" && (AvailableKingdoms & KingdomFlags.Kings_Arsenal) != 0)
                         {
                             kingdoms.Add("hw_arsenal");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_lakeside" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                        else if (kingdomOrder[i][j] == "hw_lakeside" && (AvailableKingdoms & KingdomFlags.Emerald_Lakeside) != 0)
                         {
                             kingdoms.Add("hw_lakeside");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_streets" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                        else if (kingdomOrder[i][j] == "hw_streets" && (AvailableKingdoms & KingdomFlags.Churchmouse_Streets) != 0)
                         {
                             kingdoms.Add("hw_streets");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_lighthouse" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                        else if (kingdomOrder[i][j] == "hw_lighthouse" && (AvailableKingdoms & KingdomFlags.Red_Darkhouse) != 0)
                         {
                             kingdoms.Add("hw_lighthouse");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_depths" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                        else if (kingdomOrder[i][j] == "hw_depths" && (AvailableKingdoms & KingdomFlags.Darkhouse_Depths) != 0)
                         {
                             kingdoms.Add("hw_depths");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_aurum" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                        else if (kingdomOrder[i][j] == "hw_aurum" && (AvailableKingdoms & KingdomFlags.Atelier_Aurum) != 0)
                         {
                             kingdoms.Add("hw_aurum");
                             added = true;
                         }
-                        else if (kingdomOrder[i][j] == "hw_sanct" && (AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                        else if (kingdomOrder[i][j] == "hw_sanct" && (AvailableKingdoms & KingdomFlags.Subterra_Sanctum) != 0)
                         {
                             kingdoms.Add("hw_sanct");
                             added = true;
@@ -1501,35 +1500,35 @@ namespace RnSArchipelago.Utils
             }
             else
             {
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Scholars_Nest) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Scholars_Nest) != 0)
                 {
                     kingdoms.Add("hw_nest");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Kings_Arsenal) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Kings_Arsenal) != 0)
                 {
                     kingdoms.Add("hw_arsenal");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Emerald_Lakeside) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Emerald_Lakeside) != 0)
                 {
                     kingdoms.Add("hw_lakeside");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Churchmouse_Streets) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Churchmouse_Streets) != 0)
                 {
                     kingdoms.Add("hw_streets");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Red_Darkhouse) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Red_Darkhouse) != 0)
                 {
                     kingdoms.Add("hw_lighthouse");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Darkhouse_Depths) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Darkhouse_Depths) != 0)
                 {
                     kingdoms.Add("hw_depths");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Atelier_Aurum) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Atelier_Aurum) != 0)
                 {
                     kingdoms.Add("hw_aurum");
                 }
-                if ((AvailableKingdoms & InventoryUtil.KingdomFlags.Subterra_Sanctum) != 0)
+                if ((AvailableKingdoms & KingdomFlags.Subterra_Sanctum) != 0)
                 {
                     kingdoms.Add("hw_sanct");
                 }
@@ -1558,33 +1557,33 @@ namespace RnSArchipelago.Utils
             switch (pos)
             {
                 case 0:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Wizard) != 0;
+                    return (AvailableClasses & ClassFlags.Wizard) != 0;
                 case 1:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Assassin) != 0;
+                    return (AvailableClasses & ClassFlags.Assassin) != 0;
                 case 2:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Heavyblade) != 0;
+                    return (AvailableClasses & ClassFlags.Heavyblade) != 0;
                 case 3:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Dancer) != 0;
+                    return (AvailableClasses & ClassFlags.Dancer) != 0;
                 case 4:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Druid) != 0;
+                    return (AvailableClasses & ClassFlags.Druid) != 0;
                 case 5:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Spellsword) != 0;
+                    return (AvailableClasses & ClassFlags.Spellsword) != 0;
                 case 6:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Sniper) != 0;
+                    return (AvailableClasses & ClassFlags.Sniper) != 0;
                 case 7:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Bruiser) != 0;
+                    return (AvailableClasses & ClassFlags.Bruiser) != 0;
                 case 8:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Defender) != 0;
+                    return (AvailableClasses & ClassFlags.Defender) != 0;
                 case 9:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Ancient) != 0;
+                    return (AvailableClasses & ClassFlags.Ancient) != 0;
                 case 10:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Hammermaid) != 0;
+                    return (AvailableClasses & ClassFlags.Hammermaid) != 0;
                 case 11:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Pyromancer) != 0;
+                    return (AvailableClasses & ClassFlags.Pyromancer) != 0;
                 case 12:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Grenadier) != 0;
+                    return (AvailableClasses & ClassFlags.Grenadier) != 0;
                 case 13:
-                    return (AvailableClasses & InventoryUtil.ClassFlags.Shadow) != 0;
+                    return (AvailableClasses & ClassFlags.Shadow) != 0;
             }
             return false;
         }

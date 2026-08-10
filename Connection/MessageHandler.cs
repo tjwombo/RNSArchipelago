@@ -8,10 +8,8 @@ using Archipelago.MultiClient.Net.Packets;
 
 using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
-
 using RnSArchipelago.Data;
-using RnSArchipelago.Utils;
-
+using RnSArchipelago.Game;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using static RnSArchipelago.Config.Config;
@@ -22,23 +20,9 @@ namespace RnSArchipelago.Connection
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
-        private readonly InventoryUtil inventoryUtil;
+        private readonly InventoryHandler inventoryHandler;
         private readonly Config.Config modConfig;
         private readonly SharedData data;
-
-        public MessageHandler(
-            WeakReference<IRNSReloaded> rnsReloadedRef,
-            ILogger logger,
-            InventoryUtil inventoryUtil,
-            Config.Config modConfig,
-            SharedData data)
-        {
-            this.rnsReloadedRef = rnsReloadedRef;
-            this.logger = logger;
-            this.inventoryUtil = inventoryUtil;
-            this.modConfig = modConfig;
-            this.data = data;
-        }
 
         internal IHook<ScriptDelegate>? addMessageHook;
         internal readonly ConcurrentQueue<LogMessage> messages = new();
@@ -46,6 +30,15 @@ namespace RnSArchipelago.Connection
 
         private static readonly string GAME = "Rabbit and Steel";
         internal int slot = 0;
+
+        public MessageHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, Config.Config modConfig, SharedData data)
+        {
+            this.rnsReloadedRef = rnsReloadedRef;
+            this.logger = logger;
+            this.inventoryHandler = inventoryHandler;
+            this.modConfig = modConfig;
+            this.data = data;
+        }
 
         // Handle messages that are shown to the user
         internal void OnMessageReceived(LogMessage message)
@@ -109,13 +102,13 @@ namespace RnSArchipelago.Connection
                 case ArchipelagoPacketType.RoomInfo:
                     // Save the seed so we can have a static random
                     var room = (RoomInfoPacket)packet;
-                    this.data.options.Set("seed", room.SeedName);
+                    data.options.Set("seed", room.SeedName);
 
                     break;
                 case ArchipelagoPacketType.ConnectionRefused:
                     var message = "Connection refused: " + string.Join(", ", ((ConnectionRefusedPacket)packet).Errors);
                     errorMessage = message;
-                    this.logger.PrintMessage(message, Color.Red);
+                    logger.PrintMessage(message, Color.Red);
 
                     break;
                 case ArchipelagoPacketType.Connected:
@@ -125,17 +118,17 @@ namespace RnSArchipelago.Connection
 
                     foreach (var option in connected.SlotData)
                     {
-                        this.logger.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
-                        this.data.options.Set<object>(option.Key, option.Value);
+                        logger.PrintMessage(option.Key + " " + option.Value, System.Drawing.Color.DarkOrange);
+                        data.options.Set<object>(option.Key, option.Value);
                     }
 
-                    this.inventoryUtil.GetOptions();
+                    inventoryHandler.GetOptions();
 
                     break;
                 case ArchipelagoPacketType.ReceivedItems:
                     // Actual printing message handled through OnMessageReceived, but actual mod use of items will be handled here
                     var itemPacket = (ReceivedItemsPacket)packet;
-                    this.inventoryUtil.ReceiveItem(itemPacket);
+                    inventoryHandler.ReceiveItem(itemPacket);
 
                     break;
                 case ArchipelagoPacketType.LocationInfo:
@@ -151,7 +144,7 @@ namespace RnSArchipelago.Connection
                         var itemId = gameData.ItemLookup;
                         foreach (var item in itemId)
                         {
-                            this.data.idToItem.Set<string>(item.Value, item.Key);
+                            data.idToItem.Set<string>(item.Value, item.Key);
                         }
                     }
 
@@ -219,7 +212,7 @@ namespace RnSArchipelago.Connection
             }
             else
             {
-                this.logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
+                logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
             }
 
             return returnValue;

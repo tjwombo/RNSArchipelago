@@ -1,20 +1,19 @@
 ﻿using Reloaded.Mod.Interfaces;
-
 using RNSReloaded.Interfaces.Structs;
 
-namespace RnSArchipelago.Utils
+namespace RnSArchipelago.Game
 {
-    internal unsafe class ShopItemsUtil
+    internal unsafe class ShopItemsHandler
     {
         private readonly Random rand;
         private readonly ILogger logger;
-        private readonly InventoryUtil inventoryUtil;
+        private readonly InventoryHandler inventoryHandler;
 
-        public ShopItemsUtil(Random rand, ILogger logger, InventoryUtil inventoryUtil)
+        public ShopItemsHandler(Random rand, ILogger logger, InventoryHandler inventoryHandler)
         {
             this.rand = rand;
             this.logger = logger;
-            this.inventoryUtil = inventoryUtil;
+            this.inventoryHandler = inventoryHandler;
         }
 
         private static readonly string[] SHOP_LOCATIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
@@ -52,13 +51,13 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.None)
+            else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.None)
             {
                 return;
             }
-            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.Locked)
+            else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.Locked)
             {
-                if (this.inventoryUtil.AvailablePotions.Contains("Full Heal Potion"))
+                if (inventoryHandler.AvailablePotions.Contains("Full Heal Potion"))
                 {
                     *argv[0] = new RValue(PotionNameToId("Full Heal Potion"));
                 }
@@ -69,13 +68,13 @@ namespace RnSArchipelago.Utils
             }
             else
             {
-                if (this.inventoryUtil.AvailablePotions.Count == 0)
+                if (inventoryHandler.AvailablePotions.Count == 0)
                 {
                     *argv[0] = new RValue(0);
                 }
                 else
                 {
-                    string randomPotion = this.inventoryUtil.AvailablePotions[rand.Next(this.inventoryUtil.AvailablePotions.Count)];
+                    string randomPotion = inventoryHandler.AvailablePotions[rand.Next(inventoryHandler.AvailablePotions.Count)];
                     *argv[0] = new RValue(PotionNameToId(randomPotion));
                 }
             }
@@ -87,13 +86,13 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.None)
+            else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.None)
             {
                 return;
             }
-            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.Locked)
+            else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.Locked)
             {
-                if (this.inventoryUtil.AvailablePotions.Contains("Level Up Potion"))
+                if (inventoryHandler.AvailablePotions.Contains("Level Up Potion"))
                 {
                     *argv[0] = new RValue(PotionNameToId("Level Up Potion"));
                 }
@@ -104,13 +103,13 @@ namespace RnSArchipelago.Utils
             }
             else
             {
-                if (this.inventoryUtil.AvailablePotions.Count == 0)
+                if (inventoryHandler.AvailablePotions.Count == 0)
                 {
                     *argv[0] = new RValue(0);
                 }
                 else
                 {
-                    string randomPotion = this.inventoryUtil.AvailablePotions[rand.Next(this.inventoryUtil.AvailablePotions.Count)];
+                    string randomPotion = inventoryHandler.AvailablePotions[rand.Next(inventoryHandler.AvailablePotions.Count)];
                     *argv[0] = new RValue(PotionNameToId(randomPotion));
                 }
             }
@@ -122,13 +121,13 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.None)
+            else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.None)
             {
                 return;
             }
-            else if (this.inventoryUtil.PotionSanity == InventoryUtil.PotionSetting.Locked)
+            else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.Locked)
             {
-                List<string> actualPotions = this.inventoryUtil.AvailablePotions.Where(potion => (potion != "Full Heal Potion" && potion != "Level Up Potion")).ToList();
+                List<string> actualPotions = inventoryHandler.AvailablePotions.Where(potion => potion != "Full Heal Potion" && potion != "Level Up Potion").ToList();
                 logger.PrintMessage(string.Join(", ", actualPotions), System.Drawing.Color.DarkOrange);
                 if (actualPotions.Count == 0)
                 {
@@ -142,13 +141,13 @@ namespace RnSArchipelago.Utils
             }
             else
             {
-                if (this.inventoryUtil.AvailablePotions.Count == 0)
+                if (inventoryHandler.AvailablePotions.Count == 0)
                 {
                     *argv[0] = new RValue(0);
                 }
                 else
                 {
-                    string randomPotion = this.inventoryUtil.AvailablePotions[rand.Next(this.inventoryUtil.AvailablePotions.Count)];
+                    string randomPotion = inventoryHandler.AvailablePotions[rand.Next(inventoryHandler.AvailablePotions.Count)];
                     *argv[0] = new RValue(PotionNameToId(randomPotion));
                 }
             }
@@ -160,44 +159,44 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
                 return;
             }
             else
             {
 
-                if (this.inventoryUtil.AvailablePrimaryUpgrades == InventoryUtil.PrimaryUpgradeFlags.None)
+                if (inventoryHandler.AvailablePrimaryUpgrades == InventoryHandler.PrimaryUpgradeFlags.None)
                 {
                     *argv[0] = new RValue(0);
                     return;
                 }
 
-                InventoryUtil.PrimaryUpgradeFlags[] availablePrimary = Enum.GetValues(typeof(InventoryUtil.PrimaryUpgradeFlags)).
-                    Cast<InventoryUtil.PrimaryUpgradeFlags>().
-                    Where(x => this.inventoryUtil.AvailablePrimaryUpgrades.HasFlag(x) && x != InventoryUtil.PrimaryUpgradeFlags.None).ToArray();
+                InventoryHandler.PrimaryUpgradeFlags[] availablePrimary = Enum.GetValues(typeof(InventoryHandler.PrimaryUpgradeFlags)).
+                    Cast<InventoryHandler.PrimaryUpgradeFlags>().
+                    Where(x => inventoryHandler.AvailablePrimaryUpgrades.HasFlag(x) && x != InventoryHandler.PrimaryUpgradeFlags.None).ToArray();
 
-                InventoryUtil.PrimaryUpgradeFlags randomPrimary = availablePrimary[rand.Next(availablePrimary.Length)];
+                InventoryHandler.PrimaryUpgradeFlags randomPrimary = availablePrimary[rand.Next(availablePrimary.Length)];
 
                 logger.PrintMessage(string.Join(" ", availablePrimary.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
-                if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryEmeraldGem)
+                if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryEmeraldGem)
                 {
                     *argv[0] = new RValue(713);
                 }
-                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryGarnetGem)
+                else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryGarnetGem)
                 {
                     *argv[0] = new RValue(709);
                 }
-                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryRubyGem)
+                else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryRubyGem)
                 {
                     *argv[0] = new RValue(705);
                 }
-                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimarySapphireGem)
+                else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimarySapphireGem)
                 {
                     *argv[0] = new RValue(701);
                 }
-                else if (randomPrimary == InventoryUtil.PrimaryUpgradeFlags.PrimaryOpalGem)
+                else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryOpalGem)
                 {
                     *argv[0] = new RValue(697);
                 }
@@ -211,43 +210,43 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
                 return;
             }
             else
             {
-                if (this.inventoryUtil.AvailableSecondaryUpgrades == InventoryUtil.SecondaryUpgradeFlags.None)
+                if (inventoryHandler.AvailableSecondaryUpgrades == InventoryHandler.SecondaryUpgradeFlags.None)
                 {
                     *argv[0] = new RValue(0);
                     return;
                 }
 
-                InventoryUtil.SecondaryUpgradeFlags[] availableSecondary = Enum.GetValues(typeof(InventoryUtil.SecondaryUpgradeFlags)).
-                    Cast<InventoryUtil.SecondaryUpgradeFlags>().
-                    Where(x => this.inventoryUtil.AvailableSecondaryUpgrades.HasFlag(x) && x != InventoryUtil.SecondaryUpgradeFlags.None).ToArray();
+                InventoryHandler.SecondaryUpgradeFlags[] availableSecondary = Enum.GetValues(typeof(InventoryHandler.SecondaryUpgradeFlags)).
+                    Cast<InventoryHandler.SecondaryUpgradeFlags>().
+                    Where(x => inventoryHandler.AvailableSecondaryUpgrades.HasFlag(x) && x != InventoryHandler.SecondaryUpgradeFlags.None).ToArray();
 
-                InventoryUtil.SecondaryUpgradeFlags randomSecondary = availableSecondary[rand.Next(availableSecondary.Length)];
+                InventoryHandler.SecondaryUpgradeFlags randomSecondary = availableSecondary[rand.Next(availableSecondary.Length)];
 
                 logger.PrintMessage(string.Join(" ", availableSecondary.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
-                if (randomSecondary == InventoryUtil.SecondaryUpgradeFlags.SecondaryEmeraldGem)
+                if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryEmeraldGem)
                 {
                     *argv[0] = new RValue(714);
                 }
-                else if (randomSecondary == InventoryUtil.SecondaryUpgradeFlags.SecondaryGarnetGem)
+                else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryGarnetGem)
                 {
                     *argv[0] = new RValue(710);
                 }
-                else if (randomSecondary == InventoryUtil.SecondaryUpgradeFlags.SecondaryRubyGem)
+                else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryRubyGem)
                 {
                     *argv[0] = new RValue(706);
                 }
-                else if (randomSecondary == InventoryUtil.SecondaryUpgradeFlags.SecondarySapphireGem)
+                else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondarySapphireGem)
                 {
                     *argv[0] = new RValue(702);
                 }
-                else if (randomSecondary == InventoryUtil.SecondaryUpgradeFlags.SecondaryOpalGem)
+                else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryOpalGem)
                 {
                     *argv[0] = new RValue(698);
                 }
@@ -261,43 +260,43 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
                 return;
             }
             else
             {
-                if (this.inventoryUtil.AvailableSpecialUpgrades == InventoryUtil.SpecialUpgradeFlags.None)
+                if (inventoryHandler.AvailableSpecialUpgrades == InventoryHandler.SpecialUpgradeFlags.None)
                 {
                     *argv[0] = new RValue(0);
                     return;
                 }
 
-                InventoryUtil.SpecialUpgradeFlags[] availableSpecial = Enum.GetValues(typeof(InventoryUtil.SpecialUpgradeFlags)).
-                    Cast<InventoryUtil.SpecialUpgradeFlags>().
-                    Where(x => this.inventoryUtil.AvailableSpecialUpgrades.HasFlag(x) && x != InventoryUtil.SpecialUpgradeFlags.None).ToArray();
+                InventoryHandler.SpecialUpgradeFlags[] availableSpecial = Enum.GetValues(typeof(InventoryHandler.SpecialUpgradeFlags)).
+                    Cast<InventoryHandler.SpecialUpgradeFlags>().
+                    Where(x => inventoryHandler.AvailableSpecialUpgrades.HasFlag(x) && x != InventoryHandler.SpecialUpgradeFlags.None).ToArray();
 
-                InventoryUtil.SpecialUpgradeFlags randomSpecial = availableSpecial[rand.Next(availableSpecial.Length)];
+                InventoryHandler.SpecialUpgradeFlags randomSpecial = availableSpecial[rand.Next(availableSpecial.Length)];
 
                 logger.PrintMessage(string.Join(" ", availableSpecial.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
-                if (randomSpecial == InventoryUtil.SpecialUpgradeFlags.SpecialEmeraldGem)
+                if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialEmeraldGem)
                 {
                     *argv[0] = new RValue(715);
                 }
-                else if (randomSpecial == InventoryUtil.SpecialUpgradeFlags.SpecialGarnetGem)
+                else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialGarnetGem)
                 {
                     *argv[0] = new RValue(711);
                 }
-                else if (randomSpecial == InventoryUtil.SpecialUpgradeFlags.SpecialRubyGem)
+                else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialRubyGem)
                 {
                     *argv[0] = new RValue(707);
                 }
-                else if (randomSpecial == InventoryUtil.SpecialUpgradeFlags.SpecialSapphireGem)
+                else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialSapphireGem)
                 {
                     *argv[0] = new RValue(703);
                 }
-                else if (randomSpecial == InventoryUtil.SpecialUpgradeFlags.SpecialOpalGem)
+                else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialOpalGem)
                 {
                     *argv[0] = new RValue(699);
                 }
@@ -311,43 +310,43 @@ namespace RnSArchipelago.Utils
             {
                 *argv[0] = new RValue(archipelagoItemId);
             }
-            else if (this.inventoryUtil.UpgradeSanity == InventoryUtil.UpgradeSetting.None)
+            else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
                 return;
             }
             else
             {
-                if (this.inventoryUtil.AvailableDefensiveUpgrades == InventoryUtil.DefensiveUpgradeFlags.None)
+                if (inventoryHandler.AvailableDefensiveUpgrades == InventoryHandler.DefensiveUpgradeFlags.None)
                 {
                     *argv[0] = new RValue(0);
                     return;
                 }
 
-                InventoryUtil.DefensiveUpgradeFlags[] availableDefensive = Enum.GetValues(typeof(InventoryUtil.DefensiveUpgradeFlags)).
-                    Cast<InventoryUtil.DefensiveUpgradeFlags>().
-                    Where(x => this.inventoryUtil.AvailableDefensiveUpgrades.HasFlag(x) && x != InventoryUtil.DefensiveUpgradeFlags.None).ToArray();
+                InventoryHandler.DefensiveUpgradeFlags[] availableDefensive = Enum.GetValues(typeof(InventoryHandler.DefensiveUpgradeFlags)).
+                    Cast<InventoryHandler.DefensiveUpgradeFlags>().
+                    Where(x => inventoryHandler.AvailableDefensiveUpgrades.HasFlag(x) && x != InventoryHandler.DefensiveUpgradeFlags.None).ToArray();
 
-                InventoryUtil.DefensiveUpgradeFlags randomDefensive = availableDefensive[rand.Next(availableDefensive.Length)];
+                InventoryHandler.DefensiveUpgradeFlags randomDefensive = availableDefensive[rand.Next(availableDefensive.Length)];
 
                 logger.PrintMessage(string.Join(" ", availableDefensive.Select(day => day.ToString()).ToList()), System.Drawing.Color.DarkOrange);
 
-                if (randomDefensive == InventoryUtil.DefensiveUpgradeFlags.DefensiveEmeraldGem)
+                if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveEmeraldGem)
                 {
                     *argv[0] = new RValue(716);
                 }
-                else if (randomDefensive == InventoryUtil.DefensiveUpgradeFlags.DefensiveGarnetGem)
+                else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveGarnetGem)
                 {
                     *argv[0] = new RValue(712);
                 }
-                else if (randomDefensive == InventoryUtil.DefensiveUpgradeFlags.DefensiveRubyGem)
+                else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveRubyGem)
                 {
                     *argv[0] = new RValue(708);
                 }
-                else if (randomDefensive == InventoryUtil.DefensiveUpgradeFlags.DefensiveSapphireGem)
+                else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveSapphireGem)
                 {
                     *argv[0] = new RValue(704);
                 }
-                else if (randomDefensive == InventoryUtil.DefensiveUpgradeFlags.DefensiveOpalGem)
+                else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveOpalGem)
                 {
                     *argv[0] = new RValue(700);
                 }

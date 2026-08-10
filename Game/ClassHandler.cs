@@ -1,6 +1,5 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
-
 using RnSArchipelago.Utils;
 
 using RNSReloaded.Interfaces;
@@ -12,25 +11,23 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
-        private readonly HookUtil hookUtil;
-        private readonly InventoryUtil inventoryUtil;
+        private readonly InventoryHandler inventoryHandler;
 
         internal IHook<ScriptDelegate>? lockClassHook;
         internal IHook<ScriptDelegate>? mouseClassHook;
         internal IHook<ScriptDelegate>? stopColorHook;
 
+        public ClassHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler)
+        {
+            this.rnsReloadedRef = rnsReloadedRef;
+            this.logger = logger;
+            this.inventoryHandler = inventoryHandler;
+        }
+
         // TODO: Use with character ability rando in the future
         internal static long AbilityIdToBaseId(long abilityId)
         {
             return (long)(Math.Floor((abilityId + 1.0) / 7) * 7) - 1;
-        }
-
-        internal ClassHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookUtil hookUtil, InventoryUtil inventoryUtil)
-        {
-            this.rnsReloadedRef = rnsReloadedRef;
-            this.logger = logger;
-            this.hookUtil = hookUtil;
-            this.inventoryUtil = inventoryUtil;
         }
 
         // Makes it so you can't progress in a class and remove the preview, and restore it in the palette selection
@@ -42,19 +39,19 @@ namespace RnSArchipelago.Game
             }
             else
             {
-                this.logger.PrintMessage("Unable to call lock visual class hook", System.Drawing.Color.Red);
+                logger.PrintMessage("Unable to call lock visual class hook", System.Drawing.Color.Red);
             }
 
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (this.inventoryUtil.isActive && this.inventoryUtil.isClassSanity)
+                if (inventoryHandler.isActive && inventoryHandler.isClassSanity)
                 {
-                    for (var i = 0; i < InventoryUtil.CLASSES.Length; i++)
+                    for (var i = 0; i < InventoryHandler.CLASSES.Length; i++)
                     {
                         // Character selection
-                        if (hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
+                        if (HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
                         {
-                            if (inventoryUtil.isClassAvailable(i))
+                            if (inventoryHandler.isClassAvailable(i))
                             {
                                 *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
                                 *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
@@ -66,7 +63,7 @@ namespace RnSArchipelago.Game
                             }
                         }
                         // Palette selection
-                        else if (hookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 2))
+                        else if (HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 2))
                         {
                             *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
                             *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
@@ -90,14 +87,14 @@ namespace RnSArchipelago.Game
             }
             else
             {
-                this.logger.PrintMessage("Unable to call lock class hook", System.Drawing.Color.Red);
+                logger.PrintMessage("Unable to call lock class hook", System.Drawing.Color.Red);
             }
 
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (this.inventoryUtil.isActive)
+                if (inventoryHandler.isActive)
                 {
-                    if (this.inventoryUtil.isClassSanity && !this.inventoryUtil.isClassAvailable((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    if (inventoryHandler.isClassSanity && !inventoryHandler.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                     {
                         var chars = rnsReloaded.FindValue(self, "step");
                         *chars = new(1);
@@ -113,11 +110,11 @@ namespace RnSArchipelago.Game
         // When using a mouse, make it so that the palettes are not drawn if we are going to loop back to the same state
         internal RValue* StopColorDraw(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (this.inventoryUtil.isActive)
+                if (inventoryHandler.isActive)
                 {
-                    if (this.inventoryUtil.isClassSanity && !this.inventoryUtil.isClassAvailable((int)this.hookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    if (inventoryHandler.isClassSanity && !inventoryHandler.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                     {
                         return returnValue;
                     }
@@ -130,7 +127,7 @@ namespace RnSArchipelago.Game
             }
             else
             {
-                this.logger.PrintMessage("Unable to call stop color hook", System.Drawing.Color.Red);
+                logger.PrintMessage("Unable to call stop color hook", System.Drawing.Color.Red);
             }
 
             return returnValue;

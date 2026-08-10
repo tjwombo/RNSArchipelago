@@ -1,22 +1,16 @@
 ﻿using System.Runtime.InteropServices;
 
 using Reloaded.Mod.Interfaces;
-
+using RnSArchipelago.Game;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 
 namespace RnSArchipelago.Utils
 {
-    internal unsafe class HookUtil
+    internal unsafe static class HookUtil
     {
-        private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
-        private readonly ILogger logger;
-
-        public HookUtil(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger)
-        {
-            this.rnsReloadedRef = rnsReloadedRef;
-            this.logger = logger;
-        }
+        internal static WeakReference<IRNSReloaded> rnsReloadedRef = null!;
+        internal static ILogger logger = null!;
 
         internal enum ModificationType
         {
@@ -28,7 +22,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Helper function to easily modify variables of an element
-        internal void ModifyElementVariable(CLayerElementBase* element, string variable, ModificationType modification, params RValue[] value)
+        internal static void ModifyElementVariable(CLayerElementBase* element, string variable, ModificationType modification, params RValue[] value)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
 
@@ -64,7 +58,7 @@ namespace RnSArchipelago.Utils
             }
         }
 
-        internal RValue CreateRArray(object[] values)
+        internal static RValue CreateRArray(object[] values)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return null;
 
@@ -104,28 +98,28 @@ namespace RnSArchipelago.Utils
             return null;
         }
 
-        internal bool IsEqualToNumeric(RValue* value, long testValue)
+        internal static bool IsEqualToNumeric(RValue* value, long testValue)
         {
             return ((int)value->Real | value->Int32) == testValue;
         }
 
-        internal bool IsEqualToNumeric(RValue value, long testValue)
+        internal static bool IsEqualToNumeric(RValue value, long testValue)
         {
             return ((int)value.Real | value.Int32) == testValue;
         }
 
-        internal long GetNumeric(RValue* value)
+        internal static long GetNumeric(RValue* value)
         {
             return (int)value->Real | value->Int32;
         }
 
-        internal long GetNumeric(RValue value)
+        internal static long GetNumeric(RValue value)
         {
             return (int)value.Real | value.Int32;
         }
 
         // TODO: MAKE THIS WORK FOR MULTIPLAYER
-        internal string GetClass()
+        internal static string GetClass()
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
@@ -135,7 +129,7 @@ namespace RnSArchipelago.Utils
                 {
                     var element = ((CLayerInstanceElement*)instance)->Instance;
                     var characterId = (int)GetNumeric(rnsReloaded.FindValue(element, "allyId"));
-                    var character = InventoryUtil.GetClass(characterId);
+                    var character = InventoryHandler.GetClass(characterId);
                     return character;
                 }
             }
@@ -143,7 +137,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find a given layer in the room
-        internal void FindLayer(string layerName, out CLayer* layer)
+        internal static void FindLayer(string layerName, out CLayer* layer)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
@@ -166,7 +160,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Given a layer, find an element
-        internal void FindElementInLayer(string variableName, string variableValue, CLayer* layer, out CLayerElementBase* element)
+        internal static void FindElementInLayer(string variableName, string variableValue, CLayer* layer, out CLayerElementBase* element)
         {
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
@@ -188,7 +182,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find an element on a given layer with a specific value
-        internal void FindElementInLayer(string layerName, string variableName, string variableValue, out CLayerElementBase* element)
+        internal static void FindElementInLayer(string layerName, string variableName, string variableValue, out CLayerElementBase* element)
         {
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
@@ -214,7 +208,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find an element on a given layer
-        internal void FindElementInLayer(string layerName, string variableName, out CLayerElementBase* element)
+        internal static void FindElementInLayer(string layerName, string variableName, out CLayerElementBase* element)
         {
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
@@ -239,7 +233,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find a layer and an element
-        internal void FindElementInLayer(string layerName, out CLayer* layer, string variableName, string variableValue, out CLayerElementBase* element)
+        internal static void FindElementInLayer(string layerName, out CLayer* layer, string variableName, string variableValue, out CLayerElementBase* element)
         {
             layer = null;
             element = null;
@@ -265,7 +259,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Helper function to find a layer with a given field, so we can use the other ones 
-        internal string FindLayerWithField(string field)
+        internal static string FindLayerWithField(string field)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return "";
 
@@ -293,7 +287,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Helper function to find a layer with a given field and value, so we can use the other ones 
-        internal string FindLayerWithField(string field, string value)
+        internal static string FindLayerWithField(string field, string value)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return "";
 
@@ -322,7 +316,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find an element knowing only a field name and its expected value
-        internal void FindElement(string field, string value, out CLayerElementBase* element)
+        internal static void FindElement(string field, string value, out CLayerElementBase* element)
         {
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
@@ -352,7 +346,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Find an element knowing multiple field names and its expected value
-        internal void FindElement(out CLayerElementBase* element, List<string> args)
+        internal static void FindElement(out CLayerElementBase* element, List<string> args)
         {
             element = null;
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
@@ -386,7 +380,7 @@ namespace RnSArchipelago.Utils
                         continue;
                     }
 
-                    this.logger.PrintMessage("good: " + (element != null), System.Drawing.Color.Red);
+                    logger.PrintMessage("good: " + (element != null), System.Drawing.Color.Red);
                     return;
                     
                 }
@@ -396,7 +390,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Return a string that contains information about the function that is getting hooked, namely the amount of arguments and their values
-        internal string PrintHook(string name, CInstance* self, RValue* returnValue, int argc, RValue** argv)
+        internal static string PrintHook(string name, CInstance* self, RValue* returnValue, int argc, RValue** argv)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return $"Error in calling: {name}";
 

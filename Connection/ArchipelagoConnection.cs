@@ -7,8 +7,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 
 using RnSArchipelago.Data;
-using RnSArchipelago.Utils;
-
+using RnSArchipelago.Game;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 
@@ -18,13 +17,14 @@ namespace RnSArchipelago.Connection
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
-        private readonly InventoryUtil inventoryUtil;
+        private readonly InventoryHandler inventoryHandler;
         private readonly SharedData data;
 
         internal readonly MessageHandler messageHandler;
 
         internal IHook<ScriptDelegate>? resetConnHook;
         internal IHook<ScriptDelegate>? resetConnEndHook;
+        internal IHook<ScriptDelegate>? recconectHook;
 
         internal ArchipelagoSession? session;
 
@@ -34,16 +34,16 @@ namespace RnSArchipelago.Connection
         internal ArchipelagoConnection(
             WeakReference<IRNSReloaded> rnsReloadedRef,
             ILogger logger,
-            InventoryUtil inventoryUtil,
+            InventoryHandler inventoryHandler,
             Config.Config config,
             SharedData data)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
-            this.inventoryUtil = inventoryUtil;
+            this.inventoryHandler = inventoryHandler;
             this.data = data;
 
-            this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryUtil, config, data);
+            this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, config, data);
         }
 
         // Attempt to start a connection to archipelago with the given configs
@@ -128,7 +128,7 @@ namespace RnSArchipelago.Connection
         // Reset the archipelago connection and inventory
         internal void ResetConn()
         {
-            this.inventoryUtil.Reset();
+            this.inventoryHandler.Reset();
 
             data.connection.Set<string>("name", default!);
             data.connection.Set<string>("address", default!);
@@ -183,7 +183,7 @@ namespace RnSArchipelago.Connection
                 }
             }
 
-            this.inventoryUtil.Reset();
+            this.inventoryHandler.Reset();
         }
 
         // Attempt to join the archipelago room with the provided data
@@ -212,6 +212,22 @@ namespace RnSArchipelago.Connection
                 Games = ["Rabbit and Steel"]
             };
             session?.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect }).Wait();
+        }
+
+        internal unsafe RValue* Recconect(
+            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
+        )
+        {
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                logger.PrintMessage("Attempting to Reconnect", System.Drawing.Color.Red);
+                StartConnection().Wait();
+                rnsReloaded.ExecuteScript("scr_runmenu_lobbysettings_return", null, null, []);
+
+                return returnValue;
+            }
+            recconectHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            return returnValue;
         }
     }
 }
