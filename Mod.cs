@@ -107,14 +107,16 @@ namespace RnSArchipelago
 
                 KingdomUtil.rnsReloadedRef = rnsReloadedRef;
                 KingdomUtil.inventoryHandler = inventoryHandler;
+                KingdomUtil.ResetRandom();
 
                 conn = new ArchipelagoConnection(rnsReloadedRef, logger, inventoryHandler, this.config, data);
                 scoutHandler = new ScoutHandler(rnsReloadedRef, logger, inventoryHandler, conn);
                 shopItemsHandler = new ShopItemsHandler(rand, logger, inventoryHandler);
                 locationHandler = new LocationHandler(rnsReloadedRef, rand, logger, inventoryHandler, shopItemsHandler, scoutHandler, this.config, conn);
                 lobby = new LobbySettingsHandler(rnsReloadedRef, logger, inventoryHandler, conn, this.config);
-                kingdomHandler = new KingdomHandler(rnsReloadedRef, logger, inventoryHandler, this.config);
-                routeHandler = new RouteHandler(rnsReloadedRef, logger, inventoryHandler, locationHandler, kingdomHandler, conn);
+                routeHandler = new RouteHandler(rnsReloadedRef, logger, inventoryHandler, locationHandler, conn);
+                kingdomHandler = new KingdomHandler(rnsReloadedRef, logger, inventoryHandler, routeHandler, this.config);
+                
                 classHandler = new ClassHandler(rnsReloadedRef, logger, inventoryHandler);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING

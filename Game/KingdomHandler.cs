@@ -1,12 +1,9 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
-using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-
-using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
 {
@@ -15,19 +12,19 @@ namespace RnSArchipelago.Game
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
         private readonly InventoryHandler inventoryHandler;
+        private readonly RouteHandler routeHandler;
         private readonly Config.Config modConfig;
         
         internal IHook<ScriptDelegate>? fixChooseIconsHook;
         internal IHook<ScriptDelegate>? fixEndIconsHook;
         internal IHook<ScriptDelegate>? changeStartingKingdomBackgroundScriptHook;
 
-        internal string lastVisitedRunType = "";
-
-        internal KingdomHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, Config.Config modConfig)
+        internal KingdomHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, RouteHandler routeHandler, Config.Config modConfig)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.inventoryHandler = inventoryHandler;
+            this.routeHandler = routeHandler;
             this.modConfig = modConfig;
         }
 
@@ -97,69 +94,6 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
-        // Modify the hallseed and hallway icons for future visitable kingdoms
-        internal void ModifyHallSeedAndIconsLength(int maxCanRun)
-        {
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
-            {
-               HookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var element);
-
-                if (element == null)
-                {
-                    return;
-                }
-
-                var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
-
-                if (instanceValue.Get("currentPos") != null && HookUtil.IsEqualToNumeric(instanceValue.Get("currentPos"), 0))
-                {
-                    // Modify the seed
-                    var seed = instanceValue.Get("hallseed");
-                    if (seed != null && seed->ToString() != "unset")
-                    {
-                        if (maxCanRun > 3)
-                        {
-                            var seedLength = rnsReloaded.ArrayGetLength(seed);
-                            if (seedLength.HasValue && HookUtil.GetNumeric(seedLength.Value) != maxCanRun + 3)
-                            {
-                                var rand = new Random(this.inventoryHandler.seed?.GetHashCode() ?? default);
-                                HookUtil.ModifyElementVariable(element, "hallseed", ModificationType.InsertToArray, Enumerable.Range(1, maxCanRun - 3).Select(s => new RValue(rand.Next())).ToArray());
-                            }
-                        }
-                    }
-
-                    // Modify the icons length
-                    var img = instanceValue.Get("hallsubimg");
-                    if (img != null && img->ToString() != "unset")
-                    {
-                        if (maxCanRun > 3)
-                        {
-                            var imgLength = rnsReloaded.ArrayGetLength(img);
-                            if (imgLength.HasValue && HookUtil.GetNumeric(imgLength.Value) < inventoryHandler.maxKingdoms)
-                            {
-                                HookUtil.ModifyElementVariable(element, "hallsubimg", ModificationType.InsertToArray, Enumerable.Range(1, (int)(inventoryHandler.maxKingdoms - HookUtil.GetNumeric(imgLength.Value)) + 3).Select(s => new RValue(0)).ToArray());
-
-                                HookUtil.ModifyElementVariable(element, "hallkey", ModificationType.InsertToArray,
-                                    Enumerable.Range(1, (int)(inventoryHandler.maxKingdoms - HookUtil.GetNumeric(imgLength.Value)) + 1)
-                                                .Select(s => {
-                                                    RValue empty = new();
-                                                    rnsReloaded.CreateString(&empty, "");
-                                                    return empty;
-                                                }).ToArray());
-                            }
-
-                            for (var i = 0; i < maxCanRun - 3; i++)
-                            {
-                                HookUtil.ModifyElementVariable(element, "hallsubimg", ModificationType.ModifyArray, [new(maxCanRun - 1 + i), new(6)]);
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
-
         // If we are on the route selection screen, update it to match the available kingdoms
         internal RValue* ModifyRouteIcons(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
@@ -216,8 +150,8 @@ namespace RnSArchipelago.Game
         {
             if (buttonCount >= 6)
             {
-                lastVisitedRunType = "kingdom";
-                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms(lastVisitedRunType);
+                routeHandler.lastVisitedRunType = "kingdom";
+                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms("kingdom");
 
                 if (kingdoms.Contains("hw_outskirts"))
                 {
@@ -279,8 +213,8 @@ namespace RnSArchipelago.Game
             }
             else if (buttonCount == 4)
             {
-                lastVisitedRunType = "extra";
-                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms(lastVisitedRunType);
+                routeHandler.lastVisitedRunType = "extra";
+                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms("extra");
 
                 if (kingdoms.Contains("hw_geode"))
                 {

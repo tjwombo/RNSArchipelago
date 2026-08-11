@@ -147,7 +147,7 @@ namespace RnSArchipelago.Game
 
                 foreach (var kingdom in excluded_kingdoms)
                 {
-                    AvailableKingdoms = AvailableKingdoms & ~(KingdomFlags)Enum.Parse(typeof(KingdomFlags), kingdom.Replace(" ", "_").Replace("'", ""));
+                    AvailableKingdoms &= ~(KingdomFlags)Enum.Parse(typeof(KingdomFlags), kingdom.Replace(" ", "_").Replace("'", ""));
                 }
             }
 

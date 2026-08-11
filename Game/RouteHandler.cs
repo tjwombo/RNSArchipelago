@@ -4,7 +4,6 @@ using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
 {
@@ -14,19 +13,19 @@ namespace RnSArchipelago.Game
         private readonly ILogger logger;
         private readonly InventoryHandler inventoryHandler;
         private readonly LocationHandler locationHandler;
-        private readonly KingdomHandler kingdomHandler;
         private readonly ArchipelagoConnection conn;
 
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
 
-        internal RouteHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, LocationHandler locationHandler, KingdomHandler kingdomHandler, ArchipelagoConnection conn)
+        internal string lastVisitedRunType = "";
+
+        internal RouteHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, LocationHandler locationHandler, ArchipelagoConnection conn)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.inventoryHandler = inventoryHandler;
             this.locationHandler = locationHandler;
-            this.kingdomHandler = kingdomHandler;
             this.conn = conn;
 
             this.inventoryHandler.UpdateHallwayOnItemRecieve += OnKingdomRecieve;
@@ -58,7 +57,7 @@ namespace RnSArchipelago.Game
 
                 var hallkey = instanceValue.Get("hallkey");
 
-                var kingdoms = KingdomUtil.GetRunnableKingdoms(kingdomHandler.lastVisitedRunType);
+                var kingdoms = KingdomUtil.GetRunnableKingdoms(lastVisitedRunType);
                 var maxVisitableKingdoms = kingdoms.Count;
                 if (kingdoms.Contains("hw_outskirts"))
                 {
@@ -121,9 +120,7 @@ namespace RnSArchipelago.Game
                 var instance = (CLayerInstanceElement*)element;
                 var instanceValue = new RValue(instance->Instance);
 
-                var hallkey = instanceValue.Get("hallkey");
-
-                var kingdoms = KingdomUtil.GetRunnableKingdoms(kingdomHandler.lastVisitedRunType);
+                var kingdoms = KingdomUtil.GetRunnableKingdoms(lastVisitedRunType);
                 var maxCanRun = kingdoms.Count;
                 if (kingdoms.Contains("hw_outskirts"))
                 {
@@ -138,12 +135,6 @@ namespace RnSArchipelago.Game
                 if (this.inventoryHandler.isProgressive)
                 {
                     maxCanRun = (int)Math.Min(maxCanRun, this.inventoryHandler.ProgressiveRegions);
-                }
-
-                if (hallkey != null && hallkey->ToString() != "unset" && HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")) != maxCanRun + 3)
-                {
-                    // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
-                    HookUtil.ModifyElementVariable(element, "hallwayNumber", ModificationType.ModifyLiteral, [new(maxCanRun + 3)]);
                 }
             }
         }
@@ -201,10 +192,9 @@ namespace RnSArchipelago.Game
                 var instance = (CLayerInstanceElement*)element;
                 var instanceValue = new RValue(instance->Instance);
 
-                var unplacedKingdoms = KingdomUtil.GetRunnableKingdoms(kingdomHandler.lastVisitedRunType);
+                var unplacedKingdoms = KingdomUtil.GetRunnableKingdoms(lastVisitedRunType);
 
                 var hallkey = instanceValue.Get("hallkey");
-                var hallsubimg = instanceValue.Get("hallsubimg");
                 var maxKingdoms = this.inventoryHandler.maxKingdoms;
 
                 var currentHallwayPos = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos"));
@@ -213,26 +203,24 @@ namespace RnSArchipelago.Game
                 // Handle the 0th position
                 if (!currentHallwayPosAware || currentHallwayPos < 0 || (currentPos <= 0 && currentHallwayPos == 0))
                 {
-                    var hallsubimgValue = (int)HookUtil.GetNumeric(rnsReloaded.ArrayGetLength(hallsubimg)!.Value);
-
                     if (unplacedKingdoms.Contains("hw_outskirts") && unplacedKingdoms.Contains("hw_geode"))
                     {
-                        if (kingdomHandler.lastVisitedRunType == "kingdom")
+                        if (lastVisitedRunType == "kingdom")
                         {
-                            KingdomUtil.SetHallwayValue(0, hallkey, "hw_outskirts", hallsubimg, 7);
+                            KingdomUtil.SetHallwayValue(0, instanceValue, "hw_outskirts", 7);
                         }
                         else
                         {
-                            KingdomUtil.SetHallwayValue(0, hallkey, "hw_geode", hallsubimg, 9);
+                            KingdomUtil.SetHallwayValue(0, instanceValue, "hw_geode", 9);
                         }
                     }
                     else if (unplacedKingdoms.Contains("hw_outskirts"))
                     {
-                        KingdomUtil.SetHallwayValue(0, hallkey, "hw_outskirts", hallsubimg, 7);
+                        KingdomUtil.SetHallwayValue(0, instanceValue, "hw_outskirts", 7);
                     }
                     else if (unplacedKingdoms.Contains("hw_geode"))
                     {
-                        KingdomUtil.SetHallwayValue(0, hallkey, "hw_geode", hallsubimg, 9);
+                        KingdomUtil.SetHallwayValue(0, instanceValue, "hw_geode", 9);
                     }
 
                     // Generate the hallway data
@@ -254,7 +242,7 @@ namespace RnSArchipelago.Game
 
                 if (maxCanRun == 0)
                 {
-                    KingdomUtil.SetHallwayValue(1, hallkey, "", hallsubimg, 0);
+                    KingdomUtil.SetHallwayValue(1, instanceValue, "", 0);
                     return;
                 }
 
@@ -262,13 +250,13 @@ namespace RnSArchipelago.Game
                 if (!unplacedKingdoms.Contains(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1))))
                 {
                     int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, unplacedKingdoms);
-                    KingdomUtil.SetHallwayValue(1, hallkey, unplacedKingdoms[selectedIndex], hallsubimg, 6);
+                    KingdomUtil.SetHallwayValue(1, instanceValue, unplacedKingdoms[selectedIndex], 6);
                     unplacedKingdoms.Remove(unplacedKingdoms[selectedIndex]);
                 }
                 else
                 {
                     string originalKingdom = rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1));
-                    KingdomUtil.SetHallwayValue(1, hallkey, originalKingdom, hallsubimg, 6);
+                    KingdomUtil.SetHallwayValue(1, instanceValue, originalKingdom, 6);
                     unplacedKingdoms.Remove(originalKingdom);
                 }
 
@@ -279,7 +267,7 @@ namespace RnSArchipelago.Game
                     for (var i = 2; i <= currentHallwayPos; i++)
                     {
                         string placedKingdom = rnsReloaded.ArrayGetEntry(hallkey, i)->ToString();
-                        KingdomUtil.SetHallwayValue(i, hallkey, placedKingdom, hallsubimg, 6);
+                        KingdomUtil.SetHallwayValue(i, instanceValue, placedKingdom, 6);
                         unplacedKingdoms.Remove(placedKingdom);
                     }
 
@@ -290,19 +278,19 @@ namespace RnSArchipelago.Game
                 // Assign the remaining kingdoms
                 for (var i = currentHallwayPosAware ? currentHallwayPos : 2; i <= maxCanRun; i++)
                 {
-                    var availibleNthKingdoms = KingdomUtil.GetOrderedRunnableKingdoms(kingdomHandler.lastVisitedRunType, i).Intersect(unplacedKingdoms).ToList();
+                    var availibleNthKingdoms = KingdomUtil.GetOrderedRunnableKingdoms(lastVisitedRunType, i).Intersect(unplacedKingdoms).ToList();
 
                     // Prioritize the kingdom of the correct order
                     if (availibleNthKingdoms.Count != 0)
                     {
                         int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, availibleNthKingdoms);
-                        KingdomUtil.SetHallwayValue(i, hallkey, availibleNthKingdoms[selectedIndex], hallsubimg, 6);
+                        KingdomUtil.SetHallwayValue(i, instanceValue, availibleNthKingdoms[selectedIndex], 6);
                         unplacedKingdoms.Remove(availibleNthKingdoms[selectedIndex]);
                     }
                     else
                     {
                         int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, unplacedKingdoms);
-                        KingdomUtil.SetHallwayValue(i, hallkey, unplacedKingdoms[selectedIndex], hallsubimg, 6);
+                        KingdomUtil.SetHallwayValue(i, instanceValue, unplacedKingdoms[selectedIndex], 6);
                         unplacedKingdoms.Remove(unplacedKingdoms[selectedIndex]);
                     }
                 }
@@ -312,26 +300,26 @@ namespace RnSArchipelago.Game
                 var isProgressive = this.inventoryHandler.isProgressive;
                 if (maxCanRun == maxKingdoms && (!isProgressive || this.inventoryHandler.ProgressiveRegions >= maxKingdoms + 1))
                 {
-                    if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && kingdomHandler.lastVisitedRunType == "kingdom"))
+                    if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && lastVisitedRunType == "kingdom"))
                     {
                         if ((visitableKingdoms & InventoryHandler.KingdomFlags.The_Pale_Keep) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "hw_keep", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "hw_keep", 0);
                         }
                         else
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "", 0);
                         }
                     }
-                    else if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && kingdomHandler.lastVisitedRunType == "extra"))
+                    else if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && lastVisitedRunType == "extra"))
                     {
                         if ((visitableKingdoms & InventoryHandler.KingdomFlags.Looping_Hallway) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "hw_darkhall", hallsubimg, 13);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "hw_darkhall", 13);
                         }
                         else
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "", 0);
                         }
                     }
                     else if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Combined)
@@ -340,49 +328,49 @@ namespace RnSArchipelago.Game
                         {
                             List<string> kingdoms = ["hw_keep", "hw_darkhall"];
                             int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, kingdoms);
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, kingdoms[selectedIndex], hallsubimg, selectedIndex == 0 ? 0 : 13);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, kingdoms[selectedIndex], selectedIndex == 0 ? 0 : 13);
                         }
                         else if ((visitableKingdoms & InventoryHandler.KingdomFlags.The_Pale_Keep) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "hw_keep", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "hw_keep", 0);
                         }
                         else if ((visitableKingdoms & InventoryHandler.KingdomFlags.Looping_Hallway) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "hw_darkhall", hallsubimg, 13);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "hw_darkhall", 13);
                         }
                         else
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "", 0);
                         }
                     }
                 }
                 else
                 {
-                    KingdomUtil.SetHallwayValue(maxCanRun + 1, hallkey, "", hallsubimg, 0);
+                    KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "", 0);
                 }
 
                 if (maxCanRun == maxKingdoms && (!isProgressive || this.inventoryHandler.ProgressiveRegions >= maxKingdoms + 2))
                 {
-                    if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && kingdomHandler.lastVisitedRunType == "kingdom"))
+                    if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && lastVisitedRunType == "kingdom"))
                     {
                         if ((visitableKingdoms & InventoryHandler.KingdomFlags.Moonlit_Pinnacle) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "hw_pinnacle", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_pinnacle", 0);
                         }
                         else
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "", 0);
                         }
                     }
-                    else if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && kingdomHandler.lastVisitedRunType == "extra"))
+                    else if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && lastVisitedRunType == "extra"))
                     {
                         if ((visitableKingdoms & InventoryHandler.KingdomFlags.Reflecting_Pool) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "hw_reflection", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_reflection", 0);
                         }
                         else
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "", 0);
                         }
                     }
                     else if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Combined)
@@ -391,25 +379,25 @@ namespace RnSArchipelago.Game
                         {
                             List<string> kingdoms = ["hw_pinnacle", "hw_reflection"];
                             int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, kingdoms);
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, kingdoms[selectedIndex], hallsubimg, selectedIndex == 0 ? 0 : 13);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, kingdoms[selectedIndex], selectedIndex == 0 ? 0 : 13);
                         }
                         else if ((visitableKingdoms & InventoryHandler.KingdomFlags.Moonlit_Pinnacle) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "hw_pinnacle", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_pinnacle", 0);
                         }
                         else if ((visitableKingdoms & InventoryHandler.KingdomFlags.Reflecting_Pool) != 0)
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "hw_reflection", hallsubimg, 13);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_reflection", 13);
                         }
                         else
                         {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "", hallsubimg, 0);
+                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "", 0);
                         }
                     }
                 }
                 else
                 {
-                    KingdomUtil.SetHallwayValue(maxCanRun + 2, hallkey, "", hallsubimg, 0);
+                    KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "", 0);
                 }
             }
 
@@ -422,7 +410,7 @@ namespace RnSArchipelago.Game
 
             var visitableKingdoms = this.inventoryHandler.AvailableKingdoms;
 
-            var kingdoms = KingdomUtil.GetRunnableKingdoms(kingdomHandler.lastVisitedRunType);
+            var kingdoms = KingdomUtil.GetRunnableKingdoms(lastVisitedRunType);
             var maxCanRun = kingdoms.Count;
             if (kingdoms.Contains("hw_outskirts"))
             {
@@ -440,8 +428,6 @@ namespace RnSArchipelago.Game
             }
 
             this.logger.PrintMessage("Route length: " + maxCanRun, System.Drawing.Color.DarkOrange);
-
-            kingdomHandler.ModifyHallSeedAndIconsLength(maxCanRun);
 
             ModifyRoute(maxCanRun, visitableKingdoms, currentHallwayPosAware);
         }

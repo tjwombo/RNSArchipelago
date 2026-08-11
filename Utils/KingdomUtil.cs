@@ -2,11 +2,6 @@
 using RnSArchipelago.Game;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RnSArchipelago.Utils
 {
@@ -14,6 +9,12 @@ namespace RnSArchipelago.Utils
     {
         internal static WeakReference<IRNSReloaded> rnsReloadedRef = null!;
         internal static InventoryHandler inventoryHandler = null!;
+        internal static Random rand = new Random();
+
+        internal static void ResetRandom()
+        {
+            rand = new Random(inventoryHandler?.seed?.GetHashCode() ?? default);
+        }
 
         // Gets the kingdoms you can visit for your run, excluding the ending hallways
         internal static List<string> GetRunnableKingdoms(string lastVisitedRunType)
@@ -181,7 +182,6 @@ namespace RnSArchipelago.Utils
                     }
                 }
 
-                var rand = new Random();
                 double value = rand.NextDouble();
 
                 for (var i = 0; i < kingdoms.Count; i++)
@@ -195,11 +195,14 @@ namespace RnSArchipelago.Utils
             return 0;
         }
 
-        internal static unsafe void SetHallwayValue(int index, RValue* hallkey, string hallValue, RValue* hallsubimg, int hallsubimgValue)
+        // Updates the hallkey, hallsubimg, and hallseed for a given index, while making sure the array has enough entries to modify that index
+        // The arrays will have an extra +2, once past default length, to mock having the penultimate and ultimate hallway placed (for early shira purposes, which i dont think is a problem anymore, but keeping anyways)
+        internal static unsafe void SetHallwayValue(int index, RValue instanceValue, string hallValue, int hallsubimgValue)
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 // Add to the hallkey, if we are unable to place it
+                var hallkey = instanceValue.Get("hallkey");
                 var hallkeyLength = rnsReloaded.ArrayGetLength(hallkey);
                 if (hallkeyLength.HasValue && HookUtil.GetNumeric(hallkeyLength.Value) < index + 1)
                 {
@@ -208,7 +211,8 @@ namespace RnSArchipelago.Utils
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                 }
 
-                // Add to the hallkey, if we are unable to place it
+                // Hallway icons
+                var hallsubimg = instanceValue.Get("hallsubimg");
                 var hallsubimgLength = rnsReloaded.ArrayGetLength(hallsubimg);
                 if (hallsubimgLength.HasValue && HookUtil.GetNumeric(hallsubimgLength.Value) < index + 1)
                 {
@@ -217,8 +221,20 @@ namespace RnSArchipelago.Utils
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                 }
 
+                // Hallway seed
+                var halseed = instanceValue.Get("hallseed");
+                var halseedLength = rnsReloaded.ArrayGetLength(halseed);
+                if (halseedLength.HasValue && HookUtil.GetNumeric(halseedLength.Value) < index + 1)
+                {
+                    var endArray = new RValue[(index + 1) - HookUtil.GetNumeric(halseedLength.Value) + 1];
+                    endArray[0] = *halseed;
+                    rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);    
+                }
+
+                // Set the values
                 rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, index), hallValue);
                 *rnsReloaded.ArrayGetEntry(hallsubimg, index) = new(hallsubimgValue);
+                *rnsReloaded.ArrayGetEntry(halseed, index) = new(rand.Next()); // rerandomizes hallways that haven't been visited yet on updating the route
             }
         }
     }
