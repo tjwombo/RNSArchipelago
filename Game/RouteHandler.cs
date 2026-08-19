@@ -17,6 +17,7 @@ namespace RnSArchipelago.Game
 
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
+        internal IHook<ScriptDelegate>? characterChosenHook;
 
         internal string lastVisitedRunType = "";
 
@@ -460,6 +461,23 @@ namespace RnSArchipelago.Game
             if (this.chooseHallsHook != null)
             {
                 returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
+            }
+
+            return returnValue;
+        }
+
+        // Updates the route once you select a character
+        internal RValue* UpdateRouteOnCharacterSelect(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.characterChosenHook != null)
+            {
+                returnValue = this.characterChosenHook.OriginalFunction(self, other, returnValue, argc, argv);
+
+                UpdateRoute(false);
             }
             else
             {
