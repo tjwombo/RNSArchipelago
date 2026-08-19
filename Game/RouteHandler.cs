@@ -295,7 +295,6 @@ namespace RnSArchipelago.Game
                     }
                 }
 
-                // TODO: MAKE BETTER
                 // Place the last 2 where they need to be, if they are visitable 
                 var isProgressive = this.inventoryHandler.isProgressive;
                 if (maxCanRun == maxKingdoms && (!isProgressive || this.inventoryHandler.ProgressiveRegions >= maxKingdoms + 1))

@@ -9,7 +9,7 @@ namespace RnSArchipelago.Utils
     {
         internal static WeakReference<IRNSReloaded> rnsReloadedRef = null!;
         internal static InventoryHandler inventoryHandler = null!;
-        internal static Random rand = new Random();
+        internal static Random rand = new();
 
         internal static void ResetRandom()
         {
@@ -101,10 +101,10 @@ namespace RnSArchipelago.Utils
 
         private static readonly string[] locationSuffix = [" Battle 1", " Battle 2", " Battle 3", " Chest", " Boss"];
         private static readonly int baseLocationWeight = 1;
-        private static readonly int finalBossLocationWeight = 5;
-        private static readonly int chestLocationWeight = 1;
-        private static readonly int shopLocationWeight = 1;
-        private static readonly int classLocationModifier = 3;
+        private static readonly int finalBossLocationWeight = 50;
+        private static readonly int chestLocationWeight = 5;
+        private static readonly int shopLocationWeight = 5;
+        private static readonly int classLocationModifier = 30;
 
         // Return the index of the kingdom that is chosen weighted randomly prioritizing kingdoms with more checks remaining
         internal static int GetWeightedKingdom(ArchipelagoConnection conn, List<string> kingdoms)
@@ -120,10 +120,6 @@ namespace RnSArchipelago.Utils
                 // Assign weights for each kingdom
                 for (var i = 0; i < kingdoms.Count; i++)
                 {
-                    // Each kingdom always has a chance to appear
-                    weights[i] = 1;
-                    sum += 1;
-
                     var kingdom = InventoryHandler.KingdomNotchToLocationName(kingdoms[i]);
 
                     // Add weights for each of the standard locations
@@ -182,13 +178,21 @@ namespace RnSArchipelago.Utils
                     }
                 }
 
-                double value = rand.NextDouble();
-
-                for (var i = 0; i < kingdoms.Count; i++)
+                // If there are no checks remaining for any of the kingdoms, choose a random one
+                if (sum == 0)
                 {
-                    if (weights.Take(i + 1).Sum() / sum >= value)
+                    return rand.Next(kingdoms.Count);
+                }
+                else
+                {
+                    double value = rand.NextDouble();
+
+                    for (var i = 0; i < kingdoms.Count; i++)
                     {
-                        return i;
+                        if (weights.Take(i + 1).Sum() / sum >= value)
+                        {
+                            return i;
+                        }
                     }
                 }
             }
