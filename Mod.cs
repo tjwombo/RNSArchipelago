@@ -30,6 +30,7 @@ namespace RnSArchipelago
         private Configurator configurator = null!;
         private Config.Config config = null!;
         private RouteHandler routeHandler = null!;
+        private MapHandler mapHandler = null!;
         private KingdomHandler kingdomHandler = null!;
         private ClassHandler classHandler = null!;
         private LocationHandler locationHandler = null!;
@@ -115,6 +116,7 @@ namespace RnSArchipelago
                 locationHandler = new LocationHandler(rnsReloadedRef, rand, logger, inventoryHandler, shopItemsHandler, scoutHandler, this.config, conn);
                 lobby = new LobbySettingsHandler(rnsReloadedRef, logger, inventoryHandler, conn, this.config);
                 routeHandler = new RouteHandler(rnsReloadedRef, logger, inventoryHandler, locationHandler, conn);
+                mapHandler = new MapHandler(rnsReloadedRef, logger, inventoryHandler, routeHandler);
                 kingdomHandler = new KingdomHandler(rnsReloadedRef, logger, inventoryHandler, routeHandler, this.config);
                 
                 classHandler = new ClassHandler(rnsReloadedRef, logger, inventoryHandler);
@@ -607,9 +609,9 @@ namespace RnSArchipelago
 
             // Modify the icons on the route selection screen
             var iconsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stagefirst_get_subimg") - 100000);
-            kingdomHandler.fixChooseIconsHook = hooks.CreateHook<ScriptDelegate>(kingdomHandler.ModifyRouteIcons, iconsScript->Functions->Function);
-            kingdomHandler.fixChooseIconsHook.Activate();
-            kingdomHandler.fixChooseIconsHook.Enable();
+            mapHandler.fixChooseIconsHook = hooks.CreateHook<ScriptDelegate>(mapHandler.ModifyRouteIcons, iconsScript->Functions->Function);
+            mapHandler.fixChooseIconsHook.Activate();
+            mapHandler.fixChooseIconsHook.Enable();
 
             // Make sure you can go to the next hallway
             var endHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_move_next") - 100000);

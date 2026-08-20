@@ -36,8 +36,8 @@ namespace RnSArchipelago.Game
         private GoalSetting goal = GoalSetting.Shira;
         internal long shiraKills;
         internal long witchKills;
-        private HashSet<string> shira_victories = [];
-        private HashSet<string> witch_victories = [];
+        internal HashSet<string> shira_victories = [];
+        internal HashSet<string> witch_victories = [];
         private ShopSetting shop_sanity = ShopSetting.None;
 
         internal delegate void AddChestDelegate();

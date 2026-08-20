@@ -17,7 +17,7 @@ namespace RnSArchipelago.Utils
         }
 
         // Gets the kingdoms you can visit for your run, excluding the ending hallways
-        internal static List<string> GetRunnableKingdoms(string lastVisitedRunType)
+        internal static List<string> GetRunnableKingdoms(ref string lastVisitedRunType)
         {
             if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Combined)
             {
@@ -101,7 +101,7 @@ namespace RnSArchipelago.Utils
 
         private static readonly string[] locationSuffix = [" Battle 1", " Battle 2", " Battle 3", " Chest", " Boss"];
         private static readonly int baseLocationWeight = 1;
-        private static readonly int finalBossLocationWeight = 50;
+        private static readonly int goalToKillWeight = 50;
         private static readonly int chestLocationWeight = 5;
         private static readonly int shopLocationWeight = 5;
         private static readonly int classLocationModifier = 30;
@@ -162,18 +162,36 @@ namespace RnSArchipelago.Utils
                     }
 
                     // Check for Shira/Witch
-                    if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom)))
+                    if (kingdom == "hw_pinnacle" || kingdom == "hw_reflection")
                     {
-                        weights[i] += finalBossLocationWeight;
-                        sum += finalBossLocationWeight;
-                    }
-
-                    if (character != "")
-                    {
-                        if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + " - " + character)))
+                        if (kingdom == "hw_pinnacle" && locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Shira")))
                         {
-                            weights[i] += finalBossLocationWeight * classLocationModifier;
-                            sum += finalBossLocationWeight * classLocationModifier;
+                            weights[i] += baseLocationWeight;
+                            sum += baseLocationWeight;
+                        } else if (kingdom == "hw_reflection" && locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Witch"))) {
+                            weights[i] += baseLocationWeight;
+                            sum += baseLocationWeight;
+                        }
+
+                        if (character != "")
+                        {
+                            if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) && kingdom == "hw_pinnacle" && inventoryHandler.shira_victories.Count < inventoryHandler.shiraKills)
+                            {
+                                if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Shira - " + character)))
+                                {
+                                    weights[i] += goalToKillWeight * classLocationModifier;
+                                    sum += goalToKillWeight * classLocationModifier;
+                                }
+                            }
+                            else if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) && kingdom == "hw_reflection" && inventoryHandler.witch_victories.Count < inventoryHandler.witchKills)
+                            {
+                                if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Witch - " + character)))
+                                {
+                                    weights[i] += goalToKillWeight * classLocationModifier;
+                                    sum += goalToKillWeight * classLocationModifier;
+                                }
+                            }
+
                         }
                     }
                 }

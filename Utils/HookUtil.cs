@@ -38,7 +38,7 @@ namespace RnSArchipelago.Utils
                 case ModificationType.ModifyObject:
                     return;
                 case ModificationType.ModifyArray:
-                    *objectToModify->Get(value[0].Int32) = value[1];
+                    *objectToModify->Get((int) GetNumeric(value[0])) = value[1];
                     return;
                 case ModificationType.InsertToArray:
                     var args = new RValue[value.Length + 1];
