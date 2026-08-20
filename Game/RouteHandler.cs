@@ -20,6 +20,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? characterChosenHook;
 
         internal string lastVisitedRunType = "";
+        private string selectedKingdom = "";
 
         internal RouteHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, LocationHandler locationHandler, ArchipelagoConnection conn)
         {
@@ -248,17 +249,20 @@ namespace RnSArchipelago.Game
                 }
 
                 // Handle the 1st position, trying to encorporate their request
-                if (!unplacedKingdoms.Contains(rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1))))
+                if (currentHallwayPosAware && currentHallwayPos >= 1)
+                {
+                    unplacedKingdoms.Remove(rnsReloaded.ArrayGetEntry(hallkey, 1)->ToString());
+                }
+                else if (unplacedKingdoms.Contains(selectedKingdom))
+                {
+                    KingdomUtil.SetHallwayValue(1, instanceValue, selectedKingdom, 6);
+                    unplacedKingdoms.Remove(selectedKingdom);
+                }
+                else
                 {
                     int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, unplacedKingdoms);
                     KingdomUtil.SetHallwayValue(1, instanceValue, unplacedKingdoms[selectedIndex], 6);
                     unplacedKingdoms.Remove(unplacedKingdoms[selectedIndex]);
-                }
-                else
-                {
-                    string originalKingdom = rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 1));
-                    KingdomUtil.SetHallwayValue(1, instanceValue, originalKingdom, 6);
-                    unplacedKingdoms.Remove(originalKingdom);
                 }
 
                 // Perform initial limiting
@@ -267,9 +271,7 @@ namespace RnSArchipelago.Game
                     // Remove kingdoms that are already placed for the list of possible kingdoms
                     for (var i = 2; i <= currentHallwayPos; i++)
                     {
-                        string placedKingdom = rnsReloaded.ArrayGetEntry(hallkey, i)->ToString();
-                        KingdomUtil.SetHallwayValue(i, instanceValue, placedKingdom, 6);
-                        unplacedKingdoms.Remove(placedKingdom);
+                        unplacedKingdoms.Remove(rnsReloaded.ArrayGetEntry(hallkey, i)->ToString());
                     }
 
                     // We've already handled pos 0 and 1, so we need to start at least at 2
@@ -437,26 +439,32 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
+                if (this.chooseHallsHook != null)
+                {
+                    returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                }
+                else
+                {
+                    this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
+                }
+
+                // Get the user selected kingdom
+                HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
+                var hallkey = instanceValue.Get("hallkey");
+                selectedKingdom = rnsReloaded.ArrayGetEntry(hallkey, 1)->ToString();
+
                 if (this.inventoryHandler.isActive)
                 {
                     var isKingdomSanity = this.inventoryHandler.isKingdomSanity;
                     var isProgressive = this.inventoryHandler.isProgressive;
                     if (isKingdomSanity || isProgressive)
-                    {
-                        if (this.chooseHallsHook != null)
-                        {
-                            returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
-                        }
-                        else
-                        {
-                            this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
-                        }
-
-                        OnKingdomRecieve(false);
-
-                        return returnValue;
+                    { 
+                        OnKingdomRecieve(false);  
                     }
                 }
+                return returnValue;
             }
             if (this.chooseHallsHook != null)
             {
