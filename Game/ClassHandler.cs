@@ -51,7 +51,7 @@ namespace RnSArchipelago.Game
                         // Character selection
                         if (HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
                         {
-                            if (inventoryHandler.isClassAvailable(i))
+                            if (inventoryHandler.IsClassAvailable(i))
                             {
                                 *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
                                 *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
@@ -94,7 +94,7 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.isActive)
                 {
-                    if (inventoryHandler.isClassSanity && !inventoryHandler.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    if (inventoryHandler.isClassSanity && !inventoryHandler.IsClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                     {
                         var chars = rnsReloaded.FindValue(self, "step");
                         *chars = new(1);
@@ -114,7 +114,7 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.isActive)
                 {
-                    if (inventoryHandler.isClassSanity && !inventoryHandler.isClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    if (inventoryHandler.isClassSanity && !inventoryHandler.IsClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                     {
                         return returnValue;
                     }

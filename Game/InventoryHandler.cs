@@ -1422,7 +1422,7 @@ namespace RnSArchipelago.Game
             return kingdoms;
         }
 
-        internal List<string> GetChaosKingdomsAvailable(int n = 8)
+        internal List<string> GetCombinedKingdomsAvailable(int n = 8)
         {
             var kingdoms = new List<string>();
 
@@ -1552,40 +1552,26 @@ namespace RnSArchipelago.Game
             return kingdoms;
         }
 
-        internal bool isClassAvailable(int pos)
+        internal bool IsClassAvailable(int pos)
         {
-            switch (pos)
+            return pos switch
             {
-                case 0:
-                    return (AvailableClasses & ClassFlags.Wizard) != 0;
-                case 1:
-                    return (AvailableClasses & ClassFlags.Assassin) != 0;
-                case 2:
-                    return (AvailableClasses & ClassFlags.Heavyblade) != 0;
-                case 3:
-                    return (AvailableClasses & ClassFlags.Dancer) != 0;
-                case 4:
-                    return (AvailableClasses & ClassFlags.Druid) != 0;
-                case 5:
-                    return (AvailableClasses & ClassFlags.Spellsword) != 0;
-                case 6:
-                    return (AvailableClasses & ClassFlags.Sniper) != 0;
-                case 7:
-                    return (AvailableClasses & ClassFlags.Bruiser) != 0;
-                case 8:
-                    return (AvailableClasses & ClassFlags.Defender) != 0;
-                case 9:
-                    return (AvailableClasses & ClassFlags.Ancient) != 0;
-                case 10:
-                    return (AvailableClasses & ClassFlags.Hammermaid) != 0;
-                case 11:
-                    return (AvailableClasses & ClassFlags.Pyromancer) != 0;
-                case 12:
-                    return (AvailableClasses & ClassFlags.Grenadier) != 0;
-                case 13:
-                    return (AvailableClasses & ClassFlags.Shadow) != 0;
-            }
-            return false;
+                0 => (AvailableClasses & ClassFlags.Wizard) != 0,
+                1 => (AvailableClasses & ClassFlags.Assassin) != 0,
+                2 => (AvailableClasses & ClassFlags.Heavyblade) != 0,
+                3 => (AvailableClasses & ClassFlags.Dancer) != 0,
+                4 => (AvailableClasses & ClassFlags.Druid) != 0,
+                5 => (AvailableClasses & ClassFlags.Spellsword) != 0,
+                6 => (AvailableClasses & ClassFlags.Sniper) != 0,
+                7 => (AvailableClasses & ClassFlags.Bruiser) != 0,
+                8 => (AvailableClasses & ClassFlags.Defender) != 0,
+                9 => (AvailableClasses & ClassFlags.Ancient) != 0,
+                10 => (AvailableClasses & ClassFlags.Hammermaid) != 0,
+                11 => (AvailableClasses & ClassFlags.Pyromancer) != 0,
+                12 => (AvailableClasses & ClassFlags.Grenadier) != 0,
+                13 => (AvailableClasses & ClassFlags.Shadow) != 0,
+                _ => false,
+            };
         }
 
         internal static string GetClass(int pos)

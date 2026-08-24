@@ -17,11 +17,11 @@ namespace RnSArchipelago.Utils
         }
 
         // Gets the kingdoms you can visit for your run, excluding the ending hallways
-        internal static List<string> GetRunnableKingdoms(ref string lastVisitedRunType)
+        internal static List<string> GetRunnableKingdoms(ref string currentKingdomGroup)
         {
             if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Combined)
             {
-                return inventoryHandler.GetChaosKingdomsAvailable();
+                return inventoryHandler.GetCombinedKingdomsAvailable();
             }
             else if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Kingdom)
             {
@@ -36,29 +36,29 @@ namespace RnSArchipelago.Utils
                 List<string> kingdoms;
 
                 // Try our tab and if nothing is found go to the other tab
-                if (lastVisitedRunType == "kingdom")
+                if (currentKingdomGroup == "kingdom")
                 {
                     kingdoms = inventoryHandler.GetKingdomKingdomsAvailable();
                     if (kingdoms.Count > 0)
                     {
-                        lastVisitedRunType = "kingdom";
+                        currentKingdomGroup = "kingdom";
                         return kingdoms;
                     }
                     kingdoms = inventoryHandler.GetExtraKingdomsAvailable();
-                    lastVisitedRunType = "extra";
+                    currentKingdomGroup = "extra";
                     return kingdoms;
                 }
-                else if (lastVisitedRunType == "extra")
+                else if (currentKingdomGroup == "extra")
                 {
                     kingdoms = inventoryHandler.GetExtraKingdomsAvailable();
                     if (kingdoms.Count > 0)
                     {
-                        lastVisitedRunType = "extra";
+                        currentKingdomGroup = "extra";
                         return kingdoms;
                     }
 
                     kingdoms = inventoryHandler.GetKingdomKingdomsAvailable();
-                    lastVisitedRunType = "kingdom";
+                    currentKingdomGroup = "kingdom";
                     return kingdoms;
                 }
                 // Otherwise default to assuming it was a kingdom tab
@@ -67,12 +67,12 @@ namespace RnSArchipelago.Utils
                     kingdoms = inventoryHandler.GetKingdomKingdomsAvailable();
                     if (kingdoms.Count > 0)
                     {
-                        lastVisitedRunType = "kingdom";
+                        currentKingdomGroup = "kingdom";
                         return kingdoms;
                     }
 
                     kingdoms = inventoryHandler.GetExtraKingdomsAvailable();
-                    lastVisitedRunType = "extra";
+                    currentKingdomGroup = "extra";
                     return kingdoms;
                 }
             }
@@ -81,17 +81,17 @@ namespace RnSArchipelago.Utils
         }
 
         // Gets the kingdoms you can visit for your run at a given kingdom order, excluding the ending hallways
-        internal static List<string> GetOrderedRunnableKingdoms(string lastVisitedRunType, int n)
+        internal static List<string> GetOrderedRunnableKingdoms(string currentKingdomGroup, int n)
         {
             if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Combined)
             {
-                return inventoryHandler.GetChaosKingdomsAvailable(n);
+                return inventoryHandler.GetCombinedKingdomsAvailable(n);
             }
-            else if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Kingdom || (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra && lastVisitedRunType == "kingdom"))
+            else if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Kingdom || (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra && currentKingdomGroup == "kingdom"))
             {
                 return inventoryHandler.GetKingdomKingdomsAvailable(n);
             }
-            else if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Extra || (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra && lastVisitedRunType == "extra"))
+            else if (inventoryHandler.RunType == InventoryHandler.RunTypeSetting.Extra || (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra && currentKingdomGroup == "extra"))
             {
                 return inventoryHandler.GetExtraKingdomsAvailable(n);
             }
@@ -173,9 +173,11 @@ namespace RnSArchipelago.Utils
                             sum += baseLocationWeight;
                         }
 
+                        // Only account for the character check if we still need kills and that class has a location
                         if (character != "")
                         {
-                            if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) && kingdom == "hw_pinnacle" && inventoryHandler.shira_victories.Count < inventoryHandler.shiraKills)
+                            if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) &&
+                                kingdom == "hw_pinnacle" && inventoryHandler.shira_victories.Count < inventoryHandler.shiraKills)
                             {
                                 if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Shira - " + character)))
                                 {
@@ -183,7 +185,8 @@ namespace RnSArchipelago.Utils
                                     sum += goalToKillWeight * classLocationModifier;
                                 }
                             }
-                            else if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) && kingdom == "hw_reflection" && inventoryHandler.witch_victories.Count < inventoryHandler.witchKills)
+                            else if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Witch || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) && 
+                                kingdom == "hw_reflection" && inventoryHandler.witch_victories.Count < inventoryHandler.witchKills)
                             {
                                 if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Witch - " + character)))
                                 {

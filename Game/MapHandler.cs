@@ -93,8 +93,8 @@ namespace RnSArchipelago.Game
         {
             if (buttonCount >= 6)
             {
-                routeHandler.lastVisitedRunType = "kingdom";
-                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms(ref routeHandler.lastVisitedRunType);
+                routeHandler.currentKingdomGroup = "kingdom";
+                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms(ref routeHandler.currentKingdomGroup);
 
                 if ((inventoryHandler.AvailableKingdoms & KingdomFlags.The_Pale_Keep) != 0)
                 {
@@ -156,8 +156,8 @@ namespace RnSArchipelago.Game
             }
             else if (buttonCount == 4)
             {
-                routeHandler.lastVisitedRunType = "extra";
-                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms(ref routeHandler.lastVisitedRunType);
+                routeHandler.currentKingdomGroup = "extra";
+                List<string> kingdoms = KingdomUtil.GetRunnableKingdoms(ref routeHandler.currentKingdomGroup);
 
                 if ((inventoryHandler.AvailableKingdoms & KingdomFlags.Looping_Hallway) != 0)
                 {

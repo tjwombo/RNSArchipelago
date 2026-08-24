@@ -731,8 +731,22 @@ namespace RnSArchipelago.Game
 
                     // Actually increase things
                     rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*notches, new RValue(currentPos + 1), notch]);
-                    rnsReloaded.FindValue(instance, "notchNumber")->Real = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "notchNumber")) + 1;
-                    rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
+                    var notchNumber = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "notchNumber")) + 1;
+                    rnsReloaded.FindValue(instance, "notchNumber")->Real = notchNumber;
+
+                    var subimg = rnsReloaded.FindValue(instance, "xSubimg");
+                    if (HookUtil.GetNumeric(rnsReloaded.ArrayGetLength(subimg)!.Value) >= notchNumber)
+                    {
+                        for (int i = (int) notchNumber - 1; i > currentPos + 1; i--)
+                        {
+                            *rnsReloaded.ArrayGetEntry(subimg, i) = *rnsReloaded.ArrayGetEntry(subimg, i-1); 
+                        }
+                        *rnsReloaded.ArrayGetEntry(subimg, (int) currentPos + 1) = new RValue(5);
+                    } else
+                    {
+                        rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
+                    }
+                    
 
                     treasurespheresToSpawn--;
                 }
