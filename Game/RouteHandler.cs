@@ -303,17 +303,17 @@ namespace RnSArchipelago.Game
                 for (var i = currentHallwayPosAware ? currentHallwayPos : 2; i <= maxCanRun; i++)
                 {
                     var availibleNthKingdoms = KingdomUtil.GetOrderedRunnableKingdoms(currentKingdomGroup, i).Intersect(unplacedKingdoms).ToList();
+                    int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, availibleNthKingdoms, true);
 
-                    // Prioritize the kingdom of the correct order
-                    if (availibleNthKingdoms.Count != 0)
+                    // Prioritize the kingdom of the correct order if there are checks remaining for that order
+                    if (selectedIndex != -1)
                     {
-                        int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, availibleNthKingdoms);
                         KingdomUtil.SetHallwayValue(i, instanceValue, availibleNthKingdoms[selectedIndex], 6);
                         unplacedKingdoms.Remove(availibleNthKingdoms[selectedIndex]);
                     }
                     else
                     {
-                        int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, unplacedKingdoms);
+                        selectedIndex = KingdomUtil.GetWeightedKingdom(conn, unplacedKingdoms);
                         KingdomUtil.SetHallwayValue(i, instanceValue, unplacedKingdoms[selectedIndex], 6);
                         unplacedKingdoms.Remove(unplacedKingdoms[selectedIndex]);
                     }

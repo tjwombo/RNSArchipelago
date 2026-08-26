@@ -107,8 +107,13 @@ namespace RnSArchipelago.Utils
         private static readonly int classLocationModifier = 30;
 
         // Return the index of the kingdom that is chosen weighted randomly prioritizing kingdoms with more checks remaining
-        internal static int GetWeightedKingdom(ArchipelagoConnection conn, List<string> kingdoms)
+        internal static int GetWeightedKingdom(ArchipelagoConnection conn, List<string> kingdoms, bool isOrderedCheck = false)
         {
+            if (kingdoms.Count == 0)
+            {
+                return -1;
+            }
+
             if (conn.session != null)
             {
                 var locations = conn.session.Locations.AllMissingLocations;
@@ -202,6 +207,10 @@ namespace RnSArchipelago.Utils
                 // If there are no checks remaining for any of the kingdoms, choose a random one
                 if (sum == 0)
                 {
+                    if (isOrderedCheck)
+                    {
+                        return -1;
+                    }
                     return rand.Next(kingdoms.Count);
                 }
                 else
