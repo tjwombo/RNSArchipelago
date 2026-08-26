@@ -53,7 +53,7 @@ namespace RnSArchipelago
         internal IHook<ScriptDelegate>? originalUnlockHook;
         private static readonly string[] keys = { "hardDiff", "lunarDiff", "extraMode", "randomMode", "charSpBlade", "charSniper", "charBruiser", "charDefender", "charAncient", "charHammer", "charPyro", "charGunner", "charShadow" };
 
-        private long[] originalUnlocks = new long[keys.Length];
+        private readonly long[] originalUnlocks = new long[keys.Length];
         private RValue* unlockKeys;
 
         internal IHook<ScriptDelegate>? oneShotHook;
@@ -110,8 +110,9 @@ namespace RnSArchipelago
                 KingdomUtil.inventoryHandler = inventoryHandler;
                 KingdomUtil.ResetRandom();
 
-                conn = new ArchipelagoConnection(rnsReloadedRef, logger, inventoryHandler, this.config, data);
-                scoutHandler = new ScoutHandler(rnsReloadedRef, logger, inventoryHandler, conn);
+                scoutHandler = new ScoutHandler(rnsReloadedRef, logger, inventoryHandler);
+                conn = new ArchipelagoConnection(rnsReloadedRef, logger, inventoryHandler, scoutHandler, this.config, data);
+                scoutHandler.SetConn(conn);
                 shopItemsHandler = new ShopItemsHandler(rand, logger, inventoryHandler);
                 locationHandler = new LocationHandler(rnsReloadedRef, rand, logger, inventoryHandler, shopItemsHandler, scoutHandler, this.config, conn);
                 lobby = new LobbySettingsHandler(rnsReloadedRef, logger, inventoryHandler, conn, this.config);
@@ -307,7 +308,7 @@ namespace RnSArchipelago
             conn.resetConnEndHook.Enable();
 
             // Set up in game message queue checking
-            var drawId = rnsReloaded.ScriptFindId("scr_input_check");
+            var drawId = rnsReloaded.ScriptFindId("scr_gamecontrol_update_adventure");
             var drawScript = rnsReloaded.GetScriptData(drawId - 100000);
             this.conn.messageHandler.addMessageHook = hooks.CreateHook<ScriptDelegate>(this.conn.messageHandler.AddMessage, drawScript->Functions->Function);
             this.conn.messageHandler.addMessageHook.Activate();
@@ -360,12 +361,6 @@ namespace RnSArchipelago
             locationHandler.itemGetHook = hooks.CreateHook<ScriptDelegate>(locationHandler.GetItems, itemGetScript->Functions->Function);
             locationHandler.itemGetHook.Activate();
             locationHandler.itemGetHook.Enable();
-
-            // Scout the archipelago item to display values in a chest
-            var itemScoutChestScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_populate_loot") - 100000);
-            scoutHandler.itemScoutChestHook = hooks.CreateHook<ScriptDelegate>(scoutHandler.ScoutChestItems, itemScoutChestScript->Functions->Function);
-            scoutHandler.itemScoutChestHook.Activate();
-            scoutHandler.itemScoutChestHook.Enable();
 
             // Scout the archipelago item to display values in a shop
             var itemScoutShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_populate_store") - 100000);

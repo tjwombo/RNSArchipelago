@@ -3,7 +3,6 @@ using Archipelago.MultiClient.Net.Models;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Connection;
-using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 
@@ -14,7 +13,7 @@ namespace RnSArchipelago.Game
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
         private readonly InventoryHandler inventoryHandler;
-        private readonly ArchipelagoConnection conn;
+        private ArchipelagoConnection conn = null!;
 
         internal IHook<ScriptDelegate>? itemScoutChestHook;
         internal IHook<ScriptDelegate>? itemScoutShopHook;
@@ -23,50 +22,105 @@ namespace RnSArchipelago.Game
         internal static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
-        internal Task<Dictionary<long, ScoutedItemInfo>> chestContents = null!;
-        internal Task<Dictionary<long, ScoutedItemInfo>> shopContents = null!;
+        internal Dictionary<string, Dictionary<long, ScoutedItemInfo>> chestContents = [];
+        internal Dictionary<string, Dictionary<long, ScoutedItemInfo>> shopContents = [];
 
-        internal ScoutHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, ArchipelagoConnection conn)
+        internal ScoutHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.inventoryHandler = inventoryHandler;
+        }
+
+        internal void SetConn(ArchipelagoConnection conn)
+        {
             this.conn = conn;
         }
 
-        // Scout all the items in the current chest
-        private void GetArchipelagoChestItemInfo()
+        // Add the task to the chest dictionary and create the new task for the next location
+        private Task<Dictionary<long, ScoutedItemInfo>> SetChestLocationAndStartNext(Task<Dictionary<long, ScoutedItemInfo>> task, string oldLocation, string newLocation)
+        {
+
+            chestContents[oldLocation] = task.Result;
+            task.Dispose();
+
+            var locations = CHEST_POSITIONS.Select(x => conn.session!.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, newLocation + " " + x)).ToArray();
+
+            return conn.session!.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
+        }
+
+        // Scout all the items in the current chest and then start scouting the shop items
+        internal void GetArchipelagoChestItemInfo()
         {
             if (conn.session != null)
             {
-                var locations = CHEST_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + x)).ToArray();
+                var locations = CHEST_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Crack in the Geode Chest 1 " + x)).ToArray();
 
-                chestContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
+                // Have to chain them like this, otherwise the task doesn't get set properly
+                conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations).ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Crack in the Geode Chest 1", "Kingdom Outskirts Chest 1");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Kingdom Outskirts Chest 1", "Crack in the Geode Chest 2");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Crack in the Geode Chest 2", "Kingdom Outskirts Chest 2");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Kingdom Outskirts Chest 2", "Scholar's Nest Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Scholar's Nest Chest", "King's Arsenal Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "King's Arsenal Chest", "Red Darkhouse Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Red Darkhouse Chest", "Emerald Lakeside Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Emerald Lakeside Chest", "Churchmouse Streets Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Churchmouse Streets Chest", "The Pale Keep Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "The Pale Keep Chest", "Darkhouse Depths Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Darkhouse Depths Chest", "Subterra Sanctum Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Subterra Sanctum Chest", "Altier Aurum Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+                    return SetChestLocationAndStartNext(task, "Altier Aurum Chest", "Looping Hallway Chest");
+                }).Unwrap().ContinueWith((task) =>
+                {
+
+                    chestContents["Looping Hallway Chest"] = task.Result;
+
+                    GetArchipelagoShopItemInfo();
+                });
             }
         }
 
-        // Scout the network items in the chest ahead of time so once we need the results the task has finished
-        internal RValue* ScoutChestItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        // Add the task to the shop dictionary and create the new task for the next location
+        private Task<Dictionary<long, ScoutedItemInfo>> SetShopLocationAndStartNext(Task<Dictionary<long, ScoutedItemInfo>> task, string oldLocation, string newLocation)
         {
-            if (inventoryHandler.isActive)
-            {
-                GetArchipelagoChestItemInfo();
-            }
 
-            if (this.itemScoutChestHook != null)
-            {
-                returnValue = this.itemScoutChestHook.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                logger.PrintMessage("Unable to call item scout chest hook", System.Drawing.Color.Red);
-            }
+            shopContents[oldLocation] = task.Result;
+            task.Dispose();
 
-            return returnValue;
+
+            var locations = SHOP_POSITIONS.Select(x => conn.session!.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, newLocation + " " + x)).ToArray();
+
+            return conn.session!.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
         }
 
         // Scout all the items in the current shop
-        private void GetArchipelagoShopItemInfo()
+        internal void GetArchipelagoShopItemInfo()
         {
             long[] locations = [];
 
@@ -75,13 +129,46 @@ namespace RnSArchipelago.Game
                 if (inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Global)
                 {
                     locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, x)).ToArray();
+                    shopContents["global"] = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations).Result;
                 }
                 else if (inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Regional)
                 {
-                    locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + x)).ToArray();
+                    locations = SHOP_POSITIONS.Select(x => conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Scholar's Nest Shop " + x)).ToArray();
+
+                    // Have to chain them like this, otherwise the task doesn't get set properly
+                    conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations).ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "Scholar's Nest Shop", "King's Arsenal Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "King's Arsenal Shop", "Red Darkhouse Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "Red Darkhouse Shop", "Emerald Lakeside Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "Emerald Lakeside Shop", "Churchmouse Streets Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "Churchmouse Streets Shop", "The Pale Keep Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "The Pale Keep Shop", "Darkhouse Depths Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "Darkhouse Depths Shop", "Subterra Sanctum Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "Subterra Sanctum Shop", "Atelier Aurum Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        return SetShopLocationAndStartNext(task, "Atelier Aurum Shop", "Looping Hallway Shop");
+                    }).Unwrap().ContinueWith((task) =>
+                    {
+                        shopContents["Looping Hallway Shop"] = task.Result;
+                    });
                 }
 
-                shopContents = conn.session.Locations.ScoutLocationsAsync(HintCreationPolicy.None, locations);
             }
         }
 
@@ -92,8 +179,6 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.isActive)
                 {
-                    GetArchipelagoShopItemInfo();
-
                     if (this.itemScoutShopHook != null)
                     {
                         returnValue = this.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);

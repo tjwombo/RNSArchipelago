@@ -214,7 +214,7 @@ namespace RnSArchipelago.Game
                     id = conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
                     {
-                        info = scoutHandler.shopContents.Result[id];
+                        info = scoutHandler.shopContents["global"][id];
                         if (info.Flags.HasFlag(ItemFlags.Advancement))
                         {
                             archipelagoItem = baseItemId + 1;
@@ -233,7 +233,7 @@ namespace RnSArchipelago.Game
                     id = conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[position]);
                     if (!conn.session.Locations.AllLocationsChecked.Contains(id))
                     {
-                        info = scoutHandler.shopContents.Result[id];
+                        info = scoutHandler.shopContents[LocationUtil.GetBaseLocation()][id];
 
                         if (info.Flags.HasFlag(ItemFlags.Advancement))
                         {
@@ -277,7 +277,7 @@ namespace RnSArchipelago.Game
                                 if (HookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 1), i), 1), -1))
                                 {
                                     var locationId = GetChestPositionLocationId(SlotIdToChestPos(i));
-                                    var info = scoutHandler.chestContents.Result[locationId];
+                                    var info = scoutHandler.chestContents[LocationUtil.GetBaseLocation()][locationId];
 
                                     if (conn.session != null && MessageHandler.HintConfigIsOn(modConfig, info.Flags))
                                     {
@@ -462,7 +462,7 @@ namespace RnSArchipelago.Game
 
                     if (this.inventoryHandler.checksPerItemInChest && LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
                     {
-                        info = scoutHandler.chestContents.Result[GetChestPositionLocationId(SlotIdToChestPos((int)HookUtil.GetNumeric(safeSelf["slotId"])))];
+                        info = scoutHandler.chestContents[LocationUtil.GetBaseLocation()][GetChestPositionLocationId(SlotIdToChestPos((int)HookUtil.GetNumeric(safeSelf["slotId"])))];
                     }
                     else if (this.inventoryHandler.ShopSanity != InventoryHandler.ShopSetting.None && LocationUtil.GetLocationType() == LocationUtil.LocationType.Shop)
                     {
@@ -470,11 +470,11 @@ namespace RnSArchipelago.Game
                         {
                             if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Global)
                             {
-                                info = scoutHandler.shopContents.Result[conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[(int)HookUtil.GetNumeric(safeSelf["slotId"])])];
+                                info = scoutHandler.shopContents["global"][conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[(int)HookUtil.GetNumeric(safeSelf["slotId"])])];
                             }
                             else if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Regional)
                             {
-                                info = scoutHandler.shopContents.Result[conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(safeSelf["slotId"])])];
+                                info = scoutHandler.shopContents[LocationUtil.GetBaseLocation()][conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(safeSelf["slotId"])])];
                             }
                         }
                     }
@@ -595,40 +595,41 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (this.inventoryHandler.isActive)
+                
+                var itemPos = HookUtil.GetNumeric(argv[2]);
+                CLayerElementBase* instance = null;
+
+                if (LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
                 {
-                    var itemPos = HookUtil.GetNumeric(argv[2]);
-                    CLayerElementBase* instance = null;
+                    HookUtil.FindElementInLayer("LootInfo", "slotId", itemPos + "", out instance);
+                }
+                else if (LocationUtil.GetLocationType() == LocationUtil.LocationType.Shop)
+                {
+                    HookUtil.FindElementInLayer("InventoryInfo", "slotId", itemPos + "", out instance);
+                }
 
-                    if (LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
-                    {
-                        HookUtil.FindElementInLayer("LootInfo", "slotId", itemPos + "", out instance);
-                    }
-                    else if (LocationUtil.GetLocationType() == LocationUtil.LocationType.Shop)
-                    {
-                        HookUtil.FindElementInLayer("InventoryInfo", "slotId", itemPos + "", out instance);
-                    }
+                if (instance != null)
+                {
+                    var element = ((CLayerInstanceElement*)instance)->Instance;
+                    var itemId = rnsReloaded.FindValue(element, "itemId");
 
-                    if (instance != null)
+                    // Take the item if its not an ap item
+                    if (!HookUtil.IsEqualToNumeric(itemId, baseItemId) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 1) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 2))
                     {
-                        var element = ((CLayerInstanceElement*)instance)->Instance;
-                        var itemId = rnsReloaded.FindValue(element, "itemId");
-
-                        // Take the item if its not an ap item
-                        if (!HookUtil.IsEqualToNumeric(itemId, baseItemId) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 1) && !HookUtil.IsEqualToNumeric(itemId, baseItemId + 2))
+                        if (this.takeItemHook != null)
                         {
-                            if (this.takeItemHook != null)
-                            {
-                                returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
-                            }
-                            else
-                            {
-                                this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
-                            }
-
-                            return returnValue;
+                            returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
+                        }
+                        else
+                        {
+                            this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
                         }
 
+                        return returnValue;
+                    }
+
+                    if (this.inventoryHandler.isActive)
+                    {
                         // Send the AP item
                         if (this.inventoryHandler.checksPerItemInChest && LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
                         {
@@ -661,9 +662,9 @@ namespace RnSArchipelago.Game
                             // TODO: Fix the width of item names
                             // TODO: Subtract user gold, and set price of AP items
                         }
-
-                        return returnValue;
                     }
+
+                    return returnValue;
                 }
             }
 

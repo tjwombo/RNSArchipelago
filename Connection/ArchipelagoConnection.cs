@@ -35,6 +35,7 @@ namespace RnSArchipelago.Connection
             WeakReference<IRNSReloaded> rnsReloadedRef,
             ILogger logger,
             InventoryHandler inventoryHandler,
+            ScoutHandler scoutHandler,
             Config.Config config,
             SharedData data)
         {
@@ -43,7 +44,7 @@ namespace RnSArchipelago.Connection
             this.inventoryHandler = inventoryHandler;
             this.data = data;
 
-            this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, config, data);
+            this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, scoutHandler, config, data);
         }
 
         // Attempt to start a connection to archipelago with the given configs
@@ -135,10 +136,21 @@ namespace RnSArchipelago.Connection
             data.connection.Set<string>("numPlayers", default!);
             data.connection.Set<string>("password", default!);
 
-            if (this.session != null && this.session.Socket != null && this.session.Socket.Connected)
+            if (this.session != null && this.session.Socket != null)
             {
-                this.session.Socket.DisconnectAsync().Wait();
+                if (this.session.Socket.Connected)
+                {
+                    this.session.Socket.DisconnectAsync().Wait();
+                }
+
+                session.Socket.PacketReceived -= this.messageHandler.OnPacketReceived;
+                session.MessageLog.OnMessageReceived -= this.messageHandler.OnMessageReceived;
+                session.Socket.SocketOpened -= ConnectionOpened;
+                session.Socket.ErrorReceived -= ErrorReceived;
+                session.Socket.SocketClosed -= ConnectionClosed;
             }
+
+            this.session = null;
         }
 
         internal void ConnectionOpened()
@@ -150,7 +162,6 @@ namespace RnSArchipelago.Connection
         {
             logger.PrintMessage("Connection closed: " + reason, System.Drawing.Color.Red);
             this.messageHandler.errorMessage = "Disconnected from the multiworld";
-
             if (session != null && session.Socket != null)
             {
                 session.MessageLog.OnMessageReceived -= this.messageHandler.OnMessageReceived;

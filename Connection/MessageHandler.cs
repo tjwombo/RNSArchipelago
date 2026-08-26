@@ -21,6 +21,7 @@ namespace RnSArchipelago.Connection
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
         private readonly InventoryHandler inventoryHandler;
+        private readonly ScoutHandler scoutHandler;
         private readonly Config.Config modConfig;
         private readonly SharedData data;
 
@@ -32,11 +33,12 @@ namespace RnSArchipelago.Connection
         private readonly string[] ignoreSlotdataOptions = ["starting_class_name", "starting_hallway_name"];
         internal int slot = 0;
 
-        public MessageHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, Config.Config modConfig, SharedData data)
+        public MessageHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, ScoutHandler scoutHandler, Config.Config modConfig, SharedData data)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.inventoryHandler = inventoryHandler;
+            this.scoutHandler = scoutHandler;
             this.modConfig = modConfig;
             this.data = data;
         }
@@ -129,6 +131,8 @@ namespace RnSArchipelago.Connection
 
                     inventoryHandler.GetOptions();
 
+                    scoutHandler.GetArchipelagoChestItemInfo();
+
                     break;
                 case ArchipelagoPacketType.ReceivedItems:
                     // Actual printing message handled through OnMessageReceived, but actual mod use of items will be handled here
@@ -193,7 +197,7 @@ namespace RnSArchipelago.Connection
                             if (itemSendLogMessage.IsSenderTheActivePlayer)
                             {
                                 sourceId = 0;
-                                messageToSend = messageToSend.Remove(0, messageToSend.IndexOf(" "));
+                                messageToSend = messageToSend.Remove(0, messageToSend.IndexOf(' '));
                             }
 
                             rnsReloaded.CreateString(&typedMessage, messageToSend);
