@@ -92,10 +92,10 @@ namespace RnSArchipelago.Game
                     return SetChestLocationAndStartNext(task, "Darkhouse Depths Chest", "Subterra Sanctum Chest");
                 }).Unwrap().ContinueWith((task) =>
                 {
-                    return SetChestLocationAndStartNext(task, "Subterra Sanctum Chest", "Altier Aurum Chest");
+                    return SetChestLocationAndStartNext(task, "Subterra Sanctum Chest", "Atelier Aurum Chest");
                 }).Unwrap().ContinueWith((task) =>
                 {
-                    return SetChestLocationAndStartNext(task, "Altier Aurum Chest", "Looping Hallway Chest");
+                    return SetChestLocationAndStartNext(task, "Atelier Aurum Chest", "Looping Hallway Chest");
                 }).Unwrap().ContinueWith((task) =>
                 {
 
