@@ -4,6 +4,7 @@ using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
 {
@@ -138,6 +139,9 @@ namespace RnSArchipelago.Game
                 {
                     maxCanRun = (int)Math.Min(maxCanRun, this.inventoryHandler.ProgressiveRegions);
                 }
+
+                // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
+                HookUtil.ModifyElementVariable(element, "hallwayNumber", ModificationType.ModifyLiteral, [new(maxCanRun + 3)]);
             }
         }
 
