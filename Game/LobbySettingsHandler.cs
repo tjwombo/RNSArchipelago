@@ -21,6 +21,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? lobbySettingsDisplayStepHook;
 
         internal IHook<ScriptDelegate>? archipelagoOptionsHook;
+        internal IHook<ScriptDelegate>? kingdomAvailablityHook;
 
         internal IHook<ScriptDelegate>? setNameHook;
         internal IHook<ScriptDelegate>? setDescHook;
@@ -131,6 +132,26 @@ namespace RnSArchipelago.Game
                             ModifyElementVariable(element, "selectIndex", ModificationType.ModifyLiteral, new RValue(3));
                         }
                     }
+                }
+            }
+            return returnValue;
+        }
+
+        internal RValue* ActivateAllKingdoms(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (kingdomAvailablityHook != null)
+            {
+                returnValue = kingdomAvailablityHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call activate kingdoms hook", System.Drawing.Color.Red);
+            }
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                {
+                    *returnValue = new(1);
                 }
             }
             return returnValue;

@@ -212,6 +212,13 @@ namespace RnSArchipelago
                 lobby.archipelagoOptionsHook.Activate();
                 lobby.archipelagoOptionsHook.Enable();
 
+                // Make all kingdoms available while under the AP lobby type
+                var availableId = rnsReloaded.ScriptFindId("scr_stagefirst_available");
+                var availableScript = rnsReloaded.GetScriptData(availableId - 100000);
+                lobby.kingdomAvailablityHook = hooks.CreateHook<ScriptDelegate>(lobby.ActivateAllKingdoms, availableScript->Functions->Function);
+                lobby.kingdomAvailablityHook.Activate();
+                lobby.kingdomAvailablityHook.Enable();
+
                 // Update the info banner through a step function
                 var displayId = rnsReloaded.ScriptFindId("gameframe_draw");
                 var displayScript = rnsReloaded.GetScriptData(displayId - 100000);
