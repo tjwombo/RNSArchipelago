@@ -526,6 +526,15 @@ namespace RnSArchipelago.Game
                 if (this.inventoryHandler.isActive)
                 {
                     UpdateRoute(false);
+
+                    // Regenerate the room and treasurespheres after a class joins
+                    if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+                    {
+                        HookUtil.FindElementInLayer("RunMenu_Blocker", "hallwayPos", out var element);
+                        var instance = ((CLayerInstanceElement*)element)->Instance;
+                        rnsReloaded.ExecuteScript("scr_hallwayprogress_generate", instance, other, []);
+                        locationHandler.treasurespheresToSpawn = this.inventoryHandler.AvailableTreasurespheres;
+                    }
                 }
             }
             else
