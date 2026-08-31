@@ -340,7 +340,7 @@ namespace RnSArchipelago
             locationHandler.chestOpenHook.Enable();
         }
 
-        // Set up the hooks to manipulate chest items
+        // Set up the hooks to manipulate chest and shop items
         private void SetupArchipelagoItems()
         {
             if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
@@ -402,10 +402,28 @@ namespace RnSArchipelago
             locationHandler.takeItemHook.Enable();
 
             // Give treasurespheres that have accumulated 
-            var treasuresphereOnStartNScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
-            locationHandler.spawnTreasuresphereOnStartNHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartNScript->Functions->Function);
-            locationHandler.spawnTreasuresphereOnStartNHook.Activate();
-            locationHandler.spawnTreasuresphereOnStartNHook.Enable();
+            var treasuresphereOnStartScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
+            locationHandler.spawnTreasuresphereOnStartHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartScript->Functions->Function);
+            locationHandler.spawnTreasuresphereOnStartHook.Activate();
+            locationHandler.spawnTreasuresphereOnStartHook.Enable();
+
+            // Activates the restock shop hook when the store is opened
+            var openShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_open_store") - 100000);
+            locationHandler.openShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.OpenShop, openShopScript->Functions->Function);
+            locationHandler.openShopHook.Activate();
+            locationHandler.openShopHook.Enable();
+
+            // Deactivates the restock shop hook when the store is closed
+            var closeShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_close_store") - 100000);
+            locationHandler.closeShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.CloseShop, closeShopScript->Functions->Function);
+            locationHandler.closeShopHook.Activate();
+            locationHandler.closeShopHook.Enable();
+
+            // Replacese the newly bought AP item in the shop
+            var restockShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_draw_itemrow") - 100000);
+            locationHandler.restockShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.RestockShop, restockShopScript->Functions->Function);
+            locationHandler.restockShopHook.Activate();
+
         }
 
         // Set up the hooks for class sanity handling

@@ -36,8 +36,12 @@ namespace RnSArchipelago.Game
         //internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
         internal IHook<ScriptDelegate>? takeItemHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereHook;
-        internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartNHook;
+        internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
         internal IHook<ScriptDelegate>? readyCheckHook;
+
+        internal IHook<ScriptDelegate>? openShopHook;
+        internal IHook<ScriptDelegate>? closeShopHook;
+        internal IHook<ScriptDelegate>? restockShopHook;
 
         private long baseItemId = -1;
         private int treasurespheresToSpawn = 0;
@@ -391,7 +395,7 @@ namespace RnSArchipelago.Game
                                 *argv[0] = new RValue(this.inventoryHandler.AvailableItems[index]);
                             }
 
-                            // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working
+                            // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working (probably will fix itself if/when i can properly start the adventure at the beginning
                             //HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var element);
                             //var instance = ((CLayerInstanceElement*)element)->Instance;
                             /*rnsReloaded.FindValue(instance, "yScale")->Real = 1;
@@ -640,24 +644,28 @@ namespace RnSArchipelago.Game
                         {
                             if (conn.session != null)
                             {
+                                LocationChecksPacket locationPacket = new();
                                 if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Global)
                                 {
-                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
-                                    conn.session?.Socket.SendPacketAsync(locationPacket);
+                                    locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
+                                    
                                 }
                                 else if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Regional)
                                 {
-                                    var locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
-                                    conn.session?.Socket.SendPacketAsync(locationPacket);
+                                    locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
                                 }
+
+                                conn.session?.Socket.SendPacketAsync(locationPacket);
+
+                                // TODO: Wait until the location is sent to do this (has to be on the main thread)
+                                // Set the item cache to -1, so we create the right type of item, and then place it
+                                var items = new RValue(self);
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(items["slots"], 2), (int)HookUtil.GetNumeric(argv[2])), 1) = new RValue(-1);
+
+                                // Make it so the item hasn't consumed their one per customer purchase
+                                *rnsReloaded.ArrayGetEntry(items["storeSlotOPCBin"], (int)HookUtil.GetNumeric(argv[2])) = new(0);
+
                             }
-
-                            var slots = new RValue(self);
-
-                            // Set the item cache to -1, so we repopulate it
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(slots["slots"], 2), (int)HookUtil.GetNumeric(argv[2])), 1) = new RValue(-1);
-
-                            rnsReloaded.ExecuteScript("scr_itemsys_populate_store", self, other, [new RValue(0)]);
 
                             // TODO: Fix the width of item names
                             // TODO: Subtract user gold, and set price of AP items
@@ -677,6 +685,75 @@ namespace RnSArchipelago.Game
                 this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
             }
 
+            return returnValue;
+        }
+
+        // Activate the restock shop hook when the shop opens
+        internal RValue* OpenShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.openShopHook != null)
+            {
+                returnValue = this.openShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call open shop hook", System.Drawing.Color.Red);
+            }
+
+            if (this.inventoryHandler.isActive)
+            {
+                restockShopHook!.Enable();
+            }
+            return returnValue;
+        }
+
+        // Deactivate the restock shop hook when the shop closes
+        internal RValue* CloseShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.closeShopHook != null)
+            {
+                returnValue = this.closeShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call close shop hook", System.Drawing.Color.Red);
+            }
+
+            if (this.inventoryHandler.isActive)
+            {
+                restockShopHook!.Disable();
+            }
+            return returnValue;
+        }
+
+        // Creates and set a new item when an AP shop item was bought
+        internal RValue* RestockShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.inventoryHandler.isActive)
+            {
+                if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+                {
+                    HookUtil.FindElementInLayer("InventoryItems", "slots", out var element);
+                    var instance = ((CLayerInstanceElement*)element)->Instance;
+                    for (var i = 0; i < 9; i++)
+                    {
+                        if (HookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "slots"), 2), i), 1), -1))
+                        {
+                            var newItemId = rnsReloaded.ExecuteScript("scr_itemsys_create_item", instance, other, [new RValue(0), new RValue(0), new RValue(2)]);
+                            rnsReloaded.ExecuteScript("scr_itemsys_place_item_in_row", instance, other, [newItemId!.Value, new RValue(2)]);
+                            rnsReloaded.ExecuteScript("scr_itemsys_populate_loot_end", instance, other, []); // Makes it so the new item is highlightable
+                        }
+                    }
+                }
+            }
+            if (this.restockShopHook != null)
+            {
+                returnValue = this.restockShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call restock shop hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
 
@@ -762,12 +839,12 @@ namespace RnSArchipelago.Game
             this.rnsReloadedRef.TryGetTarget(out var rnsReloaded);
 
             // Perform normal action for menu / starting kingdom
-            if (this.spawnTreasuresphereOnStartNHook != null && (!inventoryHandler.isActive || (rnsReloaded != null && HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "hallwayPos"), 0))))
+            if (this.spawnTreasuresphereOnStartHook != null && (!inventoryHandler.isActive || (rnsReloaded != null && HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "hallwayPos"), 0))))
             {
-                returnValue = this.spawnTreasuresphereOnStartNHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = this.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             // Due to a bug on the 6th kingdom, manually call each kingdoms hallway gen and update the notch icons
-            else if (this.spawnTreasuresphereOnStartNHook != null)
+            else if (this.spawnTreasuresphereOnStartHook != null)
             {
                 if (rnsReloaded != null)
                 {
