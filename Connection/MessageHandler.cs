@@ -10,6 +10,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
+using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using static RnSArchipelago.Config.Config;
@@ -27,6 +28,7 @@ namespace RnSArchipelago.Connection
 
         internal IHook<ScriptDelegate>? addMessageHook;
         internal readonly ConcurrentQueue<LogMessage> messages = new();
+        internal static readonly ConcurrentQueue<long> messageId = new();
         internal string errorMessage = "";
 
         private static readonly string GAME = "Rabbit and Steel";
@@ -187,17 +189,26 @@ namespace RnSArchipelago.Connection
                 else if (messages.TryDequeue(out var message))
                 {
                     var sourceId = -1;
+                    long playerId = 0;
                     var typedMessage = new RValue();
 
                     switch (message)
                     {
+                        case HintItemSendLogMessage:
+                            rnsReloaded.CreateString(&typedMessage, message.ToString());
+                            break;
                         case ItemSendLogMessage itemSendLogMessage:
                             var messageToSend = itemSendLogMessage.ToString();
 
                             if (itemSendLogMessage.IsSenderTheActivePlayer)
                             {
                                 sourceId = 0;
-                                messageToSend = messageToSend.Remove(0, messageToSend.IndexOf(' '));
+                                if (messageId.TryDequeue(out var id))
+                                {
+                                    playerId = id;
+                                }
+
+                                messageToSend = messageToSend.Remove(0, data.connection.Get<string>("name")!.Length + 1);
                             }
 
                             rnsReloaded.CreateString(&typedMessage, messageToSend);
@@ -211,7 +222,7 @@ namespace RnSArchipelago.Connection
                             break;
                     }
 
-                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(sourceId), new(), new(0), typedMessage, new(0)]);
+                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new(sourceId), new(playerId), new(0), typedMessage, new(0)]);
 
                 }
             }

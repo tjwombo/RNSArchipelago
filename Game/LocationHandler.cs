@@ -637,6 +637,13 @@ namespace RnSArchipelago.Game
                         if (this.inventoryHandler.checksPerItemInChest && LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
                         {
                             var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos((int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "slotId"))))] };
+                            if (conn.session != null)
+                            {
+                                if (conn.session.Locations.AllMissingLocations.Contains(locationPacket.Locations[0]))
+                                {
+                                    MessageHandler.messageId.Enqueue(HookUtil.GetNumeric(argv[0]));
+                                }
+                            }
                             conn.session?.Socket.SendPacketAsync(locationPacket);
                         }
                         else if (this.inventoryHandler.ShopSanity != InventoryHandler.ShopSetting.None && LocationUtil.GetLocationType() == LocationUtil.LocationType.Shop)
@@ -654,6 +661,11 @@ namespace RnSArchipelago.Game
                                     locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[(int)HookUtil.GetNumeric(argv[2])])] };
                                 }
 
+                                if (conn.session.Locations.AllMissingLocations.Contains(locationPacket.Locations[0]))
+                                {
+                                    MessageHandler.messageId.Enqueue(HookUtil.GetNumeric(argv[0]));
+                                }
+                                
                                 conn.session?.Socket.SendPacketAsync(locationPacket);
 
                                 // TODO: Wait until the location is sent to do this (has to be on the main thread)
@@ -769,13 +781,23 @@ namespace RnSArchipelago.Game
                 {
                     long[] locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation)];
 
-                    foreach (var character in characters)
+                    if (conn.session.Locations.AllMissingLocations.Contains(locations[0]))
                     {
-                        if (character.Equals(""))
+                        MessageHandler.messageId.Enqueue(0);
+                    }
+
+                    for (var i = 0; i < 4; i++)
+                    {
+                        if (characters[i] == null || characters[i].Equals(""))
                         {
                             continue;
                         }
-                        locations = [.. locations, conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation + " - " + character)];
+                        var newLocation = conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation + " - " + characters[i]);
+                        locations = [.. locations, newLocation];
+                        if (conn.session.Locations.AllMissingLocations.Contains(newLocation))
+                        {
+                            MessageHandler.messageId.Enqueue(i);
+                        }
                     }
                     conn.session.Locations.CompleteLocationChecksAsync(locations);
                 }
