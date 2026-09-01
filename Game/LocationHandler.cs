@@ -763,11 +763,20 @@ namespace RnSArchipelago.Game
             {
                 var baseLocation = LocationUtil.GetBaseLocation();
 
-                var character = HookUtil.GetClass();
+                var characters = HookUtil.GetClass();
 
                 if (conn.session != null)
                 {
-                    long[] locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation), conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation + " - " + character)];
+                    long[] locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation)];
+
+                    foreach (var character in characters)
+                    {
+                        if (character.Equals(""))
+                        {
+                            continue;
+                        }
+                        locations = [.. locations, conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, baseLocation + " - " + character)];
+                    }
                     conn.session.Locations.CompleteLocationChecksAsync(locations);
                 }
             }

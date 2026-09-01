@@ -119,21 +119,24 @@ namespace RnSArchipelago.Utils
         }
 
         // TODO: MAKE THIS WORK FOR MULTIPLAYER
-        internal static string GetClass()
+        internal static string[] GetClass()
         {
+            string[] classes = new string[4];
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                
-                FindElementInLayer("Ally", "allyId", out var instance);
-                if (instance != null)
+                for (var i = 0; i < 4; i++)
                 {
-                    var element = ((CLayerInstanceElement*)instance)->Instance;
-                    var characterId = (int)GetNumeric(rnsReloaded.FindValue(element, "allyId"));
-                    var character = InventoryHandler.GetClass(characterId);
-                    return character;
+                    FindElementInLayer("DialogMenu", "playerId", i + "", out var element);
+                    if (element != null)
+                    {
+                        var instance = ((CLayerInstanceElement*)element)->Instance;
+                        var characterId = (int)GetNumeric(rnsReloaded.FindValue(instance, "selectedChar"));
+                        var character = InventoryHandler.GetClass(characterId);
+                        classes[i] = character;
+                    }
                 }
             }
-            return "";
+            return classes;
         }
 
         // Find a given layer in the room

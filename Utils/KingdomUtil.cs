@@ -117,7 +117,7 @@ namespace RnSArchipelago.Utils
             if (conn.session != null)
             {
                 var locations = conn.session.Locations.AllMissingLocations;
-                var character = HookUtil.GetClass();
+                var characters = HookUtil.GetClass();
 
                 var weights = new int[kingdoms.Count];
                 double sum = 0;
@@ -136,12 +136,15 @@ namespace RnSArchipelago.Utils
                             sum += baseLocationWeight;
                         }
 
-                        if (character != "")
+                        foreach (var character in characters)
                         {
-                            if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + locationSuffix[j] + " - " + character)))
+                            if (character != "")
                             {
-                                weights[i] += baseLocationWeight * classLocationModifier;
-                                sum += baseLocationWeight * classLocationModifier;
+                                if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom + locationSuffix[j] + " - " + character)))
+                                {
+                                    weights[i] += baseLocationWeight * classLocationModifier;
+                                    sum += baseLocationWeight * classLocationModifier;
+                                }
                             }
                         }
                     }
@@ -176,28 +179,30 @@ namespace RnSArchipelago.Utils
                         }
 
                         // Only account for the character check if we still need kills and that class has a location
-                        if (character != "")
+                        foreach (var character in characters)
                         {
-                            
-                            if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) &&
-                                kingdom == "Shira" && inventoryHandler.shira_victories.Count < inventoryHandler.shiraKills)
+                            if (character != "")
                             {
-                                if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Shira - " + character)))
-                                {
-                                    weights[i] += goalToKillWeight * classLocationModifier;
-                                    sum += goalToKillWeight * classLocationModifier;
-                                }
-                            }
-                            else if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Witch || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) && 
-                                kingdom == "Witch" && inventoryHandler.witch_victories.Count < inventoryHandler.witchKills)
-                            {
-                                if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Witch - " + character)))
-                                {
-                                    weights[i] += goalToKillWeight * classLocationModifier;
-                                    sum += goalToKillWeight * classLocationModifier;
-                                }
-                            }
 
+                                if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) &&
+                                    kingdom == "Shira" && inventoryHandler.shira_victories.Count < inventoryHandler.shiraKills)
+                                {
+                                    if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Shira - " + character)))
+                                    {
+                                        weights[i] += goalToKillWeight * classLocationModifier;
+                                        sum += goalToKillWeight * classLocationModifier;
+                                    }
+                                }
+                                else if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Witch || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) &&
+                                    kingdom == "Witch" && inventoryHandler.witch_victories.Count < inventoryHandler.witchKills)
+                                {
+                                    if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Witch - " + character)))
+                                    {
+                                        weights[i] += goalToKillWeight * classLocationModifier;
+                                        sum += goalToKillWeight * classLocationModifier;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
