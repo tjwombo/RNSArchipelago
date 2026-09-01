@@ -167,13 +167,10 @@ namespace RnSArchipelago.Utils
                     }
 
                     // Check for Shira/Witch
-                    if (kingdom == "hw_pinnacle" || kingdom == "hw_reflection")
+                    if (kingdom == "Shira" || kingdom == "Witch")
                     {
-                        if (kingdom == "hw_pinnacle" && locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Shira")))
+                        if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, kingdom)))
                         {
-                            weights[i] += baseLocationWeight;
-                            sum += baseLocationWeight;
-                        } else if (kingdom == "hw_reflection" && locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Witch"))) {
                             weights[i] += baseLocationWeight;
                             sum += baseLocationWeight;
                         }
@@ -181,8 +178,9 @@ namespace RnSArchipelago.Utils
                         // Only account for the character check if we still need kills and that class has a location
                         if (character != "")
                         {
+                            
                             if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Shira || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) &&
-                                kingdom == "hw_pinnacle" && inventoryHandler.shira_victories.Count < inventoryHandler.shiraKills)
+                                kingdom == "Shira" && inventoryHandler.shira_victories.Count < inventoryHandler.shiraKills)
                             {
                                 if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Shira - " + character)))
                                 {
@@ -191,7 +189,7 @@ namespace RnSArchipelago.Utils
                                 }
                             }
                             else if ((inventoryHandler.Goal == InventoryHandler.GoalSetting.Witch || inventoryHandler.Goal == InventoryHandler.GoalSetting.Both) && 
-                                kingdom == "hw_reflection" && inventoryHandler.witch_victories.Count < inventoryHandler.witchKills)
+                                kingdom == "Witch" && inventoryHandler.witch_victories.Count < inventoryHandler.witchKills)
                             {
                                 if (locations.Contains(conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, "Witch - " + character)))
                                 {
