@@ -22,13 +22,12 @@ namespace RnSArchipelago
         private WeakReference<IReloadedHooks>? hooksRef;
         private ILogger logger = null!;
 
-        private Random rand = null!;
-        private InventoryHandler inventoryHandler = null!;
-        private ShopItemsHandler shopItemsHandler = null!;
-        private string modLocation = "";
-
         private Configurator configurator = null!;
         private Config.Config config = null!;
+        private Random rand = null!;
+
+        private InventoryHandler inventoryHandler = null!;
+        private ShopItemsHandler shopItemsHandler = null!;
         private RouteHandler routeHandler = null!;
         private MapHandler mapHandler = null!;
         private KingdomHandler kingdomHandler = null!;
@@ -38,6 +37,9 @@ namespace RnSArchipelago
         private ArchipelagoConnection conn = null!;
 
         private readonly SharedData data = new();
+
+        private string modLocation = "";
+        private string modVersion = "";
 
         // TODO: NOT ACTUALLY USED, JUST USED AS MY TESTING HOOK
         private IHook<ScriptDelegate>? setItemHook;
@@ -72,8 +74,8 @@ namespace RnSArchipelago
             this.config = this.configurator.GetConfiguration<Config.Config>(0);
             this.config.ConfigurationUpdated += this.ConfigurationUpdated;
 
-
             modLocation = _loader.GetDirectoryForModId("RnSArchipelago");
+            modVersion = modConfig.ModVersion;
 
             if (!this.config.StartUpConfig.SkipItemCreation)
             {
@@ -555,8 +557,9 @@ namespace RnSArchipelago
                     }
                 }
 
+                this.logger.PrintMessage(modVersion, Color.DarkOrange);
+
                 // Setup as if a friends only lobby or solo lobby based on the number of players
-                this.logger.PrintMessage("" + lobby.ArchipelagoNum, Color.DarkOrange);
                 if (lobby.ArchipelagoNum > 1)
                 {
                     *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);

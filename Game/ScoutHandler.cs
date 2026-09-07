@@ -15,7 +15,6 @@ namespace RnSArchipelago.Game
         private readonly InventoryHandler inventoryHandler;
         private ArchipelagoConnection conn = null!;
 
-        internal IHook<ScriptDelegate>? itemScoutChestHook;
         internal IHook<ScriptDelegate>? itemScoutShopHook;
 
         internal static readonly string[] CHEST_POSITIONS = ["Top Left", "Bottom Left", "Middle", "Bottom Right", "Top Right"];
@@ -195,6 +194,7 @@ namespace RnSArchipelago.Game
                         id = conn.session?.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[j]);
 
                         // TODO: RE-TURN THIS ON WHEN THE AP ITEM HAS BEEN BOUGHT
+                        // TODO: LOOK TO INTEGRATE THIS WITH ITEM CREATION/PLACEMENT
                         // if the item is an archipelago item, disable the purchase condition, mainly applies to hp and upgrades
                         if (id.HasValue && conn.session != null && !conn.session.Locations.AllLocationsChecked.Contains(id.Value))
                         {
