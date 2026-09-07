@@ -269,7 +269,6 @@ namespace RnSArchipelago.Game
 
                 if (maxCanRun == 0)
                 {
-                    KingdomUtil.SetHallwayValue(1, instanceValue, "", 0);
                     return;
                 }
 
@@ -290,6 +289,8 @@ namespace RnSArchipelago.Game
                     unplacedKingdoms.Remove(unplacedKingdoms[selectedIndex]);
                 }
 
+                int startingNewKingdomPosition = 2;
+
                 // Perform initial limiting
                 if (currentHallwayPosAware)
                 {
@@ -300,11 +301,11 @@ namespace RnSArchipelago.Game
                     }
 
                     // We've already handled pos 0 and 1, so we need to start at least at 2
-                    currentHallwayPos = Math.Max(currentHallwayPos + 1, 2);
+                    startingNewKingdomPosition = Math.Max(currentHallwayPos + 1, 2);
                 }
 
                 // Assign the remaining kingdoms
-                for (var i = currentHallwayPosAware ? currentHallwayPos : 2; i <= maxCanRun; i++)
+                for (var i = startingNewKingdomPosition; i <= maxCanRun; i++)
                 {
                     var availibleNthKingdoms = KingdomUtil.GetOrderedRunnableKingdoms(currentKingdomGroup, i).Intersect(unplacedKingdoms).ToList();
                     int selectedIndex = KingdomUtil.GetWeightedKingdom(conn, availibleNthKingdoms, true);
@@ -327,7 +328,11 @@ namespace RnSArchipelago.Game
                 var isProgressive = this.inventoryHandler.isProgressive;
                 if (maxCanRun == maxKingdoms && (!isProgressive || this.inventoryHandler.ProgressiveRegions >= maxKingdoms + 1))
                 {
-                    if ((visitableKingdoms & InventoryHandler.KingdomFlags.The_Pale_Keep) != 0 &&
+                    if (currentHallwayPosAware && currentHallwayPos >= maxKingdoms+1)
+                    {
+                        // Keep the already placed kingdom
+                    }
+                    else if ((visitableKingdoms & InventoryHandler.KingdomFlags.The_Pale_Keep) != 0 &&
                         (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && currentKingdomGroup == "kingdom")))
                     {
 
@@ -361,23 +366,16 @@ namespace RnSArchipelago.Game
                         {
                             KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "hw_darkhall", 13);
                         }
-                        else
-                        {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "", 0);
-                        }
-                    } else
-                    {
-                        KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "", 0);
                     }
-                }
-                else
-                {
-                    KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "", 0);
                 }
 
                 if (maxCanRun == maxKingdoms && (!isProgressive || this.inventoryHandler.ProgressiveRegions >= maxKingdoms + 2))
                 {
-                    if ((visitableKingdoms & InventoryHandler.KingdomFlags.Moonlit_Pinnacle) != 0 &&
+                    if (currentHallwayPosAware && currentHallwayPos >= maxKingdoms + 2)
+                    {
+                        // Keep the already placed kingdom
+                    }
+                    else if ((visitableKingdoms & InventoryHandler.KingdomFlags.Moonlit_Pinnacle) != 0 &&
                         this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && currentKingdomGroup == "kingdom"))
                     {
                         KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_pinnacle", 0);
@@ -403,18 +401,7 @@ namespace RnSArchipelago.Game
                         {
                             KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_reflection", 13);
                         }
-                        else
-                        {
-                            KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "", 0);
-                        }
-                    } else
-                {
-                    KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "", 0);
-                }
-                }
-                else
-                {
-                    KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "", 0);
+                    }
                 }
             }
 
