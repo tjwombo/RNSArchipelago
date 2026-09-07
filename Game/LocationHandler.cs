@@ -36,6 +36,7 @@ namespace RnSArchipelago.Game
         //internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
         internal IHook<ScriptDelegate>? takeItemHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereHook;
+        internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
         internal IHook<ScriptDelegate>? readyCheckHook;
 
         internal IHook<ScriptDelegate>? openShopHook;
@@ -43,7 +44,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? restockShopHook;
 
         private long baseItemId = -1;
-        internal int treasurespheresToSpawn = 0;
+        private int treasurespheresToSpawn = 0;
 
         internal static readonly string[] CHEST_POSITIONS = ["Top Left", "Bottom Left", "Middle", "Bottom Right", "Top Right"];
         internal static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
@@ -857,6 +858,35 @@ namespace RnSArchipelago.Game
                     
 
                     treasurespheresToSpawn--;
+                }
+            }
+
+            return returnValue;
+        }
+
+        // On outskirts loading, besides loading into lobby, add the treasurespheres we have accumulated
+        internal RValue* SpawnTreasuresphereOnStart(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            this.rnsReloadedRef.TryGetTarget(out var rnsReloaded);
+
+            if (this.spawnTreasuresphereOnStartHook != null)
+            {
+                returnValue = this.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call spawn trasuresphere on start n hook", System.Drawing.Color.Red);
+            }
+
+            if (rnsReloaded != null)
+            {
+                var kingdomName = rnsReloaded.FindValue(self, "stageName")->ToString();
+                kingdomName = kingdomName.Replace(Environment.NewLine, " ");
+
+                // If we are in the starting kingdom and generate the hallway, add the treasuresphere notches
+                if (kingdomName.Equals("Kingdom Outskirts") || kingdomName.Equals("Crack in the Geode"))
+                {
+                    treasurespheresToSpawn = this.inventoryHandler.AvailableTreasurespheres;
                 }
             }
 

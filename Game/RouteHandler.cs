@@ -533,7 +533,6 @@ namespace RnSArchipelago.Game
                         HookUtil.FindElementInLayer("RunMenu_Blocker", "hallwayPos", out var element);
                         var instance = ((CLayerInstanceElement*)element)->Instance;
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_generate", instance, other, []);
-                        locationHandler.treasurespheresToSpawn = this.inventoryHandler.AvailableTreasurespheres;
                     }
                 }
             }

@@ -401,6 +401,12 @@ namespace RnSArchipelago
             locationHandler.takeItemHook.Activate();
             locationHandler.takeItemHook.Enable();
 
+            // Give treasurespheres that have accumulated 
+            var treasuresphereOnStartScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
+            locationHandler.spawnTreasuresphereOnStartHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartScript->Functions->Function);
+            locationHandler.spawnTreasuresphereOnStartHook.Activate();
+            locationHandler.spawnTreasuresphereOnStartHook.Enable();
+
             // Activates the restock shop hook when the store is opened
             var openShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_open_store") - 100000);
             locationHandler.openShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.OpenShop, openShopScript->Functions->Function);
