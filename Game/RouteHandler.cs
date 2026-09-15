@@ -124,26 +124,26 @@ namespace RnSArchipelago.Game
                         {
                             if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom)
                             {
-                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_pinnacle"); // Might not need the secondary condition, but keeping it as safegaurd
+                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle"); // Might not need the secondary condition, but keeping it as safegaurd
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra)
                             {
-                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_reflection");
+                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection");
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Combined)
                             {
-                                return !((inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_pinnacle")
-                                    || (inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_reflection"));
+                                return !((inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle")
+                                    || (inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection"));
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either)
                             {
                                 if (rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 0)) == "hw_outskirts")
                                 {
-                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_pinnacle");
+                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle");
                                 }
                                 else if (rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 0)) == "hw_geode")
                                 {
-                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_reflection");
+                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection");
                                 }
                             }
                         }
