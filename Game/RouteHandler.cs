@@ -95,6 +95,14 @@ namespace RnSArchipelago.Game
                     {
                         if (hallwayNumber == maxVisitableKingdoms)
                         {
+                            if (inventoryHandler.isProgressive)
+                            {
+                                if (inventoryHandler.ProgressiveRegions < maxVisitableKingdoms + 1)
+                                {
+                                    return true;
+                                }
+                            }
+
                             if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom)
                             {
                                 return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep"); // Might not need the secondary condition, but keeping it as safegaurd
@@ -122,6 +130,14 @@ namespace RnSArchipelago.Game
                         }
                         else if (hallwayNumber == maxVisitableKingdoms + 1)
                         {
+                            if (inventoryHandler.isProgressive)
+                            {
+                                if (inventoryHandler.ProgressiveRegions < maxVisitableKingdoms + 2)
+                                {
+                                    return true;
+                                }
+                            }
+
                             if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom)
                             {
                                 return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle"); // Might not need the secondary condition, but keeping it as safegaurd

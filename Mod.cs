@@ -584,6 +584,7 @@ namespace RnSArchipelago
             }
             else
             {
+                //TODO: RESTORE SAVE FILE ON REACHING LOBBY ROOM / DISBANDING INSTEAD OF ENTERING AP ROOM TYPE
                 // Restore the save file
                 var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
 
