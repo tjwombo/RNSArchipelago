@@ -47,6 +47,16 @@ namespace RnSArchipelago.Connection
             this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, scoutHandler, config, data);
         }
 
+        internal void SetConnInfoAndConnect(LobbySettingsHandler lobby)
+        {
+            // Validate archipelago options / connection
+            this.data.connection.Set<string>("name", lobby.ArchipelagoName);
+            this.data.connection.Set<string>("address", lobby.ArchipelagoAddress);
+            this.data.connection.Set<string>("numPlayers", $"{lobby.ArchipelagoNum}");
+            this.data.connection.Set<string>("password", lobby.ArchipelagoPassword);
+            _ = StartConnection(true);
+        }
+
         // Attempt to start a connection to archipelago with the given configs
         internal async Task StartConnection(bool returnToTitle = false)
         {

@@ -35,6 +35,7 @@ namespace RnSArchipelago
         private LocationHandler locationHandler = null!;
         private ScoutHandler scoutHandler = null!;
         private ArchipelagoConnection conn = null!;
+        private SaveHandler saveHandler = null!;
 
         private readonly SharedData data = new();
 
@@ -51,12 +52,6 @@ namespace RnSArchipelago
         private readonly List<int> availableSecondary = [];
         private readonly List<int> availableSpecial = [];
         private readonly List<int> availableDefensive = [];
-
-        internal IHook<ScriptDelegate>? originalUnlockHook;
-        private static readonly string[] keys = { "hardDiff", "lunarDiff", "extraMode", "randomMode", "charSpBlade", "charSniper", "charBruiser", "charDefender", "charAncient", "charHammer", "charPyro", "charGunner", "charShadow" };
-
-        private readonly long[] originalUnlocks = new long[keys.Length];
-        private RValue* unlockKeys;
 
         internal IHook<ScriptDelegate>? oneShotHook;
 
@@ -123,6 +118,8 @@ namespace RnSArchipelago
                 kingdomHandler = new KingdomHandler(rnsReloadedRef, logger, inventoryHandler, routeHandler, this.config);
                 
                 classHandler = new ClassHandler(rnsReloadedRef, logger, inventoryHandler);
+
+                saveHandler = new SaveHandler(rnsReloadedRef, logger);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
                 /*var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
@@ -291,9 +288,9 @@ namespace RnSArchipelago
             // Store the initial unlock keys configuration
             var saveId = rnsReloaded.ScriptFindId("scr_unlock_read_save");
             var saveScript = rnsReloaded.GetScriptData(saveId - 100000);
-            this.originalUnlockHook = hooks.CreateHook<ScriptDelegate>(this.SetOriginalUnlock, saveScript->Functions->Function);
-            this.originalUnlockHook.Activate();
-            this.originalUnlockHook.Enable();
+            saveHandler.originalUnlockHook = hooks.CreateHook<ScriptDelegate>(saveHandler.SetOriginalUnlock, saveScript->Functions->Function);
+            saveHandler.originalUnlockHook.Activate();
+            saveHandler.originalUnlockHook.Enable();
 
             // Start the connection to archipelago
             var menuId = rnsReloaded.ScriptFindId("scr_runmenu_main_startrun_multi");
@@ -486,37 +483,6 @@ namespace RnSArchipelago
             return returnValue;
         }
 
-        private RValue* SetOriginalUnlock(
-            CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
-        )
-        {
-            if (this.originalUnlockHook != null)
-            {
-                returnValue = this.originalUnlockHook.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                this.logger.PrintMessage("Unable to call original unlock hook", System.Drawing.Color.Red);
-            }
-
-            if (!IsReady(out var rnsReloaded, out _)) return returnValue;
-
-            unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
-            var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
-            if (keysLength.HasValue)
-            {
-                for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
-                {
-                    var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
-                    if (keys.Contains(entry))
-                    {
-                        originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = HookUtil.GetNumeric(*rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i));
-                    }
-                }
-            }
-
-            return returnValue;
-        }
 
         // Create and validate the websocket connection to archipelago before moving to the character selection room
         private RValue* CreateArchipelagoWebsocket(
@@ -528,34 +494,14 @@ namespace RnSArchipelago
             // If the lobby type is archipelago set up the websocket
             if (lobby != null && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
             {
-                // Validate archipelago options / connection
-                this.data.connection.Set<string>("name", lobby.ArchipelagoName);
-                this.data.connection.Set<string>("address", lobby.ArchipelagoAddress);
-                this.data.connection.Set<string>("numPlayers", $"{lobby.ArchipelagoNum}");
-                this.data.connection.Set<string>("password", lobby.ArchipelagoPassword);
-                _ = conn.StartConnection(true);
+                conn.SetConnInfoAndConnect(lobby);
 
                 config.StartUpConfig.ArchipelagoName = lobby.ArchipelagoName;
                 config.StartUpConfig.ArchipelagoAddress = lobby.ArchipelagoAddress;
                 config.StartUpConfig.ArchipelagoPassword = lobby.ArchipelagoPassword;
                 config.Save?.Invoke();
 
-                // Lock/Unlock things for the save file
-                unlockKeys = rnsReloaded.utils.GetGlobalVar("unlOtherKey");
-                var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
-
-                if (keysLength.HasValue)
-                {
-                    for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
-                    {
-                        var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
-                        if (keys.Contains(entry))
-                        {
-                            originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = HookUtil.GetNumeric(*rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i));
-                            *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = new RValue(1);
-                        }
-                    }
-                }
+                saveHandler.RecordAndUnlockSaveInfo();
 
                 this.logger.PrintMessage(modVersion, Color.DarkOrange);
 
@@ -585,20 +531,7 @@ namespace RnSArchipelago
             else
             {
                 //TODO: RESTORE SAVE FILE ON REACHING LOBBY ROOM / DISBANDING INSTEAD OF ENTERING AP ROOM TYPE
-                // Restore the save file
-                var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
-
-                if (keysLength.HasValue)
-                {
-                    for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
-                    {
-                        var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
-                        if (keys.Contains(entry))
-                        {
-                            *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = new RValue(originalUnlocks[i]);
-                        }
-                    }
-                }
+                saveHandler.RestoreSaveInfo();
 
                 // Continue normally
                 if (this.archipelagoWebsocketHook != null)
