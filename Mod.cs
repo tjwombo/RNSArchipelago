@@ -107,8 +107,10 @@ namespace RnSArchipelago
                 KingdomUtil.inventoryHandler = inventoryHandler;
                 KingdomUtil.ResetRandom();
 
+                saveHandler = new SaveHandler(rnsReloadedRef, logger);
+
                 scoutHandler = new ScoutHandler(rnsReloadedRef, logger, inventoryHandler);
-                conn = new ArchipelagoConnection(rnsReloadedRef, logger, inventoryHandler, scoutHandler, this.config, data);
+                conn = new ArchipelagoConnection(rnsReloadedRef, logger, inventoryHandler, saveHandler, scoutHandler, this.config, data);
                 scoutHandler.SetConn(conn);
                 shopItemsHandler = new ShopItemsHandler(rand, logger, inventoryHandler);
                 locationHandler = new LocationHandler(rnsReloadedRef, rand, logger, inventoryHandler, shopItemsHandler, scoutHandler, this.config, conn);
@@ -119,7 +121,6 @@ namespace RnSArchipelago
                 
                 classHandler = new ClassHandler(rnsReloadedRef, logger, inventoryHandler);
 
-                saveHandler = new SaveHandler(rnsReloadedRef, logger);
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
                 /*var outskirtsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwaygen_outskirts") - 100000);
@@ -146,6 +147,7 @@ namespace RnSArchipelago
                 AddArchipelagoOptionsToMenu(); // Adds the options for archipelago
 
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
+                SetupArchipelagoOnlineMultiplayer(); // Create the online multiplayer hooks
 
                 SetupSendBattleAndChestLocations(); // Creates the hook to send locations on encounter win and chest open
                 SetupArchipelagoItems(); // Creates the archipelago items and puts them in the correct chest
@@ -288,7 +290,7 @@ namespace RnSArchipelago
             // Store the initial unlock keys configuration
             var saveId = rnsReloaded.ScriptFindId("scr_unlock_read_save");
             var saveScript = rnsReloaded.GetScriptData(saveId - 100000);
-            saveHandler.originalUnlockHook = hooks.CreateHook<ScriptDelegate>(saveHandler.SetOriginalUnlock, saveScript->Functions->Function);
+            saveHandler.originalUnlockHook = hooks.CreateHook<ScriptDelegate>(saveHandler.RecordSaveInfo, saveScript->Functions->Function);
             saveHandler.originalUnlockHook.Activate();
             saveHandler.originalUnlockHook.Enable();
 
@@ -300,25 +302,52 @@ namespace RnSArchipelago
             this.archipelagoWebsocketHook.Enable();
 
             // Close the connection after returning to lobby settings
-            var resetId = rnsReloaded.ScriptFindId("scr_runmenu_disband_disband");
+            var resetId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
             var resetScript = rnsReloaded.GetScriptData(resetId - 100000);
             conn.resetConnHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConn, resetScript->Functions->Function);
             conn.resetConnHook.Activate();
             conn.resetConnHook.Enable();
 
-            // Close the connection after returning to lobby settings from a victory/defeat screen
-            var resetEndId = rnsReloaded.ScriptFindId("scr_runmenu_victory_disbandlobby");
-            var resetEndScript = rnsReloaded.GetScriptData(resetEndId - 100000);
-            conn.resetConnEndHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnEnd, resetEndScript->Functions->Function);
-            conn.resetConnEndHook.Activate();
-            conn.resetConnEndHook.Enable();
+            // Close the connection upon entering the lobby list screen (destination after leaving a lobby as a client)
+            var resetClientEndId = rnsReloaded.ScriptFindId("scr_runmenu_lobbylist_setup");
+            var resetClientEndScript = rnsReloaded.GetScriptData(resetClientEndId - 100000);
+            conn.resetConnClientHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnClient, resetClientEndScript->Functions->Function);
+            conn.resetConnClientHook.Activate();
+            conn.resetConnClientHook.Enable();
 
             // Set up in game message queue checking
             var drawId = rnsReloaded.ScriptFindId("scr_gamecontrol_update_adventure");
             var drawScript = rnsReloaded.GetScriptData(drawId - 100000);
-            this.conn.messageHandler.addMessageHook = hooks.CreateHook<ScriptDelegate>(this.conn.messageHandler.AddMessage, drawScript->Functions->Function);
-            this.conn.messageHandler.addMessageHook.Activate();
-            this.conn.messageHandler.addMessageHook.Enable();
+            conn.messageHandler.addMessageHook = hooks.CreateHook<ScriptDelegate>(conn.messageHandler.AddMessage, drawScript->Functions->Function);
+            conn.messageHandler.addMessageHook.Activate();
+            conn.messageHandler.addMessageHook.Enable();
+        }
+
+        private void SetupArchipelagoOnlineMultiplayer()
+        {
+            if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
+
+            // Start the connection to archipelago
+            var connectId = rnsReloaded.ScriptFindId("scr_lobbyhost_buff_client");
+            var connectScript = rnsReloaded.GetScriptData(connectId - 100000);
+            conn.sendClientConnectionHook = hooks.CreateHook<ScriptDelegate>(conn.SendClientConnection, connectScript->Functions->Function);
+            conn.sendClientConnectionHook.Activate();
+            conn.sendClientConnectionHook.Enable();
+
+            // Tell the clients the new hallway data
+            var hallwayId = rnsReloaded.ScriptFindId("scr_lobbyhost_buff_adventuredata");
+            var hallwayScript = rnsReloaded.GetScriptData(hallwayId - 100000);
+            conn.sendClientHallwayHook = hooks.CreateHook<ScriptDelegate>(conn.SendClientHallway, hallwayScript->Functions->Function);
+            conn.sendClientHallwayHook.Activate();
+            conn.sendClientHallwayHook.Enable();
+
+            // Handle host communication
+            var packetId = rnsReloaded.ScriptFindId("scr_steam_handle_packet");
+            var packetScript = rnsReloaded.GetScriptData(packetId - 100000);
+            conn.parseSteamPacketHook = hooks.CreateHook<ScriptDelegate>(conn.ParseSteamPacket, packetScript->Functions->Function);
+            conn.parseSteamPacketHook.Activate();
+            conn.parseSteamPacketHook.Enable();
+
         }
 
         // Set up the hooks to send locations through the websocket
@@ -483,7 +512,6 @@ namespace RnSArchipelago
             return returnValue;
         }
 
-
         // Create and validate the websocket connection to archipelago before moving to the character selection room
         private RValue* CreateArchipelagoWebsocket(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
@@ -494,14 +522,19 @@ namespace RnSArchipelago
             // If the lobby type is archipelago set up the websocket
             if (lobby != null && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
             {
-                conn.SetConnInfoAndConnect(lobby);
+                this.data.connection.Set<string>("name", lobby.ArchipelagoName);
+                this.data.connection.Set<string>("address", lobby.ArchipelagoAddress);
+                this.data.connection.Set<string>("numPlayers", $"{lobby.ArchipelagoNum}");
+                this.data.connection.Set<string>("password", lobby.ArchipelagoPassword);
+                conn.isHost = true;
+                _ = conn.StartConnection(true);
 
                 config.StartUpConfig.ArchipelagoName = lobby.ArchipelagoName;
                 config.StartUpConfig.ArchipelagoAddress = lobby.ArchipelagoAddress;
                 config.StartUpConfig.ArchipelagoPassword = lobby.ArchipelagoPassword;
                 config.Save?.Invoke();
 
-                saveHandler.RecordAndUnlockSaveInfo();
+                saveHandler.UnlockSaveInfo();
 
                 this.logger.PrintMessage(modVersion, Color.DarkOrange);
 

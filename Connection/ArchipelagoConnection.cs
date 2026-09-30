@@ -18,15 +18,21 @@ namespace RnSArchipelago.Connection
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
         private readonly InventoryHandler inventoryHandler;
+        private readonly SaveHandler saveHandler;
         private readonly SharedData data;
+        private readonly Config.Config config;
 
         internal readonly MessageHandler messageHandler;
 
         internal IHook<ScriptDelegate>? resetConnHook;
-        internal IHook<ScriptDelegate>? resetConnEndHook;
+        internal IHook<ScriptDelegate>? resetConnClientHook;
         internal IHook<ScriptDelegate>? recconectHook;
+        internal IHook<ScriptDelegate>? parseSteamPacketHook;
+        internal IHook<ScriptDelegate>? sendClientConnectionHook;
+        internal IHook<ScriptDelegate>? sendClientHallwayHook;
 
         internal ArchipelagoSession? session;
+        internal bool isHost = true;
 
         private static readonly NetworkVersion VERSION = new(0, 6, 7);
         internal static readonly string GAME = "Rabbit and Steel";
@@ -35,6 +41,7 @@ namespace RnSArchipelago.Connection
             WeakReference<IRNSReloaded> rnsReloadedRef,
             ILogger logger,
             InventoryHandler inventoryHandler,
+            SaveHandler saveHandler,
             ScoutHandler scoutHandler,
             Config.Config config,
             SharedData data)
@@ -42,19 +49,123 @@ namespace RnSArchipelago.Connection
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
             this.inventoryHandler = inventoryHandler;
+            this.saveHandler = saveHandler;
             this.data = data;
+            this.config = config;
 
             this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, scoutHandler, config, data);
         }
 
-        internal void SetConnInfoAndConnect(LobbySettingsHandler lobby)
+        // Send the connection command to the client joining
+        internal unsafe RValue* SendClientConnection(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            // Validate archipelago options / connection
-            this.data.connection.Set<string>("name", lobby.ArchipelagoName);
-            this.data.connection.Set<string>("address", lobby.ArchipelagoAddress);
-            this.data.connection.Set<string>("numPlayers", $"{lobby.ArchipelagoNum}");
-            this.data.connection.Set<string>("password", lobby.ArchipelagoPassword);
-            _ = StartConnection(true);
+            if (this.sendClientConnectionHook != null)
+            {
+                returnValue = this.sendClientConnectionHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call send client connect hook", System.Drawing.Color.Red);
+            }
+
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
+
+                var msg = new RValue();
+                rnsReloaded.CreateString(&msg, "APConnect;" + config.StartUpConfig.ArchipelagoAddress + ";" + config.StartUpConfig.ArchipelagoName + ";" + config.StartUpConfig.ArchipelagoPassword);
+                args = new RValue[] { buffer!.Value, new(11), msg}; // Treat the message as a string
+                rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
+
+                args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
+                rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", self, other, args);
+
+            }
+
+            return returnValue;
+        }
+
+        // Send the updated hallway info to the clients
+        internal unsafe RValue* SendClientHallway(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.sendClientHallwayHook != null)
+            {
+                returnValue = this.sendClientHallwayHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call send client hallway hook", System.Drawing.Color.Red);
+            }
+
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
+
+                var msg = new RValue();
+                rnsReloaded.CreateString(&msg, "APHallway;" + "");
+                args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
+
+                args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
+                rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", self, other, args);
+
+            }
+
+            return returnValue;
+        }
+
+        // Handle steam packets for multiplayer communication
+        internal unsafe RValue* ParseSteamPacket(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                var buffer = *argv[1];
+
+                // Make sure we're at the beginning of the buffer
+                RValue[] args = [buffer, new(0), new(0)];
+                rnsReloaded.ExecuteCodeFunction("buffer_seek", null, null, args);
+
+                // Read the buffer as a string
+                args = [buffer, new(11)]; // 11 is to read the buffer as a string
+                var message = rnsReloaded.ExecuteCodeFunction("buffer_read", null, null, args);
+
+                // Reset the position to the beginning for the actual read
+                args = [buffer, new(0), new(0)];
+                rnsReloaded.ExecuteCodeFunction("buffer_seek", null, null, args);
+
+                if (message.HasValue)
+                {
+                    if (message.Value.ToString().StartsWith("APConnect"))
+                    {
+                        this.logger.PrintMessage(message.Value.ToString(), System.Drawing.Color.Red);
+                        string[] parts = message.Value.ToString().Substring(10).Split(";");
+                        this.logger.PrintMessage(parts.Length + " " + parts[0] + " " + message.Value.ToString().Substring(10), System.Drawing.Color.Red);
+
+                        this.data.connection.Set<string>("address", parts[0]);
+                        this.data.connection.Set<string>("name", parts[1]);
+                        this.data.connection.Set<string>("password", parts[2]);
+                        isHost = false;
+                        _ = StartConnection(true);
+
+                        saveHandler.UnlockSaveInfo();
+
+                        *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
+                    }
+                }
+            }
+
+            if (this.parseSteamPacketHook != null)
+            {
+                returnValue = this.parseSteamPacketHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call parse steam packet hook", System.Drawing.Color.Red);
+            }
+
+            return returnValue;
         }
 
         // Attempt to start a connection to archipelago with the given configs
@@ -119,16 +230,16 @@ namespace RnSArchipelago.Connection
             return returnValue;
         }
 
-        // Return to the lobby settings, after a win/loss
-        internal unsafe RValue* ResetConnEnd(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        // Return to the lobby list after leaving as client
+        internal unsafe RValue* ResetConnClient(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.resetConnEndHook != null)
+            if (this.resetConnClientHook != null)
             {
-                this.resetConnEndHook?.OriginalFunction(self, other, returnValue, argc, argv);
+                this.resetConnClientHook?.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
-                this.logger.PrintMessage("Unable to call reset conn end hook", System.Drawing.Color.Red);
+                this.logger.PrintMessage("Unable to call reset conn client hook", System.Drawing.Color.Red);
             }
 
             ResetConn();

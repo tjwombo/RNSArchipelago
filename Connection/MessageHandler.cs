@@ -10,7 +10,6 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
-using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using static RnSArchipelago.Config.Config;
@@ -27,6 +26,7 @@ namespace RnSArchipelago.Connection
         private readonly SharedData data;
 
         internal IHook<ScriptDelegate>? addMessageHook;
+
         internal readonly ConcurrentQueue<LogMessage> messages = new();
         internal static readonly ConcurrentQueue<long> messageId = new();
         internal string errorMessage = "";
@@ -99,7 +99,7 @@ namespace RnSArchipelago.Connection
                 (modConfig.MessageConfig.TrapLog && itemSendLogMessage.Item.Flags.HasFlag(ItemFlags.Trap)));
         }
 
-        // Handle incomming packets
+        // Handle incomming AP packets
         internal void OnPacketReceived(ArchipelagoPacketBase packet)
         {
             switch (packet.PacketType)
@@ -232,7 +232,7 @@ namespace RnSArchipelago.Connection
             }
             else
             {
-                logger.PrintMessage("Unable to call fix end icons hook", System.Drawing.Color.Red);
+                logger.PrintMessage("Unable to call add message hook", System.Drawing.Color.Red);
             }
 
             return returnValue;

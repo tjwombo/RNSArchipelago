@@ -118,7 +118,6 @@ namespace RnSArchipelago.Utils
             return (int)value.Real | value.Int32;
         }
 
-        // TODO: MAKE THIS WORK FOR MULTIPLAYER
         internal static string[] GetClass()
         {
             string[] classes = new string[4];
@@ -329,6 +328,13 @@ namespace RnSArchipelago.Utils
             var layer = room->Layers.First;
             while (layer != null)
             {
+                // Crashes when you try to get a field in backgrounds as it has no objects
+                if (Marshal.PtrToStringAnsi((nint)layer->Name) == "Backgrounds_1")
+                {
+                    layer = layer->Next;
+                    continue;
+                }
+
                 // Find the element in the layer that is the lobby type selector, has name lobby
                 element = layer->Elements.First;
                 while (element != null)

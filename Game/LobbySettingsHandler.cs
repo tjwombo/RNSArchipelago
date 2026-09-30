@@ -1,10 +1,8 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Connection;
-
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-
 using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
@@ -645,7 +643,38 @@ namespace RnSArchipelago.Game
             {
                 if (argv[0]->ToString() == "lobbydisplay" && IsEqualToNumeric(argv[2], -350) && IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
-                    FindElement("name", "click to edit lobby settings", out var element);
+                    var scoreId = rnsReloaded.CodeFunctionFind("parameter_count");
+
+                    if (!scoreId.HasValue)
+                    {
+                        this.logger.PrintMessage("Could not assign reconnection hook to button", System.Drawing.Color.Red);
+                        return returnValue;
+                    }
+
+                    CLayerElementBase* element;
+
+                    if (conn.isHost)
+                    {
+                        FindElement("name", "click to edit lobby settings", out element);
+                    } else
+                    {
+                        RValue id = new();
+                        rnsReloaded.CreateString(&id, "lobbysettings");
+
+                        FindElement("funct", (scoreId.Value + 100000) + "", out element);
+
+                        // Destroy the existing (if any) reconnect button so we can create a new one, as this function errors if we dont create the button or call the original function as a client
+                        if (element != null)
+                        {
+                            // TODO: ACTUALLY DESTROY THE INSTANCE RATHER THAN CHANGE THE FUNCTION SO WE DONT FIND IT IN THE SEARCH
+                            var destroyInstance = new RValue(((CLayerInstanceElement*)element)->Instance);
+                            *destroyInstance.Get("funct") = new(-1);
+                        }
+
+                        rnsReloaded.ExecuteScript("scr_runmenu_make_button", self, other, [id, new(), new(), new(), new(0), new(-360), new(1400), new(110), new(scoreId.Value + 100000)]);
+                        FindElement("funct", (scoreId.Value + 100000) + "", out element);
+                    }
+
                     var instance = new RValue(((CLayerInstanceElement*)element)->Instance);
 
                     RValue boxTitle = new RValue(0);
@@ -671,14 +700,11 @@ namespace RnSArchipelago.Game
 
                     *instance.Get("textOffsetY") = new(-10);
 
+                    *instance.Get("mouseob_height") = new(110);
                     *instance.Get("height") = new(110);
 
                     // Attach it to a dummy function so that we can hook it
-                    var scoreId = rnsReloaded.CodeFunctionFind("parameter_count");
-                    if (scoreId.HasValue)
-                    {
-                        *instance.Get("funct") = new(scoreId.Value + 100000);
-                    }
+                    *instance.Get("funct") = new(scoreId.Value + 100000);
 
                     return returnValue;
                 }

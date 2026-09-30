@@ -24,7 +24,7 @@ namespace RnSArchipelago.Game
             this.logger = logger;
         }
 
-        internal RValue* SetOriginalUnlock(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        internal RValue* RecordSaveInfo(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (this.originalUnlockHook != null)
             {
@@ -57,7 +57,7 @@ namespace RnSArchipelago.Game
         }
 
         // Unlock the keys in "keys" for the save file
-        internal void RecordAndUnlockSaveInfo()
+        internal void UnlockSaveInfo()
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
@@ -71,7 +71,6 @@ namespace RnSArchipelago.Game
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
                         if (keys.Contains(entry))
                         {
-                            originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = HookUtil.GetNumeric(*rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i));
                             *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = new RValue(1);
                         }
                     }

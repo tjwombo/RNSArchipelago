@@ -20,7 +20,7 @@ This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II)
 You can install the mod thorugh Reloaded by adding Rabbit and Steel as an application by clicking the + button and then
 1. Download the mod by clicking the ⚙+ button
 2. Filter All Sources to RabbitSteel.exe
-3. Search "RnS Reloaded" and install it
+3. Search "RnS Archipelago" and install it
 
 Alternatively, it can be downloaded manually by 
 1. Downloading the .7z file in releases
@@ -28,7 +28,7 @@ Alternatively, it can be downloaded manually by
 3. Dragging it (while still zipped) onto the Reloaded 2 "Configure Mods" screen, which is reached by clicking on the Rabbit and Steel Icon
 
 Then on the "Configure Mods" screen make sure the mod is active, box should be red and have a + instead of -
-- RNSReloaded should have a filled in red box
+- RNSReloaded (which should have been added automatically, [see Dependencies](#Dependencies)) should have a filled in red box
 
 And then hit "Launch Application"
 
@@ -43,8 +43,6 @@ If you get disconnected mid run, the "ONWARD" loading area will not appear.
 You can reconnect by pausing the game and hit the reconnect button at the top to try reconnecting
 - Upon reconnection, the loading area should reappear.
 - Any checks obtained while disconnected will not be sent. This will eventually be updated.
-
-It is recommended to pick your starting kingdom through the map inside the lobby rather than when creating the lobby, as the mod does not know which kingdoms you have access to until you've connected
 
 ## Dependencies
 This mod requires two dependencies, reloaded.sharedlib.hooks and RNSReloaded (along with their dependencies) which should be installed automatically regardless of which instalation method you choose.
