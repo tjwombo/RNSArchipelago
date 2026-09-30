@@ -13,22 +13,20 @@ If you found any bugs, please report it in the Archipelago discord server in the
 
 ## Installation
 
-**Note Reloaded-II can have some trouble downloading/updating, so it is recommended to make sure you are using the correct version before starting a multiworld**
-
 This mod uses [R2Reloaded](https://github.com/Reloaded-Project/Reloaded-II)
 
-You can install the mod thorugh Reloaded by adding Rabbit and Steel as an application by clicking the + button and then
-1. Download the mod by clicking the ⚙+ button
-2. Filter All Sources to RabbitSteel.exe
-3. Search "RnS Archipelago" and install it
+You can install the mod thorugh Reloaded by:
+1. Adding Rabbit and Steel as an application by clicking the + button on the left and selecting the exe
+2. Search the mod by clicking the ⚙+ button and search for "RnS Archipelago"
+3. Download it, make sure the version listed in the changelog is the correct version
 
 Alternatively, it can be downloaded manually by 
 1. Downloading the .7z file in releases
 2. Remove the version number from the name so that its RnSArchipelago.7z
 3. Dragging it (while still zipped) onto the Reloaded 2 "Configure Mods" screen, which is reached by clicking on the Rabbit and Steel Icon
 
-Then on the "Configure Mods" screen make sure the mod is active, box should be red and have a + instead of -
-- RNSReloaded (which should have been added automatically, [see Dependencies](#Dependencies)) should have a filled in red box
+Then on the "Configure Mods" screen, after clicking on the Rabbit and Steel icon on the left, make sure the mod is active, box should be have a + instead of - inside it
+- RNSReloaded (which should have been added automatically, [see Dependencies](#Dependencies)) should have a filled in box
 
 And then hit "Launch Application"
 
