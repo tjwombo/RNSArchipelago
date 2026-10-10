@@ -8,8 +8,10 @@ using Reloaded.Mod.Interfaces;
 
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
+using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
+using System.Collections;
 
 namespace RnSArchipelago.Connection
 {
@@ -30,9 +32,11 @@ namespace RnSArchipelago.Connection
         internal IHook<ScriptDelegate>? parseSteamPacketHook;
         internal IHook<ScriptDelegate>? sendClientConnectionHook;
         internal IHook<ScriptDelegate>? sendClientHallwayHook;
+        internal IHook<ScriptDelegate>? handleClientDisconnectHook;
 
         internal ArchipelagoSession? session;
         internal bool isHost = true;
+        internal ArrayList clientIds = [];
 
         private static readonly NetworkVersion VERSION = new(0, 6, 7);
         internal static readonly string GAME = "Rabbit and Steel";
@@ -54,6 +58,23 @@ namespace RnSArchipelago.Connection
             this.config = config;
 
             this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, scoutHandler, config, data);
+        }
+
+        // Send the connection command to the client joining
+        internal unsafe RValue* HandleClientDisconnect(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.handleClientDisconnectHook != null)
+            {
+                returnValue = this.handleClientDisconnectHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call client disconnect hook", System.Drawing.Color.Red);
+            }
+
+            clientIds.Remove(HookUtil.GetNumeric(argv[0]));
+
+            return returnValue;
         }
 
         // Send the connection command to the client joining
@@ -79,41 +100,88 @@ namespace RnSArchipelago.Connection
                 rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
 
                 args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
-                rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", self, other, args);
+                rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
+
+                clientIds.Add(HookUtil.GetNumeric(rnsReloaded.FindValue(self, "clientId")));
+
+                SendClientHallway();
+                SendClientNotch();
 
             }
 
             return returnValue;
         }
 
-        // Send the updated hallway info to the clients
-        internal unsafe RValue* SendClientHallway(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        // Send the connection command to the client joining
+        internal unsafe void SendClientHallway()
         {
-            if (this.sendClientHallwayHook != null)
-            {
-                returnValue = this.sendClientHallwayHook.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                logger.PrintMessage("Unable to call send client hallway hook", System.Drawing.Color.Red);
-            }
-
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
                 var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
 
+                var info = "APHallway;";
+                HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
+                this.logger.PrintMessage((instance == null) + "", System.Drawing.Color.Red);
+                var hallkey = instanceValue.Get("hallkey");
+                for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")); i++)
+                {
+                    info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("hallseed"), i)->ToString() + ";"; // 0 (will be enum) says its hallway, position, value
+                }
+
+                info = info.TrimEnd(';');
+
                 var msg = new RValue();
-                rnsReloaded.CreateString(&msg, "APHallway;" + "");
+                rnsReloaded.CreateString(&msg, info);
                 args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
                 rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
 
-                args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
-                rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", self, other, args);
+                this.logger.PrintMessage("send hallway", System.Drawing.Color.Red);
+
+                foreach (long id in clientIds)
+                {
+                    args = new RValue[] { new(id), buffer!.Value };
+                    rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
+                }
 
             }
+        }
 
-            return returnValue;
+        internal unsafe void SendClientNotch()
+        {
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
+
+                var info = "APHallway;";
+                HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+                var instance = (CLayerInstanceElement*)element;
+                var instanceValue = new RValue(instance->Instance);
+                var notches = instanceValue.Get("notches");
+                for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("currentPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("notchNumber")); i++)
+                {
+                    info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("xSubimg"), i)->ToString() + ";"; // 1 (will be enum) says its notch, position, value
+                }
+
+                info = info.TrimEnd(';');
+
+                var msg = new RValue();
+                rnsReloaded.CreateString(&msg, info);
+                args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
+
+                this.logger.PrintMessage("send notch", System.Drawing.Color.Red);
+
+                foreach (long id in clientIds)
+                {
+                    args = new RValue[] { new(id), buffer!.Value };
+                    rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
+                }
+
+            }
         }
 
         // Handle steam packets for multiplayer communication

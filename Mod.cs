@@ -334,13 +334,6 @@ namespace RnSArchipelago
             conn.sendClientConnectionHook.Activate();
             conn.sendClientConnectionHook.Enable();
 
-            // Tell the clients the new hallway data
-            var hallwayId = rnsReloaded.ScriptFindId("scr_lobbyhost_buff_adventuredata");
-            var hallwayScript = rnsReloaded.GetScriptData(hallwayId - 100000);
-            conn.sendClientHallwayHook = hooks.CreateHook<ScriptDelegate>(conn.SendClientHallway, hallwayScript->Functions->Function);
-            conn.sendClientHallwayHook.Activate();
-            conn.sendClientHallwayHook.Enable();
-
             // Handle host communication
             var packetId = rnsReloaded.ScriptFindId("scr_steam_handle_packet");
             var packetScript = rnsReloaded.GetScriptData(packetId - 100000);
@@ -348,6 +341,13 @@ namespace RnSArchipelago
             conn.parseSteamPacketHook.Activate();
             conn.parseSteamPacketHook.Enable();
 
+            // Handle client disconnect
+            var disconnectId = rnsReloaded.ScriptFindId("scr_clientmap_delete");
+            var disconnectScript = rnsReloaded.GetScriptData(disconnectId - 100000);
+            conn.handleClientDisconnectHook = hooks.CreateHook<ScriptDelegate>(conn.HandleClientDisconnect, disconnectScript->Functions->Function);
+            conn.handleClientDisconnectHook.Activate();
+            conn.handleClientDisconnectHook.Enable();
+            
         }
 
         // Set up the hooks to send locations through the websocket

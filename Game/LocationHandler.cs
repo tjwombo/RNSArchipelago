@@ -859,6 +859,7 @@ namespace RnSArchipelago.Game
 
                     treasurespheresToSpawn--;
                 }
+                conn.SendClientNotch();
             }
 
             return returnValue;

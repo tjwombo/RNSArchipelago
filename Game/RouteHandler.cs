@@ -331,6 +331,12 @@ namespace RnSArchipelago.Game
 
                 if (maxCanRun == 0)
                 {
+
+                    if (conn.isHost)
+                    {
+                        conn.SendClientHallway();
+                    }
+
                     return;
                 }
 
@@ -465,6 +471,11 @@ namespace RnSArchipelago.Game
                         }
                     }
                 }
+
+                if (conn.isHost)
+                {
+                    conn.SendClientHallway();
+                }
             }
 
         }
@@ -582,6 +593,11 @@ namespace RnSArchipelago.Game
                         HookUtil.FindElementInLayer("RunMenu_Blocker", "hallwayPos", out var element);
                         var instance = ((CLayerInstanceElement*)element)->Instance;
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_generate", instance, other, []);
+                    }
+
+                    if (conn.isHost)
+                    {
+                        conn.SendClientNotch();
                     }
                 }
             }
