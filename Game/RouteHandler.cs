@@ -19,6 +19,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
         internal IHook<ScriptDelegate>? characterChosenHook;
+        internal IHook<ScriptDelegate>? StopXSubimgHook;
 
         internal string currentKingdomGroup = "";
         private string selectedKingdom = "";
@@ -37,9 +38,18 @@ namespace RnSArchipelago.Game
         // Update the kingdoms we visit and the number of kingdoms we should be visiting
         internal void OnKingdomRecieve(bool currentHallwayPosAware = true)
         {
-            UpdateRoute(currentHallwayPosAware);
+            if (conn.isHost)
+            {
+                UpdateRoute(currentHallwayPosAware);
 
-            UpdateRouteLength();
+                UpdateRouteLength();
+
+                // When currentHallwayPosAware is false is from changing halls, which sends the info correctly by default
+                if (currentHallwayPosAware)
+                {
+                    conn.SendClientHallway();
+                }
+            }
         }
 
         // End the route early if we arent allowed to continue
@@ -99,32 +109,53 @@ namespace RnSArchipelago.Game
                             {
                                 if (inventoryHandler.ProgressiveRegions < maxVisitableKingdoms + 1)
                                 {
+                                    this.logger.PrintMessage("Ending route early as there is not enough progressive regions", System.Drawing.Color.Red);
                                     return true;
                                 }
                             }
 
                             if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom)
                             {
-                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep"); // Might not need the secondary condition, but keeping it as safegaurd
+                                if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep")) // Might not need the secondary condition, but keeping it as safegaurd
+                                {
+                                    this.logger.PrintMessage("Ending route early as The Pale Keep has not been obtained", System.Drawing.Color.Red);
+                                    return true;
+                                }
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra)
                             {
-                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Looping_Hallway) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_darkhall");
+                                if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Looping_Hallway) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_darkhall"))
+                                {
+                                    this.logger.PrintMessage("Ending route early as Looping Hallway has not been obtained", System.Drawing.Color.Red);
+                                    return true;
+                                }
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Combined)
                             {
-                                return !((inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep") ||
-                                    (inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Looping_Hallway) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_darkhall"));
+                                if (!((inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep") ||
+                                    (inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Looping_Hallway) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_darkhall")))
+                                {
+                                    this.logger.PrintMessage("Ending route early as neither The Pale Keep nor Looping Hallway has not been obtained", System.Drawing.Color.Red);
+                                    return true;
+                                }
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either)
                             {
                                 if (rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 0)) == "hw_outskirts")
                                 {
-                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep");
+                                    if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep"))
+                                    {
+                                        this.logger.PrintMessage("Ending route early as The Pale Keep has not been obtained", System.Drawing.Color.Red);
+                                        return true;
+                                    }
                                 }
                                 else if (rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 0)) == "hw_geode")
                                 {
-                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Looping_Hallway) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_darkhall");
+                                    if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Looping_Hallway) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_darkhall"))
+                                    {
+                                        this.logger.PrintMessage("Ending route early as Looping Hallway has not been obtained", System.Drawing.Color.Red);
+                                        return true;
+                                    }
                                 }
                             }
                         }
@@ -134,32 +165,53 @@ namespace RnSArchipelago.Game
                             {
                                 if (inventoryHandler.ProgressiveRegions < maxVisitableKingdoms + 2)
                                 {
+                                    this.logger.PrintMessage("Ending route early as there is not enough progressive regions", System.Drawing.Color.Red);
                                     return true;
                                 }
                             }
 
                             if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom)
                             {
-                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle"); // Might not need the secondary condition, but keeping it as safegaurd
+                                if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle")) // Might not need the secondary condition, but keeping it as safegaurd
+                                {
+                                    this.logger.PrintMessage("Ending route early as Moonlit Pinnacle has not been obtained", System.Drawing.Color.Red);
+                                    return true;
+                                }
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra)
                             {
-                                return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection");
+                                if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection"))
+                                {
+                                    this.logger.PrintMessage("Ending route early as Reflecting Pool has not been obtained", System.Drawing.Color.Red);
+                                    return true;
+                                }
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Combined)
                             {
-                                return !((inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle")
-                                    || (inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection"));
+                                if (!((inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle")
+                                    || (inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection")))
+                                {
+                                    this.logger.PrintMessage("Ending route early as neither Moonlit Pinnacle nor Reflecting Pool has not been obtained", System.Drawing.Color.Red);
+                                    return true;
+                                }
                             }
                             else if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either)
                             {
                                 if (rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 0)) == "hw_outskirts")
                                 {
-                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle");
+                                    if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Moonlit_Pinnacle) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_pinnacle"))
+                                    {
+                                        this.logger.PrintMessage("Ending route early as Moonlit Pinnacle has not been obtained", System.Drawing.Color.Red);
+                                        return true;
+                                    }
                                 }
                                 else if (rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, 0)) == "hw_geode")
                                 {
-                                    return !(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection");
+                                    if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.Reflecting_Pool) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 2)) == "hw_reflection"))
+                                    {
+                                        this.logger.PrintMessage("Ending route early as Reflecting Pool has not been obtained", System.Drawing.Color.Red);
+                                        return true;
+                                    }
                                 }
                             }
                         }
@@ -403,7 +455,6 @@ namespace RnSArchipelago.Game
                     else if ((visitableKingdoms & InventoryHandler.KingdomFlags.The_Pale_Keep) != 0 &&
                         (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && currentKingdomGroup == "kingdom")))
                     {
-
                         KingdomUtil.SetHallwayValue(maxCanRun + 1, instanceValue, "hw_keep", 0);
                     }
                     else if ((visitableKingdoms & InventoryHandler.KingdomFlags.Looping_Hallway) != 0 &&
@@ -451,7 +502,7 @@ namespace RnSArchipelago.Game
                     else if ((visitableKingdoms & InventoryHandler.KingdomFlags.Reflecting_Pool) != 0 &&
                         this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Extra || (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Either && currentKingdomGroup == "extra"))
                     {
-                        KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_reflection", 0);
+                        KingdomUtil.SetHallwayValue(maxCanRun + 2, instanceValue, "hw_reflection", 13);
                     }
                     else if (this.inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Combined)
                     {
@@ -504,7 +555,7 @@ namespace RnSArchipelago.Game
                 maxCanRun = (int)Math.Min(maxCanRun, this.inventoryHandler.ProgressiveRegions);
             }
 
-            this.logger.PrintMessage("Route length: " + maxCanRun, System.Drawing.Color.DarkOrange);
+            this.logger.PrintMessage("Main Kingdoms Route length: " + maxCanRun, System.Drawing.Color.DarkOrange);
 
             ModifyRoute(maxCanRun, visitableKingdoms, currentHallwayPosAware);
         }
@@ -512,7 +563,7 @@ namespace RnSArchipelago.Game
         // Create the route such that you only visit kingdoms you are allowed to with your settings and items combo
         internal RValue* CreateRoute(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && conn.isHost)
             {
                 if (this.chooseHallsHook != null)
                 {
@@ -566,7 +617,10 @@ namespace RnSArchipelago.Game
             }
             if (this.chooseHallsHook != null)
             {
-                returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                if (conn.session == null || conn.isHost)
+                {
+                    returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                }
             }
             else
             {
@@ -585,7 +639,7 @@ namespace RnSArchipelago.Game
 
                 if (this.inventoryHandler.isActive)
                 {
-                    UpdateRoute(false);
+                    OnKingdomRecieve(true);
 
                     // Regenerate the room and treasurespheres after a class joins
                     if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
@@ -604,6 +658,24 @@ namespace RnSArchipelago.Game
             else
             {
                 this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
+            }
+
+            return returnValue;
+        }
+
+        // Stop client from overriding recieved xsubimg info
+        internal RValue* StopXSubimg(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.StopXSubimgHook != null)
+            {
+                if (conn.session == null || conn.isHost)
+                {
+                    returnValue = this.StopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
+                }
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call xsubimg hook", System.Drawing.Color.Red);
             }
 
             return returnValue;

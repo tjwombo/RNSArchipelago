@@ -808,7 +808,10 @@ namespace RnSArchipelago.Game
         // Make the next notch be an ingame only chest
         private void AddChestToNotch()
         {
-            treasurespheresToSpawn++;
+            if (conn.isHost)
+            {
+                treasurespheresToSpawn++;
+            }
         }
 
         // On outskirts loading, besides loading into lobby, add the treasurespheres we have accumulated
@@ -872,7 +875,10 @@ namespace RnSArchipelago.Game
 
             if (this.spawnTreasuresphereOnStartHook != null)
             {
-                returnValue = this.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
+                if (conn.session == null || conn.isHost)
+                {
+                    returnValue = this.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
+                }
             }
             else
             {
@@ -881,13 +887,16 @@ namespace RnSArchipelago.Game
 
             if (rnsReloaded != null)
             {
-                var kingdomName = rnsReloaded.FindValue(self, "stageName")->ToString();
-                kingdomName = kingdomName.Replace(Environment.NewLine, " ");
-
-                // If we are in the starting kingdom and generate the hallway, add the treasuresphere notches
-                if (kingdomName.Equals("Kingdom Outskirts") || kingdomName.Equals("Crack in the Geode"))
+                if (conn.isHost)
                 {
-                    treasurespheresToSpawn = this.inventoryHandler.AvailableTreasurespheres;
+                    var kingdomName = rnsReloaded.FindValue(self, "stageName")->ToString();
+                    kingdomName = kingdomName.Replace(Environment.NewLine, " ");
+
+                    // If we are in the starting kingdom and generate the hallway, add the treasuresphere notches
+                    if (kingdomName.Equals("Kingdom Outskirts") || kingdomName.Equals("Crack in the Geode"))
+                    {
+                        treasurespheresToSpawn = this.inventoryHandler.AvailableTreasurespheres;
+                    }
                 }
             }
 

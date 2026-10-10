@@ -27,7 +27,6 @@ namespace RnSArchipelago.Connection
         internal readonly MessageHandler messageHandler;
 
         internal IHook<ScriptDelegate>? resetConnHook;
-        internal IHook<ScriptDelegate>? resetConnClientHook;
         internal IHook<ScriptDelegate>? recconectHook;
         internal IHook<ScriptDelegate>? parseSteamPacketHook;
         internal IHook<ScriptDelegate>? sendClientConnectionHook;
@@ -60,7 +59,7 @@ namespace RnSArchipelago.Connection
             this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, scoutHandler, config, data);
         }
 
-        // Send the connection command to the client joining
+        // Disconnect the client
         internal unsafe RValue* HandleClientDisconnect(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (this.handleClientDisconnectHook != null)
@@ -112,23 +111,23 @@ namespace RnSArchipelago.Connection
             return returnValue;
         }
 
-        // Send the connection command to the client joining
+        // Send the hallway data to clients
         internal unsafe void SendClientHallway()
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
                 var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
-
                 var info = "APHallway;";
+
                 HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
                 var instance = (CLayerInstanceElement*)element;
                 var instanceValue = new RValue(instance->Instance);
-                this.logger.PrintMessage((instance == null) + "", System.Drawing.Color.Red);
                 var hallkey = instanceValue.Get("hallkey");
+
                 for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")); i++)
                 {
-                    info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("hallseed"), i)->ToString() + ";"; // 0 (will be enum) says its hallway, position, value
+                    info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("hallseed"), i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
                 }
 
                 info = info.TrimEnd(';');
@@ -137,8 +136,6 @@ namespace RnSArchipelago.Connection
                 rnsReloaded.CreateString(&msg, info);
                 args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
                 rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
-
-                this.logger.PrintMessage("send hallway", System.Drawing.Color.Red);
 
                 foreach (long id in clientIds)
                 {
@@ -149,6 +146,7 @@ namespace RnSArchipelago.Connection
             }
         }
 
+        // Send the notch data to clients
         internal unsafe void SendClientNotch()
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
@@ -163,7 +161,7 @@ namespace RnSArchipelago.Connection
                 var notches = instanceValue.Get("notches");
                 for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("currentPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("notchNumber")); i++)
                 {
-                    info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("xSubimg"), i)->ToString() + ";"; // 1 (will be enum) says its notch, position, value
+                    info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("xSubimg"), i)->ToString() + ";"; // 1 says its notch, position, value, xsubimg
                 }
 
                 info = info.TrimEnd(';');
@@ -172,8 +170,6 @@ namespace RnSArchipelago.Connection
                 rnsReloaded.CreateString(&msg, info);
                 args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
                 rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
-
-                this.logger.PrintMessage("send notch", System.Drawing.Color.Red);
 
                 foreach (long id in clientIds)
                 {
@@ -207,9 +203,7 @@ namespace RnSArchipelago.Connection
                 {
                     if (message.Value.ToString().StartsWith("APConnect"))
                     {
-                        this.logger.PrintMessage(message.Value.ToString(), System.Drawing.Color.Red);
-                        string[] parts = message.Value.ToString().Substring(10).Split(";");
-                        this.logger.PrintMessage(parts.Length + " " + parts[0] + " " + message.Value.ToString().Substring(10), System.Drawing.Color.Red);
+                        string[] parts = message.Value.ToString()[10..].Split(";");
 
                         this.data.connection.Set<string>("address", parts[0]);
                         this.data.connection.Set<string>("name", parts[1]);
@@ -220,6 +214,81 @@ namespace RnSArchipelago.Connection
                         saveHandler.UnlockSaveInfo();
 
                         *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
+
+                        this.logger.PrintMessage("Client Connected", System.Drawing.Color.Orange);
+                    }
+                    else if (message.Value.ToString().StartsWith("APHallway"))
+                    {
+                        string[] parts = message.Value.ToString().Substring(10).Split(";");
+
+                        HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+
+                        var instance = (CLayerInstanceElement*)element;
+                        var instanceValue = new RValue(instance->Instance);
+
+                        for (var i = 0; i < parts.Length; i++)
+                        {
+                            string[] info = parts[i].Split("~");
+                            var index = Int32.Parse(info[1]);
+
+                            switch (info[0]) {
+                                case "0":
+
+                                    var subimg = 6;
+                                    if (info[2] == "hw_outskirts")
+                                    {
+                                        subimg = 7;
+                                    } else if (info[2] == "hw_geode")
+                                    {
+                                        subimg = 9;
+                                    } else if (info[2] == "hw_keep" || info[2] == "hw_pinnacle")
+                                    {
+                                        subimg = 0;
+                                    } else if (info[2] == "hw_darkhall" || info[2] == "hw_reflection")
+                                    {
+                                        subimg = 13;
+                                    }
+
+                                    KingdomUtil.SetHallwayValue(index, instanceValue, info[2], subimg, Int64.Parse(info[3]));
+                                    break;
+                                case "1":
+
+                                    string[] notchInfo = info[2].TrimStart('[').TrimEnd(']').Trim().Split(",");
+
+                                    var enc = new RValue();
+                                    rnsReloaded.CreateString(&enc, notchInfo[1].Trim('"'));
+
+                                    var notches = instanceValue.Get("notches");
+
+                                    RValue[] notch = [new(Int32.Parse(notchInfo[0])), enc, new(Double.Parse(notchInfo[2])), new(Int32.Parse(notchInfo[3]))];
+
+                                    var notchesLength = rnsReloaded.ArrayGetLength(notches);
+                                    if (notchesLength.HasValue && HookUtil.GetNumeric(notchesLength.Value) < index)
+                                    {
+                                        var endArray = new RValue[(index + 1) - HookUtil.GetNumeric(notchesLength.Value) + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
+                                        endArray[0] = *notches;
+                                        rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
+                                    }
+
+                                    var xsubimg = instanceValue.Get("xSubimg");
+                                    var subimgLength = rnsReloaded.ArrayGetLength(xsubimg);
+                                    if (subimgLength.HasValue && HookUtil.GetNumeric(subimgLength.Value) < index)
+                                    {
+                                        var endArray = new RValue[(index + 1) - HookUtil.GetNumeric(subimgLength.Value) + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
+                                        endArray[0] = *xsubimg;
+                                        rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
+                                    }
+
+                                    *rnsReloaded.ArrayGetEntry(notches, index) = HookUtil.CreateRArray([Int32.Parse(notchInfo[0]), notchInfo[1].Trim('"'), Double.Parse(notchInfo[2]), Int32.Parse(notchInfo[3])]);
+                                    *rnsReloaded.ArrayGetEntry(xsubimg, index) = new(Int32.Parse(info[3]));
+
+                                    *instanceValue.Get("notchNumber") = new(Math.Max(HookUtil.GetNumeric(instanceValue.Get("notchNumber")), index+1));
+
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
                     }
                 }
             }
@@ -291,23 +360,6 @@ namespace RnSArchipelago.Connection
             else
             {
                 this.logger.PrintMessage("Unable to call reset conn hook", System.Drawing.Color.Red);
-            }
-
-            ResetConn();
-
-            return returnValue;
-        }
-
-        // Return to the lobby list after leaving as client
-        internal unsafe RValue* ResetConnClient(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
-        {
-            if (this.resetConnClientHook != null)
-            {
-                this.resetConnClientHook?.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                this.logger.PrintMessage("Unable to call reset conn client hook", System.Drawing.Color.Red);
             }
 
             ResetConn();

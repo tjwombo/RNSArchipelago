@@ -301,19 +301,12 @@ namespace RnSArchipelago
             this.archipelagoWebsocketHook.Activate();
             this.archipelagoWebsocketHook.Enable();
 
-            // Close the connection after returning to lobby settings
-            var resetId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
-            var resetScript = rnsReloaded.GetScriptData(resetId - 100000);
-            conn.resetConnHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConn, resetScript->Functions->Function);
+            // Close the AP connection
+            var resetAPConnId = rnsReloaded.ScriptFindId("scr_socketmap_clear_and_disconnect");
+            var resetAPConnScript = rnsReloaded.GetScriptData(resetAPConnId - 100000);
+            conn.resetConnHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConn, resetAPConnScript->Functions->Function);
             conn.resetConnHook.Activate();
             conn.resetConnHook.Enable();
-
-            // Close the connection upon entering the lobby list screen (destination after leaving a lobby as a client)
-            var resetClientEndId = rnsReloaded.ScriptFindId("scr_runmenu_lobbylist_setup");
-            var resetClientEndScript = rnsReloaded.GetScriptData(resetClientEndId - 100000);
-            conn.resetConnClientHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConnClient, resetClientEndScript->Functions->Function);
-            conn.resetConnClientHook.Activate();
-            conn.resetConnClientHook.Enable();
 
             // Set up in game message queue checking
             var drawId = rnsReloaded.ScriptFindId("scr_gamecontrol_update_adventure");
@@ -614,6 +607,12 @@ namespace RnSArchipelago
             kingdomHandler.fixEndIconsHook = hooks.CreateHook<ScriptDelegate>(kingdomHandler.ModifyEndScreenIcons, iconsEndScript->Functions->Function);
             kingdomHandler.fixEndIconsHook.Activate();
             kingdomHandler.fixEndIconsHook.Enable();
+
+            // Modifies the notch xsubimg
+            var xSubimgScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_subimgs") - 100000);
+            routeHandler.StopXSubimgHook = hooks.CreateHook<ScriptDelegate>(routeHandler.StopXSubimg, xSubimgScript->Functions->Function);
+            routeHandler.StopXSubimgHook.Activate();
+            routeHandler.StopXSubimgHook.Enable();
 
             // WIP FUNCTION
             /*// Modifys 

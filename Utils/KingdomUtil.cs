@@ -234,7 +234,7 @@ namespace RnSArchipelago.Utils
 
         // Updates the hallkey, hallsubimg, and hallseed for a given index, while making sure the array has enough entries to modify that index
         // The arrays will have an extra +2, once past default length, to mock having the penultimate and ultimate hallway placed (for early shira purposes, which i dont think is a problem anymore, but keeping anyways)
-        internal static unsafe void SetHallwayValue(int index, RValue instanceValue, string hallValue, int hallsubimgValue)
+        internal static unsafe void SetHallwayValue(int index, RValue instanceValue, string hallValue, int hallsubimgValue, long? hallseedValue = null)
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
@@ -259,19 +259,26 @@ namespace RnSArchipelago.Utils
                 }
 
                 // Hallway seed
-                var halseed = instanceValue.Get("hallseed");
-                var halseedLength = rnsReloaded.ArrayGetLength(halseed);
-                if (halseedLength.HasValue && HookUtil.GetNumeric(halseedLength.Value) < index + 1)
+                var hallseed = instanceValue.Get("hallseed");
+                var hallseedLength = rnsReloaded.ArrayGetLength(hallseed);
+                if (hallseedLength.HasValue && HookUtil.GetNumeric(hallseedLength.Value) < index + 1)
                 {
-                    var endArray = new RValue[(index + 1) - HookUtil.GetNumeric(halseedLength.Value) + 1];
-                    endArray[0] = *halseed;
+                    var endArray = new RValue[(index + 1) - HookUtil.GetNumeric(hallseedLength.Value) + 1];
+                    endArray[0] = *hallseed;
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);    
                 }
 
                 // Set the values
                 rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, index), hallValue);
                 *rnsReloaded.ArrayGetEntry(hallsubimg, index) = new(hallsubimgValue);
-                *rnsReloaded.ArrayGetEntry(halseed, index) = new(rand.Next()); // rerandomizes hallways that haven't been visited yet on updating the route
+                if (hallseedValue.HasValue)
+                {
+                    *rnsReloaded.ArrayGetEntry(hallseed, index) = new(hallseedValue.Value);
+                }
+                else
+                {
+                    *rnsReloaded.ArrayGetEntry(hallseed, index) = new(rand.Next()); // rerandomizes hallways that haven't been visited yet on updating the route
+                }
             }
         }
     }
