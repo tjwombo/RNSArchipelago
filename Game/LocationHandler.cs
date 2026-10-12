@@ -875,10 +875,7 @@ namespace RnSArchipelago.Game
 
             if (this.spawnTreasuresphereOnStartHook != null)
             {
-                if (conn.session == null || conn.isHost)
-                {
-                    returnValue = this.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
-                }
+                returnValue = this.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {

@@ -563,7 +563,7 @@ namespace RnSArchipelago.Game
         // Create the route such that you only visit kingdoms you are allowed to with your settings and items combo
         internal RValue* CreateRoute(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && conn.isHost)
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (conn.session == null || conn.isHost))
             {
                 if (this.chooseHallsHook != null)
                 {
@@ -621,6 +621,15 @@ namespace RnSArchipelago.Game
                 {
                     returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
                 }
+                else if (rnsReloaded != null)
+                {
+                    var currentPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "currentPos"));
+
+                    if (currentPos == 0)
+                    {
+                        returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    }
+                }
             }
             else
             {
@@ -671,6 +680,14 @@ namespace RnSArchipelago.Game
                 if (conn.session == null || conn.isHost)
                 {
                     returnValue = this.StopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
+                } else if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+                {
+                    var currentPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "currentPos"));
+
+                    if (currentPos != 0)
+                    {
+                        returnValue = this.StopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    }
                 }
             }
             else

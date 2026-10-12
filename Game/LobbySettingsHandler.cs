@@ -641,7 +641,7 @@ namespace RnSArchipelago.Game
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (argv[0]->ToString() == "lobbydisplay" && IsEqualToNumeric(argv[2], -350) && IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (argv[0]->ToString() == "lobbydisplay" && IsEqualToNumeric(argv[2], -350) && conn.session != null)
                 {
                     var scoreId = rnsReloaded.CodeFunctionFind("parameter_count");
 
