@@ -90,21 +90,24 @@ namespace RnSArchipelago.Connection
 
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
-                var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
+                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                {
+                    var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                    var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
 
-                var msg = new RValue();
-                rnsReloaded.CreateString(&msg, "APConnect;" + config.StartUpConfig.ArchipelagoAddress + ";" + config.StartUpConfig.ArchipelagoName + ";" + config.StartUpConfig.ArchipelagoPassword);
-                args = new RValue[] { buffer!.Value, new(11), msg}; // Treat the message as a string
-                rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
+                    var msg = new RValue();
+                    rnsReloaded.CreateString(&msg, "APConnect;" + config.StartUpConfig.ArchipelagoAddress + ";" + config.StartUpConfig.ArchipelagoName + ";" + config.StartUpConfig.ArchipelagoPassword);
+                    args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                    rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
 
-                args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
-                rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
+                    args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
+                    rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
 
-                clientIds.Add(HookUtil.GetNumeric(rnsReloaded.FindValue(self, "clientId")));
+                    clientIds.Add(HookUtil.GetNumeric(rnsReloaded.FindValue(self, "clientId")));
 
-                SendClientHallway();
-                SendClientNotch();
+                    SendClientHallway();
+                    SendClientNotch();
+                }
 
             }
 
@@ -116,33 +119,35 @@ namespace RnSArchipelago.Connection
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
-                var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
-                var info = "APHallway;";
-
-                HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
-                var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
-                var hallkey = instanceValue.Get("hallkey");
-
-                for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")); i++)
+                if (clientIds.Count > 0)
                 {
-                    info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("hallseed"), i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
+                    var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                    var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
+                    var info = "APHallway;";
+
+                    HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+                    var hallkey = instanceValue.Get("hallkey");
+
+                    for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")); i++)
+                    {
+                        info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("hallseed"), i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
+                    }
+
+                    info = info.TrimEnd(';');
+
+                    var msg = new RValue();
+                    rnsReloaded.CreateString(&msg, info);
+                    args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                    rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
+
+                    foreach (long id in clientIds)
+                    {
+                        args = new RValue[] { new(id), buffer!.Value };
+                        rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
+                    }
                 }
-
-                info = info.TrimEnd(';');
-
-                var msg = new RValue();
-                rnsReloaded.CreateString(&msg, info);
-                args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
-                rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
-
-                foreach (long id in clientIds)
-                {
-                    args = new RValue[] { new(id), buffer!.Value };
-                    rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
-                }
-
             }
         }
 
@@ -151,32 +156,39 @@ namespace RnSArchipelago.Connection
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
-                var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
-
-                var info = "APHallway;";
-                HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
-                var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
-                var notches = instanceValue.Get("notches");
-                for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("currentPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("notchNumber")); i++)
+                if (clientIds.Count > 0)
                 {
-                    info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("xSubimg"), i)->ToString() + ";"; // 1 says its notch, position, value, xsubimg
+                    var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                    var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
+
+                    var info = "APHallway;";
+                    HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+                    var instance = (CLayerInstanceElement*)element;
+                    var instanceValue = new RValue(instance->Instance);
+                    var notches = instanceValue.Get("notches");
+                    for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("currentPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("notchNumber")); i++)
+                    {
+                        if (i == -1)
+                        {
+                            continue;
+                        }
+
+                        info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("xSubimg"), i)->ToString() + ";"; // 1 says its notch, position, value, xsubimg
+                    }
+
+                    info = info.TrimEnd(';');
+
+                    var msg = new RValue();
+                    rnsReloaded.CreateString(&msg, info);
+                    args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                    rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
+
+                    foreach (long id in clientIds)
+                    {
+                        args = new RValue[] { new(id), buffer!.Value };
+                        rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
+                    }
                 }
-
-                info = info.TrimEnd(';');
-
-                var msg = new RValue();
-                rnsReloaded.CreateString(&msg, info);
-                args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
-                rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
-
-                foreach (long id in clientIds)
-                {
-                    args = new RValue[] { new(id), buffer!.Value };
-                    rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
-                }
-
             }
         }
 
