@@ -143,7 +143,6 @@ namespace RnSArchipelago
                 this.setItemHook.Enable();*/
 
 
-                AddArchipelagoButtonToMenu(); // Adds archipelago as a lobbyType
                 AddArchipelagoOptionsToMenu(); // Adds the options for archipelago
 
                 SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
@@ -183,30 +182,20 @@ namespace RnSArchipelago
         }
 
         // Set up the hooks relating to archipelago options
-        private void AddArchipelagoButtonToMenu()
-        {
-            if (this.IsReady(out var rnsReloaded, out var hooks))
-            {
-                var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
-                var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
-                if (lobby != null)
-                {
-                    lobby.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoLobbyType, menuScript->Functions->Function);
-                    lobby.archipelagoButtonHook.Activate();
-                    lobby.archipelagoButtonHook.Enable();
-                }
-
-            }
-        }
-
-        // Set up the hooks relating to archipelago options
         private void AddArchipelagoOptionsToMenu()
         {
             if (
                 this.IsReady(out var rnsReloaded, out var hooks) && lobby != null
             )
             {
-                // Create the archipelago lobby type
+                // Create the archipelago lobby type button
+                var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
+                var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
+                lobby.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoLobbyType, menuScript->Functions->Function);
+                lobby.archipelagoButtonHook.Activate();
+                lobby.archipelagoButtonHook.Enable();
+
+                // Create the archipelago banner
                 var optionsId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_setup");
                 var optionsScript = rnsReloaded.GetScriptData(optionsId - 100000);
                 lobby.archipelagoOptionsHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoOptions, optionsScript->Functions->Function);
