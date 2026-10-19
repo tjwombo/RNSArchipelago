@@ -1,6 +1,7 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Connection;
+using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
 using static RnSArchipelago.Utils.HookUtil;
@@ -641,7 +642,7 @@ namespace RnSArchipelago.Game
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (argv[0]->ToString() == "lobbydisplay" && IsEqualToNumeric(argv[2], -350) && conn.session != null)
+                if (argv[0]->ToString() == "lobbydisplay" && IsEqualToNumeric(argv[2], -350) && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
                     var scoreId = rnsReloaded.CodeFunctionFind("parameter_count");
 
