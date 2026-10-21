@@ -606,12 +606,7 @@ namespace RnSArchipelago.Game
 
                 if (this.inventoryHandler.isActive)
                 {
-                    var isKingdomSanity = this.inventoryHandler.isKingdomSanity;
-                    var isProgressive = this.inventoryHandler.isProgressive;
-                    if (isKingdomSanity || isProgressive)
-                    { 
-                        OnKingdomRecieve(false);  
-                    }
+                    OnKingdomRecieve(false);  
                 }
                 return returnValue;
             }

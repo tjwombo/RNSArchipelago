@@ -1285,7 +1285,7 @@ namespace RnSArchipelago.Game
             }
 
             // Do we make use of kingdom order at all
-            if (isKingdomSanity && useKingdomOrderWithKingdomSanity || !isKingdomSanity && isProgressive)
+            if ((isKingdomSanity && useKingdomOrderWithKingdomSanity) || (!isKingdomSanity && isProgressive))
             {
                 for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
                 {
@@ -1369,7 +1369,7 @@ namespace RnSArchipelago.Game
             }
 
             // Do we make use of kingdom order at all
-            if (isKingdomSanity && useKingdomOrderWithKingdomSanity || !isKingdomSanity && isProgressive)
+            if ((isKingdomSanity && useKingdomOrderWithKingdomSanity) || (!isKingdomSanity && isProgressive))
             {
                 for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
                 {
@@ -1442,7 +1442,7 @@ namespace RnSArchipelago.Game
             }
 
             // Do we make use of kingdom order at all
-            if (isKingdomSanity && useKingdomOrderWithKingdomSanity || !isKingdomSanity && isProgressive)
+            if ((isKingdomSanity && useKingdomOrderWithKingdomSanity) || (!isKingdomSanity && isProgressive))
             {
                 for (var i = 0; i < Math.Min(n, maxKingdoms); i++)
                 {
