@@ -35,7 +35,6 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? itemSetDescriptionHook;
         //internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
         internal IHook<ScriptDelegate>? takeItemHook;
-        internal IHook<ScriptDelegate>? spawnTreasuresphereHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
         internal IHook<ScriptDelegate>? readyCheckHook;
 
@@ -814,18 +813,9 @@ namespace RnSArchipelago.Game
             }
         }
 
-        // On outskirts loading, besides loading into lobby, add the treasurespheres we have accumulated
-        internal RValue* SpawnTreasuresphere(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        // Spawn a treasuresphere on the next notch if there is any to spawn
+        internal void SpawnTreasuresphere()
         {
-            if (this.spawnTreasuresphereHook != null)
-            {
-                returnValue = this.spawnTreasuresphereHook.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                this.logger.PrintMessage("Unable to call spawn trasuresphere hook", System.Drawing.Color.Red);
-            }
-
             if (treasurespheresToSpawn > 0)
             {
                 if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
@@ -864,11 +854,9 @@ namespace RnSArchipelago.Game
                 }
                 conn.SendClientNotch();
             }
-
-            return returnValue;
         }
 
-        // On outskirts loading, besides loading into lobby, add the treasurespheres we have accumulated
+        // Upon loading the lobby, reset the number of treasurespheres that are needed to spawn
         internal RValue* SpawnTreasuresphereOnStart(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             this.rnsReloadedRef.TryGetTarget(out var rnsReloaded);

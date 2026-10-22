@@ -114,6 +114,12 @@ namespace RnSArchipelago.Game
                                 }
                             }
 
+                            if (maxVisitableKingdoms < this.inventoryHandler.maxKingdoms)
+                            {
+                                this.logger.PrintMessage("Ending route early as there is not enough kingdoms recieved", System.Drawing.Color.Red);
+                                return true;
+                            }
+
                             if (inventoryHandler.run_type == InventoryHandler.RunTypeSetting.Kingdom)
                             {
                                 if (!(inventoryHandler.AvailableKingdoms.HasFlag(InventoryHandler.KingdomFlags.The_Pale_Keep) && rnsReloaded.GetString(rnsReloaded.ArrayGetEntry(hallkey, maxVisitableKingdoms + 1)) == "hw_keep")) // Might not need the secondary condition, but keeping it as safegaurd
@@ -259,8 +265,8 @@ namespace RnSArchipelago.Game
             }
         }
 
-        // Ends the route early if kingdom sanity is enabled, but not enough kingdoms are unlocked, or progressive kingdom count != maxKingdoms
-        internal RValue* ManageRouteLength(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        // Various functions that are needed to call before moving to the next notch
+        internal RValue* MoveNext(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
@@ -282,12 +288,16 @@ namespace RnSArchipelago.Game
                         }
                     }
 
+                    // Ends the route early if kingdom sanity is enabled, but not enough kingdoms are unlocked, or progressive kingdom count != maxKingdoms
                     if (EndRouteEarly())
                     {
                         rnsReloaded.ExecuteScript("scr_hallwayprogress_make_defeat", self, other, []);
 
                         return returnValue;
                     }
+
+                    // Spawn a treasuresphere if there is any in the queue
+                    locationHandler.SpawnTreasuresphere();
                 }
             }
             if (this.endHallsHook != null)

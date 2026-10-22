@@ -585,9 +585,9 @@ namespace RnSArchipelago
             mapHandler.fixChooseIconsHook.Activate();
             mapHandler.fixChooseIconsHook.Enable();
 
-            // Make sure you can go to the next hallway
+            // Make sure you can go to the next hallway and perform additional functions that need to run every room
             var endHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_move_next") - 100000);
-            routeHandler.endHallsHook = hooks.CreateHook<ScriptDelegate>(routeHandler.ManageRouteLength, endHallsScript->Functions->Function);
+            routeHandler.endHallsHook = hooks.CreateHook<ScriptDelegate>(routeHandler.MoveNext, endHallsScript->Functions->Function);
             routeHandler.endHallsHook.Activate();
             routeHandler.endHallsHook.Enable();
 
@@ -621,12 +621,6 @@ namespace RnSArchipelago
             locationHandler.readyCheckHook = hooks.CreateHook<ScriptDelegate>(locationHandler.StopReadyCheck, readyCheckScript->Functions->Function);
             locationHandler.readyCheckHook.Activate();
             locationHandler.readyCheckHook.Enable();
-
-            // Runs every frame checking to see if a treasuresphere is needed to be added
-            var spawnTreasuresphereScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_input_check_p") - 100000);
-            locationHandler.spawnTreasuresphereHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphere, spawnTreasuresphereScript->Functions->Function);
-            locationHandler.spawnTreasuresphereHook.Activate();
-            locationHandler.spawnTreasuresphereHook.Enable();
         }
 
         // TODO: REMOVE Testing function to oneshot
