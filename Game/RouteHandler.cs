@@ -18,7 +18,6 @@ namespace RnSArchipelago.Game
 
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
-        internal IHook<ScriptDelegate>? characterChosenHook;
         internal IHook<ScriptDelegate>? StopXSubimgHook;
 
         internal string currentKingdomGroup = "";
@@ -44,8 +43,7 @@ namespace RnSArchipelago.Game
 
                 UpdateRouteLength();
 
-                // When currentHallwayPosAware is false is from changing halls, which sends the info correctly by default
-                if (currentHallwayPosAware)
+                if (conn.isHost)
                 {
                     conn.SendClientHallway();
                 }
@@ -393,12 +391,6 @@ namespace RnSArchipelago.Game
 
                 if (maxCanRun == 0)
                 {
-
-                    if (conn.isHost)
-                    {
-                        conn.SendClientHallway();
-                    }
-
                     return;
                 }
 
@@ -532,13 +524,7 @@ namespace RnSArchipelago.Game
                         }
                     }
                 }
-
-                if (conn.isHost)
-                {
-                    conn.SendClientHallway();
-                }
             }
-
         }
 
         // Update the route from the start or from the current position + 1
@@ -573,7 +559,7 @@ namespace RnSArchipelago.Game
         // Create the route such that you only visit kingdoms you are allowed to with your settings and items combo
         internal RValue* CreateRoute(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (conn.session == null || conn.isHost))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3)))
             {
                 if (this.chooseHallsHook != null)
                 {
@@ -582,6 +568,13 @@ namespace RnSArchipelago.Game
                 else
                 {
                     this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
+                }
+
+                if (!conn.isHost)
+                {
+                    conn.RequestSync("hallway");
+
+                    return returnValue;
                 }
 
                 // Get the user selected kingdom
@@ -618,56 +611,13 @@ namespace RnSArchipelago.Game
                 {
                     OnKingdomRecieve(false);  
                 }
+
                 return returnValue;
             }
+            
             if (this.chooseHallsHook != null)
             {
-                if (conn.session == null || conn.isHost)
-                {
-                    returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
-                }
-                else if (rnsReloaded != null)
-                {
-                    var currentPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "currentPos"));
-
-                    if (currentPos == 0)
-                    {
-                        returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
-                    }
-                }
-            }
-            else
-            {
-                this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
-            }
-
-            return returnValue;
-        }
-
-        // Updates the route once you select a character
-        internal RValue* UpdateRouteOnCharacterSelect(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
-        {
-            if (this.characterChosenHook != null)
-            {
-                returnValue = this.characterChosenHook.OriginalFunction(self, other, returnValue, argc, argv);
-
-                if (this.inventoryHandler.isActive)
-                {
-                    OnKingdomRecieve(true);
-
-                    if (conn.isHost)
-                    {
-                        // Regenerate the room and treasurespheres after a class joins
-                        if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
-                        {
-                            HookUtil.FindElementInLayer("RunMenu_Blocker", "hallwayPos", out var element);
-                            var instance = ((CLayerInstanceElement*)element)->Instance;
-                            rnsReloaded.ExecuteScript("scr_hallwayprogress_generate", instance, other, []);
-                        }
-
-                        conn.SendClientNotch();
-                    }
-                }
+                returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {

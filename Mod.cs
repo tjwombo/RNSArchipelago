@@ -573,12 +573,6 @@ namespace RnSArchipelago
             routeHandler.chooseHallsHook.Activate();
             routeHandler.chooseHallsHook.Enable();
 
-            // Update the route after selecting a kingdom
-            var chooseCharacterScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_update_spawning") - 100000);
-            routeHandler.characterChosenHook = hooks.CreateHook<ScriptDelegate>(routeHandler.UpdateRouteOnCharacterSelect, chooseCharacterScript->Functions->Function);
-            routeHandler.characterChosenHook.Activate();
-            routeHandler.characterChosenHook.Enable();
-
             // Modify the icons on the route selection screen
             var iconsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stagefirst_get_subimg") - 100000);
             mapHandler.fixChooseIconsHook = hooks.CreateHook<ScriptDelegate>(mapHandler.ModifyRouteIcons, iconsScript->Functions->Function);

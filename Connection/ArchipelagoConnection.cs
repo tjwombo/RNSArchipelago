@@ -192,6 +192,26 @@ namespace RnSArchipelago.Connection
             }
         }
 
+        // Send a request to the host to sync the data
+        internal unsafe void RequestSync(string type) // type is ; delimited string of types of methods we have to sync
+        {
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                var info = "APSync;" + type;
+
+                var args = new RValue[] { new(info.Length), new(1), new(1) };
+                var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
+
+                var msg = new RValue();
+                rnsReloaded.CreateString(&msg, info);
+                args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
+
+                args = new RValue[] { buffer!.Value, new(60) };
+                rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_host", null, null, args);
+            }
+        }
+
         // Handle steam packets for multiplayer communication
         internal unsafe RValue* ParseSteamPacket(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
@@ -262,6 +282,8 @@ namespace RnSArchipelago.Connection
                                     }
 
                                     KingdomUtil.SetHallwayValue(index, instanceValue, info[2], subimg, Int64.Parse(info[3]));
+                                    *instanceValue.Get("hallwayNumber") = new(Math.Max(HookUtil.GetNumeric(instanceValue.Get("hallwayPos")), index + 1));
+
                                     break;
                                 case "1":
 
