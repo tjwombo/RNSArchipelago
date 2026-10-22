@@ -233,9 +233,10 @@ namespace RnSArchipelago.Connection
 
                 if (message.HasValue)
                 {
-                    if (message.Value.ToString().StartsWith("APConnect"))
+                    var messageValue = message.Value.ToString();
+                    if (messageValue.StartsWith("APConnect"))
                     {
-                        string[] parts = message.Value.ToString()[10..].Split(";");
+                        string[] parts = messageValue[10..].Split(";");
 
                         this.data.connection.Set<string>("address", parts[0]);
                         this.data.connection.Set<string>("name", parts[1]);
@@ -249,9 +250,26 @@ namespace RnSArchipelago.Connection
 
                         this.logger.PrintMessage("Client Connected", System.Drawing.Color.Orange);
                     }
-                    else if (message.Value.ToString().StartsWith("APHallway"))
+                    else if (messageValue.StartsWith("APSync"))
                     {
-                        string[] parts = message.Value.ToString().Substring(10).Split(";");
+                        string[] parts = messageValue[7..].Split(";");
+
+                        foreach (var part in parts)
+                        {
+                            switch (part)
+                            {
+                                case "hallway":
+                                    SendClientHallway();
+                                    break;
+                                case "notch":
+                                    SendClientNotch();
+                                    break;
+                            }
+                        }
+                    }
+                    else if (messageValue.StartsWith("APHallway"))
+                    {
+                        string[] parts = messageValue.Substring(10).Split(";");
 
                         HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
 
@@ -263,20 +281,24 @@ namespace RnSArchipelago.Connection
                             string[] info = parts[i].Split("~");
                             var index = Int32.Parse(info[1]);
 
-                            switch (info[0]) {
+                            switch (info[0])
+                            {
                                 case "0":
 
                                     var subimg = 6;
                                     if (info[2] == "hw_outskirts")
                                     {
                                         subimg = 7;
-                                    } else if (info[2] == "hw_geode")
+                                    }
+                                    else if (info[2] == "hw_geode")
                                     {
                                         subimg = 9;
-                                    } else if (info[2] == "hw_keep" || info[2] == "hw_pinnacle")
+                                    }
+                                    else if (info[2] == "hw_keep" || info[2] == "hw_pinnacle")
                                     {
                                         subimg = 0;
-                                    } else if (info[2] == "hw_darkhall" || info[2] == "hw_reflection")
+                                    }
+                                    else if (info[2] == "hw_darkhall" || info[2] == "hw_reflection")
                                     {
                                         subimg = 13;
                                     }
@@ -316,7 +338,7 @@ namespace RnSArchipelago.Connection
                                     *rnsReloaded.ArrayGetEntry(notches, index) = HookUtil.CreateRArray([Int32.Parse(notchInfo[0]), notchInfo[1].Trim('"'), Double.Parse(notchInfo[2]), Int32.Parse(notchInfo[3])]);
                                     *rnsReloaded.ArrayGetEntry(xsubimg, index) = new(Int32.Parse(info[3]));
 
-                                    *instanceValue.Get("notchNumber") = new(Math.Max(HookUtil.GetNumeric(instanceValue.Get("notchNumber")), index+1));
+                                    *instanceValue.Get("notchNumber") = new(Math.Max(HookUtil.GetNumeric(instanceValue.Get("notchNumber")), index + 1));
 
                                     break;
                                 default:
