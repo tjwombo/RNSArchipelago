@@ -78,7 +78,7 @@ namespace RnSArchipelago.Game
 
             if (this.inventoryHandler.isActive)
             {
-                SendNotchLoctaion();
+                CompleteNotch();
             }
             return returnValue;
         }
@@ -97,7 +97,7 @@ namespace RnSArchipelago.Game
 
             if (this.inventoryHandler.isActive)
             {
-                SendNotchLoctaion();
+                CompleteNotch();
             }
 
             return returnValue;
@@ -768,6 +768,14 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
+        // After 'completing' the notch, send the location and then spawn any AP treasurespheres
+        internal void CompleteNotch()
+        {
+            SendNotchLoctaion();
+
+            SpawnTreasuresphere();
+        }
+
         // Send the location for finishing a notch if there is a generic location for it, i.e. battle, chest, or boss (not shop)
         internal void SendNotchLoctaion()
         {
@@ -816,9 +824,11 @@ namespace RnSArchipelago.Game
         // Spawn a treasuresphere on the next notch if there is any to spawn
         internal void SpawnTreasuresphere()
         {
-            if (treasurespheresToSpawn > 0)
+            bool added = false;
+
+            while (treasurespheresToSpawn > 0)
             {
-                if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+                if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && conn.isHost)
                 {
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "xSubimg", out var element);
                     var instance = ((CLayerInstanceElement*)element)->Instance;
@@ -849,9 +859,18 @@ namespace RnSArchipelago.Game
                         rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
                     }
                     
-
                     treasurespheresToSpawn--;
+
+                    added = true;
+                } else if (!conn.isHost)
+                {
+                    // Clients shouldn't be populating their own treasuresphere notch
+                    break;
                 }
+            }
+
+            if (added)
+            {
                 conn.SendClientNotch();
             }
         }

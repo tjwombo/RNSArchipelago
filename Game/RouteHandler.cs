@@ -270,19 +270,26 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryHandler.isActive)
                 {
-                    // Backup send location in case they disconnected during the fight
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var element);
                     if (element != null)
                     {
                         var instance = new RValue(((CLayerInstanceElement*)element)->Instance);
                         var currentPos = HookUtil.GetNumeric(instance.Get("currentPos")); // Wasn't playing well with IsEqualToNumeric
                         var hallwayPos = HookUtil.GetNumeric(instance.Get("hallwayPos"));
-                        var index = HookUtil.GetNumeric(instance.Get("currentPos"));
 
+                        // Backup send location in case they disconnected during the fight
                         // First check is to prevent shop, second is general transitions, and last is final boss
-                        if ((currentPos != 0 || hallwayPos != 0) && index != -1 && (hallwayPos != this.inventoryHandler.maxKingdoms + 2 && currentPos == 0))
+                        if (currentPos != -1 && !(hallwayPos == this.inventoryHandler.maxKingdoms + 2 && currentPos == 0))
                         {
-                            locationHandler.SendNotchLoctaion();
+                            // TODO: Maybe disable on normal chests as it may be ideal to skip it if hinted it was useless
+                            locationHandler.CompleteNotch();
+                        }
+
+                        // Show notch map and stop joining if the first notch is an AP treasuresphere
+                        if (currentPos == 0 && hallwayPos == 0 && LocationUtil.GetLocationType((int)currentPos + 1) == LocationUtil.LocationType.SpecialChest)
+                        {
+                            *rnsReloaded.utils.GetGlobalVar("notchExHideMap") = new(0);
+                            // TODO: Stop the joining message
                         }
                     }
 
@@ -293,9 +300,6 @@ namespace RnSArchipelago.Game
 
                         return returnValue;
                     }
-
-                    // Spawn a treasuresphere if there is any in the queue
-                    locationHandler.SpawnTreasuresphere();
                 }
             }
             if (this.endHallsHook != null)
