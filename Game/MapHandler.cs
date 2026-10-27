@@ -32,7 +32,7 @@ namespace RnSArchipelago.Game
                 if (map != null)
                 {
                     var instance2 = (CLayerInstanceElement*)map;
-                    var instanceValue2 = new RValue(instance2->Instance);
+                    RValue instanceValue2 = instance2->Instance;
 
                     var routeIcons = instanceValue2.Get("buttonAvailable");
                     return HookUtil.GetNumeric(rnsReloaded.ArrayGetLength(routeIcons)!.Value) switch
@@ -73,17 +73,13 @@ namespace RnSArchipelago.Game
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
+                RValue instanceValue = new(instance->Instance);
 
-                HookUtil.ModifyElementVariable(element, "buttonAvailable", HookUtil.ModificationType.ModifyArray, [new(index), new(activated)]);
+                HookUtil.ModifyElementVariable(element, "buttonAvailable", HookUtil.ModificationType.ModifyArray, [index, activated]);
 
-                RValue description = new();
-                rnsReloaded.CreateString(&description, desc);
-                *(instanceValue.Get("buttonStr")->Get(index)) = description;
+                *(instanceValue.Get("buttonStr")->Get(index)) = desc;
 
-                RValue titleValue = new();
-                rnsReloaded.CreateString(&titleValue, title);
-                *(instanceValue.Get("buttonTitle")->Get(index)) = titleValue;
+                *(instanceValue.Get("buttonTitle")->Get(index)) = title;
             }
         }
 
@@ -151,8 +147,8 @@ namespace RnSArchipelago.Game
                 }
 
                 // Always disallow the extras
-                *(buttons->Get(6)) = new(0);
-                *(buttons->Get(7)) = new(0);
+                *(buttons->Get(6)) = 0;
+                *(buttons->Get(7)) = 0;
             }
             else if (buttonCount == 4)
             {
@@ -239,7 +235,7 @@ namespace RnSArchipelago.Game
                     }
 
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     var routeIcons = instanceValue.Get("buttonAvailable");
                     var buttonCount = rnsReloaded.ArrayGetLength(routeIcons);

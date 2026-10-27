@@ -127,16 +127,12 @@ namespace RnSArchipelago.Game
                         var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
                         if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
                         {
-                            var name = new RValue();
-                            rnsReloaded.CreateString(&name, "Archipelago Items");
-                            *rnsReloaded.ArrayGetEntry(entry, 4) = name;
+                            *rnsReloaded.ArrayGetEntry(entry, 4) = "Archipelago Items";
 
-                            var tags = new RValue();
-                            rnsReloaded.CreateString(&tags, "Loot Items,");
-                            *rnsReloaded.ArrayGetEntry(entry, 5) = tags;
+                            *rnsReloaded.ArrayGetEntry(entry, 5) = "Loot Items,";
 
-                            *rnsReloaded.ArrayGetEntry(entry, 8) = new(1); // Enabled
-                            *rnsReloaded.ArrayGetEntry(entry, 10) = new(0); // 'Workshop'
+                            *rnsReloaded.ArrayGetEntry(entry, 8) = 1; // Enabled
+                            *rnsReloaded.ArrayGetEntry(entry, 10) = 0; // 'Workshop'
 
                             foundMod = true;
 
@@ -177,7 +173,7 @@ namespace RnSArchipelago.Game
                         var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
                         if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
                         {
-                            *rnsReloaded.ArrayGetEntry(entry, 8) = new(1); // Enabled
+                            *rnsReloaded.ArrayGetEntry(entry, 8) = 1; // Enabled
 
                             return returnValue;
                         }
@@ -290,16 +286,16 @@ namespace RnSArchipelago.Game
                                     // If the location is checked
                                     if (conn.session != null && conn.session.Locations.AllLocationsChecked.Contains(locationId))
                                     {
-                                        *argv[0] = new RValue(baseItemId + 2);
+                                        *argv[0] = baseItemId + 2;
                                     }
                                     // If the item is progression
                                     else if (info.Flags.HasFlag(ItemFlags.Advancement))
                                     {
-                                        *argv[0] = new RValue(baseItemId + 1);
+                                        *argv[0] = baseItemId + 1;
                                     }
                                     else
                                     {
-                                        *argv[0] = new RValue(baseItemId);
+                                        *argv[0] = baseItemId;
                                     }
                                     break;
                                 }
@@ -309,12 +305,12 @@ namespace RnSArchipelago.Game
                         {
                             if (this.inventoryHandler.AvailableItems.Count == 0)
                             {
-                                *argv[0] = new RValue(0);
+                                *argv[0] = 0;
                             }
                             else
                             {
                                 var index = this.rand.Next(this.inventoryHandler.AvailableItems.Count);
-                                *argv[0] = new RValue(this.inventoryHandler.AvailableItems[index]);
+                                *argv[0] = this.inventoryHandler.AvailableItems[index];
                             }
                         }
                     }
@@ -386,12 +382,12 @@ namespace RnSArchipelago.Game
                         {
                             if (this.inventoryHandler.AvailableItems.Count == 0)
                             {
-                                *argv[0] = new RValue(0);
+                                *argv[0] = 0;
                             }
                             else
                             {
                                 var index = rand.Next(this.inventoryHandler.AvailableItems.Count);
-                                *argv[0] = new RValue(this.inventoryHandler.AvailableItems[index]);
+                                *argv[0] = this.inventoryHandler.AvailableItems[index];
                             }
 
                             // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working (probably will fix itself if/when i can properly start the adventure at the beginning
@@ -461,7 +457,7 @@ namespace RnSArchipelago.Game
                 {
                     ScoutedItemInfo? info = null;
                     //TODO: Look into making the better
-                    var safeSelf = new RValue(self);
+                    RValue safeSelf = new(self);
 
                     if (this.inventoryHandler.checksPerItemInChest && LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
                     {
@@ -528,7 +524,7 @@ namespace RnSArchipelago.Game
                     {
                         var instance = (CInstance*)element;
                         var shopSlot = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "slotId"));
-                        var a = new RValue(instance);
+                        RValue a = instance;
                         this.logger.PrintMessage(shopSlot + "", System.Drawing.Color.DarkOrange);
                         //this.logger.PrintMessage(shopSlot + " " + HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "slotId")) + " " + Marshal.PtrToStringAnsi((nint)element->Layer->Name), System.Drawing.Color.DarkOrange);
                         if (shopSlot >= 5 && shopSlot <= 8)
@@ -545,7 +541,7 @@ namespace RnSArchipelago.Game
                         return returnValue;
                     }
                 }*/
-                //var a = new RValue(self);
+                //RValue a = new(self);
                 //this.logger.PrintMessage(a.ToString(), System.Drawing.Color.DarkOrange);
                 /*this.logger.PrintMessage(HookUtil.GetNumeric(rnsReloaded.FindValue(self, "slotId")) + "", System.Drawing.Color.DarkOrange);
                 var shopSlot = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "slotId"));
@@ -556,7 +552,7 @@ namespace RnSArchipelago.Game
                 }*/
             }
             //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "uh", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
-            var a = new RValue(self);
+            RValue a = new(self);
             this.logger.PrintMessage(a.ToString(), System.Drawing.Color.DarkOrange);
             /*if (this.itemSetUpgradeDescriptionHook != null)
             {
@@ -670,11 +666,11 @@ namespace RnSArchipelago.Game
 
                                 // TODO: Wait until the location is sent to do this (has to be on the main thread)
                                 // Set the item cache to -1, so we create the right type of item, and then place it
-                                var items = new RValue(self);
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(items["slots"], 2), (int)HookUtil.GetNumeric(argv[2])), 1) = new RValue(-1);
+                                RValue items = new(self);
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(items["slots"], 2), (int)HookUtil.GetNumeric(argv[2])), 1) = -1;
 
                                 // Make it so the item hasn't consumed their one per customer purchase
-                                *rnsReloaded.ArrayGetEntry(items["storeSlotOPCBin"], (int)HookUtil.GetNumeric(argv[2])) = new(0);
+                                *rnsReloaded.ArrayGetEntry(items["storeSlotOPCBin"], (int)HookUtil.GetNumeric(argv[2])) = 0;
 
                             }
 
@@ -750,8 +746,8 @@ namespace RnSArchipelago.Game
                     {
                         if (HookUtil.IsEqualToNumeric(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "slots"), 2), i), 1), -1))
                         {
-                            var newItemId = rnsReloaded.ExecuteScript("scr_itemsys_create_item", instance, other, [new RValue(0), new RValue(0), new RValue(2)]);
-                            rnsReloaded.ExecuteScript("scr_itemsys_place_item_in_row", instance, other, [newItemId!.Value, new RValue(2)]);
+                            var newItemId = rnsReloaded.ExecuteScript("scr_itemsys_create_item", instance, other, [0, 0, 2]);
+                            rnsReloaded.ExecuteScript("scr_itemsys_place_item_in_row", instance, other, [newItemId!.Value, 2]);
                             rnsReloaded.ExecuteScript("scr_itemsys_populate_loot_end", instance, other, []); // Makes it so the new item is highlightable
                         }
                     }
@@ -839,10 +835,10 @@ namespace RnSArchipelago.Game
                         currentPos = 0;
                     }
                     var notches = rnsReloaded.FindValue(instance, "notches");
-                    var notch = HookUtil.CreateRArray([5, "", 0, 0]);
+                    var notch = new RValue([5, "", 0, 0]);
 
                     // Actually increase things
-                    rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*notches, new RValue(currentPos + 1), notch]);
+                    rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*notches, currentPos + 1, notch]);
                     var notchNumber = HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "notchNumber")) + 1;
                     rnsReloaded.FindValue(instance, "notchNumber")->Real = notchNumber;
 
@@ -853,10 +849,10 @@ namespace RnSArchipelago.Game
                         {
                             *rnsReloaded.ArrayGetEntry(subimg, i) = *rnsReloaded.ArrayGetEntry(subimg, i-1); 
                         }
-                        *rnsReloaded.ArrayGetEntry(subimg, (int) currentPos + 1) = new RValue(5);
+                        *rnsReloaded.ArrayGetEntry(subimg, (int) currentPos + 1) = 5;
                     } else
                     {
-                        rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), new RValue(currentPos + 1), new(5)]);
+                        rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), currentPos + 1, 5]);
                     }
                     
                     treasurespheresToSpawn--;
@@ -917,8 +913,8 @@ namespace RnSArchipelago.Game
                     HookUtil.FindElementInLayer("PlayerField", "percent", out var fieldElement);
                     if (fieldElement != null)
                     {
-                        var fieldInstance = new RValue(((CLayerInstanceElement*)fieldElement)->Instance);
-                        *fieldInstance.Get("percent") = new(-0.1);
+                        RValue fieldInstance = ((CLayerInstanceElement*)fieldElement)->Instance;
+                        *fieldInstance.Get("percent") = -0.1;
                     }
                 }
             }

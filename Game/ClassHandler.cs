@@ -53,20 +53,20 @@ namespace RnSArchipelago.Game
                         {
                             if (inventoryHandler.IsClassAvailable(i))
                             {
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = 1;
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = 1;
                             }
                             else
                             {
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(0);
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(0);
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = 0;
+                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = 0;
                             }
                         }
                         // Palette selection
                         else if (HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 2))
                         {
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = new(1);
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = new(1);
+                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = 1;
+                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = 1;
                         }
                     }
                 }
@@ -97,9 +97,9 @@ namespace RnSArchipelago.Game
                     if (inventoryHandler.isClassSanity && !inventoryHandler.IsClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
                     {
                         var chars = rnsReloaded.FindValue(self, "step");
-                        *chars = new(1);
+                        *chars = 1;
                         var previous = rnsReloaded.FindValue(self, "previousStep");
-                        *previous = new(1);
+                        *previous = 1;
                     }
                 }
             }

@@ -34,7 +34,7 @@ namespace RnSArchipelago.Game
             {
                 if (this.inventoryHandler.isActive)
                 {
-                    var a = new RValue(self);
+                    RValue a = new(self);
                     //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
 
                     //this.logger.PrintMessage(HookUtil.PrintHook(rnsReloaded, "end", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
@@ -46,22 +46,22 @@ namespace RnSArchipelago.Game
                     if (layer != null)
                     {
                         //this.logger.PrintMessage("not null: " + layer->Elements.Count, System.Drawing.Color.DarkOrange);
-                        //var a = new RValue(self);
+                        //RValue a = new(self);
                         //this.logger.PrintMessage(rnsReloaded.GetString(&a), System.Drawing.Color.DarkOrange);
                         hallway = layer->Elements.First;
                         while (hallway != null)
                         {
                             var instance = (CLayerInstanceElement*)hallway;
-                            var instanceValue = new RValue(instance->Instance);
+                            RValue instanceValue = new(instance->Instance);
 
 
                             var seed = rnsReloaded.FindValue((&instanceValue)->Object, "potY");
                             if (seed != null && seed->ToString() != "unset")
                             {
                                 //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
-                                //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [new(0), new(400)]);
+                                //ModifyElementVariable(rnsReloaded, hallway, "potY", ModificationType.ModifyArray, [0, 400]);
                                 //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
-                                //var b = new RValue(self);
+                                //RValue b = new(self);
                                 //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
                                 if (this.fixEndIconsHook != null)
                                 {

@@ -48,7 +48,7 @@
 
   <ItemGroup>
     <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.1" />
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.8" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.14" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.5.0" ExcludeAssets="runtime" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.9.0" />
   </ItemGroup>

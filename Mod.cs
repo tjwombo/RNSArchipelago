@@ -523,13 +523,13 @@ namespace RnSArchipelago
                 // Setup as if a friends only lobby or solo lobby based on the number of players
                 if (lobby.ArchipelagoNum > 1)
                 {
-                    *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
+                    *rnsReloaded.utils.GetGlobalVar("obLobbyType") = 1;
                 }
                 else
                 {
                     // TODO: Fix this as there was errors stopping a single player lobby
-                    //*rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(0);
-                    *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(1);
+                    //*rnsReloaded.utils.GetGlobalVar("obLobbyType") = 0;
+                    *rnsReloaded.utils.GetGlobalVar("obLobbyType") = 1;
                 }
                 if (this.archipelagoWebsocketHook != null)
                 {
@@ -541,7 +541,7 @@ namespace RnSArchipelago
                 }
 
                 // Return to archipelago lobby
-                *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
+                *rnsReloaded.utils.GetGlobalVar("obLobbyType") = 3;
             }
             else
             {
@@ -709,27 +709,27 @@ namespace RnSArchipelago
                 int abilityId = (int)rnsReloaded.utils.RValueToLong(argv[0]);
                 if (isPrimary(abilityId))
                 {
-                    //*argv[0] = new RValue(availablePrimary[random.Next(availablePrimary.Count)]);
-                    *argv[0] = new RValue(67);
+                    //*argv[0] = availablePrimary[random.Next(availablePrimary.Count)];
+                    *argv[0] = 67;
                 }
                 else if (isSecondary(abilityId))
                 {
-                    //*argv[0] = new RValue(availableSecondary[random.Next(availableSecondary.Count)]);
-                    *argv[0] = new RValue(72);
+                    //*argv[0] = availableSecondary[random.Next(availableSecondary.Count)];
+                    *argv[0] = 72;
                 }
                 else if (isSpecial(abilityId))
                 {
-                    //*argv[0] = new RValue(availableSpecial[random.Next(availableSpecial.Count)]);
+                    //*argv[0] = availableSpecial[random.Next(availableSpecial.Count)];
                 }
                 else if (isDefensive(abilityId))
                 {
-                    //*argv[0] = new RValue(availableDefensive[random.Next(availableDefensive.Count)]);
+                    //*argv[0] = availableDefensive[random.Next(availableDefensive.Count)];
                 }
 
                 if (HookUtil.IsEqualToNumeric(argv[2], 1))
                 {
 
-                    //*argv[0] = new(324);
+                    //*argv[0] = 324;
                 }
             }
 

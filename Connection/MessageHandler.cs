@@ -175,9 +175,7 @@ namespace RnSArchipelago.Connection
             {
                 if (errorMessage != "")
                 {
-                    var message = new RValue();
-                    rnsReloaded.CreateString(&message, errorMessage);
-                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new RValue(-1), new(), new(0), message, new(0)]);
+                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [-1, new(), 0, errorMessage, 0]);
 
                     // Return to lobby in a safe thread if there was a connection error
                     if (errorMessage.StartsWith("Connection refused: ") || errorMessage.StartsWith("Could not connect to the multiworld"))
@@ -190,12 +188,12 @@ namespace RnSArchipelago.Connection
                 {
                     var sourceId = -1;
                     long playerId = 0;
-                    var typedMessage = new RValue();
+                    RValue typedMessage = new();
 
                     switch (message)
                     {
                         case HintItemSendLogMessage:
-                            rnsReloaded.CreateString(&typedMessage, message.ToString());
+                            typedMessage = message.ToString();
                             break;
                         case ItemSendLogMessage itemSendLogMessage:
                             var messageToSend = itemSendLogMessage.ToString();
@@ -211,18 +209,18 @@ namespace RnSArchipelago.Connection
                                 messageToSend = messageToSend.Remove(0, data.connection.Get<string>("name")!.Length + 1);
                             }
 
-                            rnsReloaded.CreateString(&typedMessage, messageToSend);
+                            typedMessage = messageToSend;
 
                             break;
                         default:
                             if (modConfig.MessageConfig.SystemLog)
                             {
-                                rnsReloaded.CreateString(&typedMessage, message.ToString());
+                                typedMessage = message.ToString();
                             }
                             break;
                     }
 
-                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [new(sourceId), new(playerId), new(0), typedMessage, new(0)]);
+                    rnsReloaded.ExecuteScript("scr_chat_add_message", null, null, [sourceId, playerId, 0, typedMessage, 0]);
 
                 }
             }

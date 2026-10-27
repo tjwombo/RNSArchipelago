@@ -71,7 +71,7 @@ namespace RnSArchipelago.Game
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
                         if (keys.Contains(entry))
                         {
-                            *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = new RValue(1);
+                            *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = 1;
                         }
                     }
                 }
@@ -92,7 +92,7 @@ namespace RnSArchipelago.Game
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
                         if (keys.Contains(entry))
                         {
-                            *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = new RValue(originalUnlocks[i]);
+                            *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = originalUnlocks[i];
                         }
                     }
                 }

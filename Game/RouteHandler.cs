@@ -64,7 +64,7 @@ namespace RnSArchipelago.Game
                 }
 
                 var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
+                RValue instanceValue = new(instance->Instance);
 
                 var hallkey = instanceValue.Get("hallkey");
 
@@ -239,7 +239,7 @@ namespace RnSArchipelago.Game
                 }
 
                 var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
+                RValue instanceValue = new(instance->Instance);
 
                 var kingdoms = KingdomUtil.GetRunnableKingdoms(ref currentKingdomGroup);
                 var maxCanRun = kingdoms.Count;
@@ -259,7 +259,7 @@ namespace RnSArchipelago.Game
                 }
 
                 // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
-                HookUtil.ModifyElementVariable(element, "hallwayNumber", ModificationType.ModifyLiteral, [new(maxCanRun + 3)]);
+                HookUtil.ModifyElementVariable(element, "hallwayNumber", ModificationType.ModifyLiteral, [maxCanRun + 3]);
             }
         }
 
@@ -273,7 +273,7 @@ namespace RnSArchipelago.Game
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "currentPos", out var element);
                     if (element != null)
                     {
-                        var instance = new RValue(((CLayerInstanceElement*)element)->Instance);
+                        RValue instance = ((CLayerInstanceElement*)element)->Instance;
                         var currentPos = HookUtil.GetNumeric(instance.Get("currentPos")); // Wasn't playing well with IsEqualToNumeric
                         var hallwayPos = HookUtil.GetNumeric(instance.Get("hallwayPos"));
 
@@ -288,7 +288,7 @@ namespace RnSArchipelago.Game
                         // Show notch map and stop joining if the first notch is an AP treasuresphere
                         if (currentPos == 0 && hallwayPos == 0 && LocationUtil.GetLocationType((int)currentPos + 1) == LocationUtil.LocationType.SpecialChest)
                         {
-                            *rnsReloaded.utils.GetGlobalVar("notchExHideMap") = new(0);
+                            *rnsReloaded.utils.GetGlobalVar("notchExHideMap") = 0;
                             // TODO: Stop the joining message
                         }
                     }
@@ -322,7 +322,7 @@ namespace RnSArchipelago.Game
                 HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
 
                 var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
+                RValue instanceValue = new(instance->Instance);
 
                 var unplacedKingdoms = KingdomUtil.GetRunnableKingdoms(ref currentKingdomGroup);
 
@@ -387,7 +387,7 @@ namespace RnSArchipelago.Game
                     }
 
                     // Update the name
-                    *instanceValue.Get("stageNameRefresh") = new RValue(1);
+                    *instanceValue.Get("stageNameRefresh") = 1;
                 }
 
                 unplacedKingdoms.Remove("hw_outskirts");
@@ -597,7 +597,7 @@ namespace RnSArchipelago.Game
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
 
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
                     var hallkey = instanceValue.Get("hallkey");
 
                     selectedKingdom = rnsReloaded.ArrayGetEntry(hallkey, 1)->ToString();

@@ -49,7 +49,7 @@ namespace RnSArchipelago.Game
         {
             if (useArchipelago)
             {
-                *argv[0] = new RValue(archipelagoItemId);
+                *argv[0] = archipelagoItemId;
             }
             else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.None)
             {
@@ -59,23 +59,23 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.AvailablePotions.Contains("Full Heal Potion"))
                 {
-                    *argv[0] = new RValue(PotionNameToId("Full Heal Potion"));
+                    *argv[0] = PotionNameToId("Full Heal Potion");
                 }
                 else
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                 }
             }
             else
             {
                 if (inventoryHandler.AvailablePotions.Count == 0)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                 }
                 else
                 {
                     string randomPotion = inventoryHandler.AvailablePotions[rand.Next(inventoryHandler.AvailablePotions.Count)];
-                    *argv[0] = new RValue(PotionNameToId(randomPotion));
+                    *argv[0] = PotionNameToId(randomPotion);
                 }
             }
         }
@@ -84,7 +84,7 @@ namespace RnSArchipelago.Game
         {
             if (useArchipelago)
             {
-                *argv[0] = new RValue(archipelagoItemId);
+                *argv[0] = archipelagoItemId;
             }
             else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.None)
             {
@@ -94,23 +94,23 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.AvailablePotions.Contains("Level Up Potion"))
                 {
-                    *argv[0] = new RValue(PotionNameToId("Level Up Potion"));
+                    *argv[0] = PotionNameToId("Level Up Potion");
                 }
                 else
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                 }
             }
             else
             {
                 if (inventoryHandler.AvailablePotions.Count == 0)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                 }
                 else
                 {
                     string randomPotion = inventoryHandler.AvailablePotions[rand.Next(inventoryHandler.AvailablePotions.Count)];
-                    *argv[0] = new RValue(PotionNameToId(randomPotion));
+                    *argv[0] = PotionNameToId(randomPotion);
                 }
             }
         }
@@ -119,7 +119,7 @@ namespace RnSArchipelago.Game
         {
             if (useArchipelago)
             {
-                *argv[0] = new RValue(archipelagoItemId);
+                *argv[0] = archipelagoItemId;
             }
             else if (inventoryHandler.PotionSanity == InventoryHandler.PotionSetting.None)
             {
@@ -131,24 +131,24 @@ namespace RnSArchipelago.Game
                 logger.PrintMessage(string.Join(", ", actualPotions), System.Drawing.Color.DarkOrange);
                 if (actualPotions.Count == 0)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                 }
                 else
                 {
                     string randomPotion = actualPotions[rand.Next(actualPotions.Count)];
-                    *argv[0] = new RValue(PotionNameToId(randomPotion));
+                    *argv[0] = PotionNameToId(randomPotion);
                 }
             }
             else
             {
                 if (inventoryHandler.AvailablePotions.Count == 0)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                 }
                 else
                 {
                     string randomPotion = inventoryHandler.AvailablePotions[rand.Next(inventoryHandler.AvailablePotions.Count)];
-                    *argv[0] = new RValue(PotionNameToId(randomPotion));
+                    *argv[0] = PotionNameToId(randomPotion);
                 }
             }
         }
@@ -157,7 +157,7 @@ namespace RnSArchipelago.Game
         {
             if (useArchipelago)
             {
-                *argv[0] = new RValue(archipelagoItemId);
+                *argv[0] = archipelagoItemId;
             }
             else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
@@ -168,7 +168,7 @@ namespace RnSArchipelago.Game
 
                 if (inventoryHandler.AvailablePrimaryUpgrades == InventoryHandler.PrimaryUpgradeFlags.None)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                     return;
                 }
 
@@ -182,23 +182,23 @@ namespace RnSArchipelago.Game
 
                 if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryEmeraldGem)
                 {
-                    *argv[0] = new RValue(713);
+                    *argv[0] = 713;
                 }
                 else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryGarnetGem)
                 {
-                    *argv[0] = new RValue(709);
+                    *argv[0] = 709;
                 }
                 else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryRubyGem)
                 {
-                    *argv[0] = new RValue(705);
+                    *argv[0] = 705;
                 }
                 else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimarySapphireGem)
                 {
-                    *argv[0] = new RValue(701);
+                    *argv[0] = 701;
                 }
                 else if (randomPrimary == InventoryHandler.PrimaryUpgradeFlags.PrimaryOpalGem)
                 {
-                    *argv[0] = new RValue(697);
+                    *argv[0] = 697;
                 }
             }
 
@@ -208,7 +208,7 @@ namespace RnSArchipelago.Game
         {
             if (useArchipelago)
             {
-                *argv[0] = new RValue(archipelagoItemId);
+                *argv[0] = archipelagoItemId;
             }
             else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
@@ -218,7 +218,7 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.AvailableSecondaryUpgrades == InventoryHandler.SecondaryUpgradeFlags.None)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                     return;
                 }
 
@@ -232,23 +232,23 @@ namespace RnSArchipelago.Game
 
                 if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryEmeraldGem)
                 {
-                    *argv[0] = new RValue(714);
+                    *argv[0] = 714;
                 }
                 else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryGarnetGem)
                 {
-                    *argv[0] = new RValue(710);
+                    *argv[0] = 710;
                 }
                 else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryRubyGem)
                 {
-                    *argv[0] = new RValue(706);
+                    *argv[0] = 706;
                 }
                 else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondarySapphireGem)
                 {
-                    *argv[0] = new RValue(702);
+                    *argv[0] = 702;
                 }
                 else if (randomSecondary == InventoryHandler.SecondaryUpgradeFlags.SecondaryOpalGem)
                 {
-                    *argv[0] = new RValue(698);
+                    *argv[0] = 698;
                 }
             }
 
@@ -258,7 +258,7 @@ namespace RnSArchipelago.Game
         {
             if (useArchipelago)
             {
-                *argv[0] = new RValue(archipelagoItemId);
+                *argv[0] = archipelagoItemId;
             }
             else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
@@ -268,7 +268,7 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.AvailableSpecialUpgrades == InventoryHandler.SpecialUpgradeFlags.None)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                     return;
                 }
 
@@ -282,23 +282,23 @@ namespace RnSArchipelago.Game
 
                 if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialEmeraldGem)
                 {
-                    *argv[0] = new RValue(715);
+                    *argv[0] = 715;
                 }
                 else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialGarnetGem)
                 {
-                    *argv[0] = new RValue(711);
+                    *argv[0] = 711;
                 }
                 else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialRubyGem)
                 {
-                    *argv[0] = new RValue(707);
+                    *argv[0] = 707;
                 }
                 else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialSapphireGem)
                 {
-                    *argv[0] = new RValue(703);
+                    *argv[0] = 703;
                 }
                 else if (randomSpecial == InventoryHandler.SpecialUpgradeFlags.SpecialOpalGem)
                 {
-                    *argv[0] = new RValue(699);
+                    *argv[0] = 699;
                 }
             }
 
@@ -308,7 +308,7 @@ namespace RnSArchipelago.Game
         {
             if (useArchipelago)
             {
-                *argv[0] = new RValue(archipelagoItemId);
+                *argv[0] = archipelagoItemId;
             }
             else if (inventoryHandler.UpgradeSanity == InventoryHandler.UpgradeSetting.None)
             {
@@ -318,7 +318,7 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.AvailableDefensiveUpgrades == InventoryHandler.DefensiveUpgradeFlags.None)
                 {
-                    *argv[0] = new RValue(0);
+                    *argv[0] = 0;
                     return;
                 }
 
@@ -332,23 +332,23 @@ namespace RnSArchipelago.Game
 
                 if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveEmeraldGem)
                 {
-                    *argv[0] = new RValue(716);
+                    *argv[0] = 716;
                 }
                 else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveGarnetGem)
                 {
-                    *argv[0] = new RValue(712);
+                    *argv[0] = 712;
                 }
                 else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveRubyGem)
                 {
-                    *argv[0] = new RValue(708);
+                    *argv[0] = 708;
                 }
                 else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveSapphireGem)
                 {
-                    *argv[0] = new RValue(704);
+                    *argv[0] = 704;
                 }
                 else if (randomDefensive == InventoryHandler.DefensiveUpgradeFlags.DefensiveOpalGem)
                 {
-                    *argv[0] = new RValue(700);
+                    *argv[0] = 700;
                 }
             }
 

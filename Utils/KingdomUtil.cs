@@ -270,14 +270,14 @@ namespace RnSArchipelago.Utils
 
                 // Set the values
                 rnsReloaded.CreateString(rnsReloaded.ArrayGetEntry(hallkey, index), hallValue);
-                *rnsReloaded.ArrayGetEntry(hallsubimg, index) = new(hallsubimgValue);
+                *rnsReloaded.ArrayGetEntry(hallsubimg, index) = hallsubimgValue;
                 if (hallseedValue.HasValue)
                 {
-                    *rnsReloaded.ArrayGetEntry(hallseed, index) = new(hallseedValue.Value);
+                    *rnsReloaded.ArrayGetEntry(hallseed, index) = hallseedValue.Value;
                 }
                 else
                 {
-                    *rnsReloaded.ArrayGetEntry(hallseed, index) = new(rand.Next()); // rerandomizes hallways that haven't been visited yet on updating the route
+                    *rnsReloaded.ArrayGetEntry(hallseed, index) = rand.Next(); // rerandomizes hallways that haven't been visited yet on updating the route
                 }
             }
         }

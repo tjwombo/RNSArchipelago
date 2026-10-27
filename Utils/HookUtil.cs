@@ -27,7 +27,7 @@ namespace RnSArchipelago.Utils
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
 
             var instance = (CLayerInstanceElement*)element;
-            var instanceValue = new RValue(instance->Instance);
+            RValue instanceValue = new(instance->Instance);
             RValue* objectToModify = instanceValue.Get(variable);
 
             switch (modification)
@@ -56,46 +56,6 @@ namespace RnSArchipelago.Utils
                 default:
                     return;
             }
-        }
-
-        internal static RValue CreateRArray(object[] values)
-        {
-            if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return null;
-
-            var array = rnsReloaded.ExecuteCodeFunction("array_create", null, null, [new(values.Length)]);
-            if (array.HasValue)
-            {
-                var arrayValues = array.Value;
-                for (var i = 0; i < values.Length; i++)
-                {
-                    if (values[i] is string s)
-                    {
-                        var stringValue = new RValue();
-                        rnsReloaded.CreateString(&stringValue, s);
-                        *arrayValues[i] = stringValue;
-
-                    }
-                    else if (values[i] is long l)
-                    {
-                        *arrayValues[i] = new RValue(l);
-                    }
-                    else if (values[i] is double d)
-                    {
-                        *arrayValues[i] = new RValue(d);
-                    }
-                    else if (values[i] is int intValue)
-                    {
-                        *arrayValues[i] = new RValue(intValue);
-                    }
-                    else
-                    {
-                        logger.PrintMessage(values[i] + " is not convertable", System.Drawing.Color.Red);
-                    }
-                }
-
-                return arrayValues;
-            }
-            return null;
         }
 
         internal static bool IsEqualToNumeric(RValue* value, long testValue)
@@ -172,7 +132,7 @@ namespace RnSArchipelago.Utils
             while (element != null)
             {
                 var instance = (CLayerInstanceElement*)element;
-                var instanceValue = new RValue(instance->Instance);
+                RValue instanceValue = new(instance->Instance);
 
                 if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
                 {
@@ -197,7 +157,7 @@ namespace RnSArchipelago.Utils
                 while (element != null)
                 {
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
                     {
@@ -223,7 +183,7 @@ namespace RnSArchipelago.Utils
                 while (element != null)
                 {
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     if (instanceValue.Get(variableName) != null && instanceValue.Get(variableName)->ToString() != "unset")
                     {
@@ -249,7 +209,7 @@ namespace RnSArchipelago.Utils
                 while (element != null)
                 {
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
                     {
@@ -275,7 +235,7 @@ namespace RnSArchipelago.Utils
                 while (element != null)
                 {
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset")
                     {
@@ -310,7 +270,7 @@ namespace RnSArchipelago.Utils
                 while (element != null)
                 {
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset"
                         && rnsReloaded.GetString(instanceValue.Get(field)) == value)
@@ -347,7 +307,7 @@ namespace RnSArchipelago.Utils
                 while (element != null)
                 {
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset"
                         && rnsReloaded.GetString(instanceValue.Get(field)) == value)
@@ -377,7 +337,7 @@ namespace RnSArchipelago.Utils
                 while (element != null)
                 {
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
 
                     var found = true;
 

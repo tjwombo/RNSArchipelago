@@ -92,12 +92,10 @@ namespace RnSArchipelago.Connection
             {
                 if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
                 {
-                    var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                    var args = new RValue[] { 60, 1, 1 }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
                     var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
 
-                    var msg = new RValue();
-                    rnsReloaded.CreateString(&msg, "APConnect;" + config.StartUpConfig.ArchipelagoAddress + ";" + config.StartUpConfig.ArchipelagoName + ";" + config.StartUpConfig.ArchipelagoPassword);
-                    args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                    args = new RValue[] { buffer!.Value, 11, "APConnect;" + config.StartUpConfig.ArchipelagoAddress + ";" + config.StartUpConfig.ArchipelagoName + ";" + config.StartUpConfig.ArchipelagoPassword }; // Treat the message as a string
                     rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
 
                     args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
@@ -121,13 +119,13 @@ namespace RnSArchipelago.Connection
             {
                 if (clientIds.Count > 0)
                 {
-                    var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                    var args = new RValue[] { 60, 1, 1 }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
                     var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
                     var info = "APHallway;";
 
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
                     var hallkey = instanceValue.Get("hallkey");
 
                     for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")); i++)
@@ -137,14 +135,12 @@ namespace RnSArchipelago.Connection
 
                     info = info.TrimEnd(';');
 
-                    var msg = new RValue();
-                    rnsReloaded.CreateString(&msg, info);
-                    args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                    args = new RValue[] { buffer!.Value, 11, info }; // Treat the message as a string
                     rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
 
                     foreach (long id in clientIds)
                     {
-                        args = new RValue[] { new(id), buffer!.Value };
+                        args = new RValue[] { id, buffer!.Value };
                         rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
                     }
                 }
@@ -158,13 +154,13 @@ namespace RnSArchipelago.Connection
             {
                 if (clientIds.Count > 0)
                 {
-                    var args = new RValue[] { new(60), new(1), new(1) }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
+                    var args = new RValue[] { 60, 1, 1 }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
                     var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
 
                     var info = "APHallway;";
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
                     var instance = (CLayerInstanceElement*)element;
-                    var instanceValue = new RValue(instance->Instance);
+                    RValue instanceValue = new(instance->Instance);
                     var notches = instanceValue.Get("notches");
                     for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("currentPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("notchNumber")); i++)
                     {
@@ -178,14 +174,12 @@ namespace RnSArchipelago.Connection
 
                     info = info.TrimEnd(';');
 
-                    var msg = new RValue();
-                    rnsReloaded.CreateString(&msg, info);
-                    args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                    args = [buffer!.Value, 11, info]; // Treat the message as a string
                     rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
 
                     foreach (long id in clientIds)
                     {
-                        args = new RValue[] { new(id), buffer!.Value };
+                        args = [id, buffer!.Value];
                         rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
                     }
                 }
@@ -199,15 +193,13 @@ namespace RnSArchipelago.Connection
             {
                 var info = "APSync;" + type;
 
-                var args = new RValue[] { new(info.Length), new(1), new(1) };
+                var args = new RValue[] { info.Length, 1, 1 };
                 var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
 
-                var msg = new RValue();
-                rnsReloaded.CreateString(&msg, info);
-                args = new RValue[] { buffer!.Value, new(11), msg }; // Treat the message as a string
+                args = new RValue[] { buffer!.Value, 11, info }; // Treat the message as a string
                 rnsReloaded.ExecuteCodeFunction("buffer_write", null, null, args);
 
-                args = new RValue[] { buffer!.Value, new(60) };
+                args = new RValue[] { buffer!.Value, 60 };
                 rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_host", null, null, args);
             }
         }
@@ -220,15 +212,15 @@ namespace RnSArchipelago.Connection
                 var buffer = *argv[1];
 
                 // Make sure we're at the beginning of the buffer
-                RValue[] args = [buffer, new(0), new(0)];
+                RValue[] args = [buffer, 0, 0];
                 rnsReloaded.ExecuteCodeFunction("buffer_seek", null, null, args);
 
                 // Read the buffer as a string
-                args = [buffer, new(11)]; // 11 is to read the buffer as a string
+                args = [buffer, 11]; // 11 is to read the buffer as a string
                 var message = rnsReloaded.ExecuteCodeFunction("buffer_read", null, null, args);
 
                 // Reset the position to the beginning for the actual read
-                args = [buffer, new(0), new(0)];
+                args = [buffer, 0, 0];
                 rnsReloaded.ExecuteCodeFunction("buffer_seek", null, null, args);
 
                 if (message.HasValue)
@@ -246,7 +238,7 @@ namespace RnSArchipelago.Connection
 
                         saveHandler.UnlockSaveInfo();
 
-                        *rnsReloaded.utils.GetGlobalVar("obLobbyType") = new RValue(3);
+                        *rnsReloaded.utils.GetGlobalVar("obLobbyType") = 3;
 
                         this.logger.PrintMessage("Client Connected", System.Drawing.Color.Orange);
                     }
@@ -274,7 +266,7 @@ namespace RnSArchipelago.Connection
                         HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
 
                         var instance = (CLayerInstanceElement*)element;
-                        var instanceValue = new RValue(instance->Instance);
+                        RValue instanceValue = new(instance->Instance);
 
                         for (var i = 0; i < parts.Length; i++)
                         {
@@ -304,19 +296,16 @@ namespace RnSArchipelago.Connection
                                     }
 
                                     KingdomUtil.SetHallwayValue(index, instanceValue, info[2], subimg, Int64.Parse(info[3]));
-                                    *instanceValue.Get("hallwayNumber") = new(Math.Max(HookUtil.GetNumeric(instanceValue.Get("hallwayPos")), index + 1));
+                                    *instanceValue.Get("hallwayNumber") = Math.Max(HookUtil.GetNumeric(instanceValue.Get("hallwayPos")), index + 1);
 
                                     break;
                                 case "1":
 
                                     string[] notchInfo = info[2].TrimStart('[').TrimEnd(']').Trim().Split(",");
 
-                                    var enc = new RValue();
-                                    rnsReloaded.CreateString(&enc, notchInfo[1].Trim('"'));
-
                                     var notches = instanceValue.Get("notches");
 
-                                    RValue[] notch = [new(Int32.Parse(notchInfo[0])), enc, new(Double.Parse(notchInfo[2])), new(Int32.Parse(notchInfo[3]))];
+                                    RValue[] notch = [notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]];
 
                                     var notchesLength = rnsReloaded.ArrayGetLength(notches);
                                     if (notchesLength.HasValue && HookUtil.GetNumeric(notchesLength.Value) < index)
@@ -335,10 +324,10 @@ namespace RnSArchipelago.Connection
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }
 
-                                    *rnsReloaded.ArrayGetEntry(notches, index) = HookUtil.CreateRArray([Int32.Parse(notchInfo[0]), notchInfo[1].Trim('"'), Double.Parse(notchInfo[2]), Int32.Parse(notchInfo[3])]);
-                                    *rnsReloaded.ArrayGetEntry(xsubimg, index) = new(Int32.Parse(info[3]));
+                                    *rnsReloaded.ArrayGetEntry(notches, index) = new RValue([notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]]);
+                                    *rnsReloaded.ArrayGetEntry(xsubimg, index) = info[3];
 
-                                    *instanceValue.Get("notchNumber") = new(Math.Max(HookUtil.GetNumeric(instanceValue.Get("notchNumber")), index + 1));
+                                    *instanceValue.Get("notchNumber") = Math.Max(HookUtil.GetNumeric(instanceValue.Get("notchNumber")), index + 1);
 
                                     break;
                                 default:

@@ -187,7 +187,7 @@ namespace RnSArchipelago.Game
                         logger.PrintMessage("Unable to call item scout shop hook", System.Drawing.Color.Red);
                     }
 
-                    var instance = new RValue(self);
+                    RValue instance = new(self);
                     long? id = -1;
                     for (var j = 0; j < 9; j++)
                     {
@@ -198,8 +198,8 @@ namespace RnSArchipelago.Game
                         // if the item is an archipelago item, disable the purchase condition, mainly applies to hp and upgrades
                         if (id.HasValue && conn.session != null && !conn.session.Locations.AllLocationsChecked.Contains(id.Value))
                         {
-                            *rnsReloaded.ArrayGetEntry(instance["storeSlotHeal"], j) = new RValue(0);
-                            *rnsReloaded.ArrayGetEntry(instance["storeSlotUpgrade"], j) = new RValue(0);
+                            *rnsReloaded.ArrayGetEntry(instance["storeSlotHeal"], j) = 0;
+                            *rnsReloaded.ArrayGetEntry(instance["storeSlotUpgrade"], j) = 0;
                         }
                     }
 
