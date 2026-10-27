@@ -12,52 +12,6 @@ namespace RnSArchipelago.Utils
         internal static WeakReference<IRNSReloaded> rnsReloadedRef = null!;
         internal static ILogger logger = null!;
 
-        internal enum ModificationType
-        {
-            ModifyLiteral,
-            ModifyObject,
-            ModifyArray,
-            InsertToArray,
-            DeleteFromArray
-        }
-
-        // Helper function to easily modify variables of an element
-        internal static void ModifyElementVariable(CLayerElementBase* element, string variable, ModificationType modification, params RValue[] value)
-        {
-            if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
-
-            var instance = (CLayerInstanceElement*)element;
-            RValue instanceValue = new(instance->Instance);
-            RValue* objectToModify = instanceValue.Get(variable);
-
-            switch (modification)
-            {
-                case ModificationType.ModifyLiteral:
-                    *objectToModify = value[0];
-                    return;
-                case ModificationType.ModifyObject:
-                    return;
-                case ModificationType.ModifyArray:
-                    *objectToModify->Get(value[0].ToInt()) = value[1];
-                    return;
-                case ModificationType.InsertToArray:
-                    var args = new RValue[value.Length + 1];
-                    Array.Copy(value, 0, args, 1, value.Length);
-                    args[0] = *objectToModify;
-                    rnsReloaded.ExecuteCodeFunction("array_push", null, null, args);
-                    return;
-                case ModificationType.DeleteFromArray:
-                    var args2 = new RValue[3];
-                    args2[0] = *objectToModify;
-                    args2[1] = value[0];
-                    args2[2] = value[1];
-                    rnsReloaded.ExecuteCodeFunction("array_delete", null, null, args2);
-                    return;
-                default:
-                    return;
-            }
-        }
-
         internal static string[] GetClass()
         {
             string[] classes = new string[4];

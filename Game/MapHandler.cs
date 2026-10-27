@@ -75,7 +75,7 @@ namespace RnSArchipelago.Game
                 var instance = (CLayerInstanceElement*)element;
                 RValue instanceValue = new(instance->Instance);
 
-                HookUtil.ModifyElementVariable(element, "buttonAvailable", HookUtil.ModificationType.ModifyArray, [index, activated]);
+                *rnsReloaded.ArrayGetEntry(instanceValue.Get("buttonAvailable"), index) = activated;
 
                 *(instanceValue.Get("buttonStr")->Get(index)) = desc;
 

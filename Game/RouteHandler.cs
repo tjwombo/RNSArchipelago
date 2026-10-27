@@ -259,7 +259,7 @@ namespace RnSArchipelago.Game
                 }
 
                 // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
-                HookUtil.ModifyElementVariable(element, "hallwayNumber", ModificationType.ModifyLiteral, [maxCanRun + 3]);
+                *instanceValue.Get("hallwayNumber") = maxCanRun + 3;
             }
         }
 
