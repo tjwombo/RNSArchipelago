@@ -86,7 +86,7 @@ namespace RnSArchipelago.Game
 
                 maxVisitableKingdoms = (int)Math.Min(maxVisitableKingdoms, this.inventoryHandler.maxKingdoms);
 
-                var hallwayNumber = HookUtil.GetNumeric(rnsReloaded.utils.GetGlobalVar("hallwayCurrent")); // 0 is Kingdom Outskirts / Crack in the Geode
+                var hallwayNumber =rnsReloaded.utils.GetGlobalVar("hallwayCurrent")->ToLong(); // 0 is Kingdom Outskirts / Crack in the Geode
 
                 if (hallwayNumber < maxVisitableKingdoms)
                 {
@@ -99,7 +99,7 @@ namespace RnSArchipelago.Game
                 if (currentPos != null && notchNumber != null)
                 {
                     // Check to see if we are at the last notch in the hallway
-                    if (HookUtil.IsEqualToNumeric(currentPos, HookUtil.GetNumeric(notchNumber) - 1))
+                    if (currentPos->ToInt() == notchNumber->ToInt() - 1)
                     {
                         if (hallwayNumber == maxVisitableKingdoms)
                         {
@@ -274,8 +274,8 @@ namespace RnSArchipelago.Game
                     if (element != null)
                     {
                         RValue instance = ((CLayerInstanceElement*)element)->Instance;
-                        var currentPos = HookUtil.GetNumeric(instance.Get("currentPos")); // Wasn't playing well with IsEqualToNumeric
-                        var hallwayPos = HookUtil.GetNumeric(instance.Get("hallwayPos"));
+                        var currentPos = instance.Get("currentPos")->ToLong(); // Wasn't playing well with IsEqualToNumeric
+                        var hallwayPos = instance.Get("hallwayPos")->ToLong();
 
                         // Backup send location in case they disconnected during the fight
                         // First check is to prevent shop, second is general transitions, and last is final boss
@@ -329,8 +329,8 @@ namespace RnSArchipelago.Game
                 var hallkey = instanceValue.Get("hallkey");
                 var maxKingdoms = this.inventoryHandler.maxKingdoms;
 
-                var currentHallwayPos = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos"));
-                var currentPos = (int)HookUtil.GetNumeric(instanceValue.Get("currentPos"));
+                var currentHallwayPos = instanceValue.Get("hallwayPos")->ToInt();
+                var currentPos = instanceValue.Get("currentPos")->ToInt();
 
                 // Handle the 0th position
                 if (!currentHallwayPosAware || currentHallwayPos < 0 || (currentPos <= 0 && currentHallwayPos == 0))
@@ -563,7 +563,7 @@ namespace RnSArchipelago.Game
         // Create the route such that you only visit kingdoms you are allowed to with your settings and items combo
         internal RValue* CreateRoute(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3)))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3))
             {
                 if (this.chooseHallsHook != null)
                 {
@@ -641,7 +641,7 @@ namespace RnSArchipelago.Game
                     returnValue = this.StopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
                 } else if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
                 {
-                    var currentPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "currentPos"));
+                    var currentPos = rnsReloaded.FindValue(self, "currentPos")->ToInt();
 
                     if (currentPos != 0)
                     {

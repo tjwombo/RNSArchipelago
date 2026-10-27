@@ -502,7 +502,7 @@ namespace RnSArchipelago
             if (!this.IsReady(out var rnsReloaded, out _)) return returnValue;
 
             // If the lobby type is archipelago set up the websocket
-            if (lobby != null && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+            if (lobby != null && rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
             {
                 this.data.connection.Set<string>("name", lobby.ArchipelagoName);
                 this.data.connection.Set<string>("address", lobby.ArchipelagoAddress);
@@ -726,7 +726,7 @@ namespace RnSArchipelago
                     //*argv[0] = availableDefensive[random.Next(availableDefensive.Count)];
                 }
 
-                if (HookUtil.IsEqualToNumeric(argv[2], 1))
+                if (argv[2]->ToInt() == 1)
                 {
 
                     //*argv[0] = 324;

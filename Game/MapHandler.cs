@@ -35,9 +35,9 @@ namespace RnSArchipelago.Game
                     RValue instanceValue2 = instance2->Instance;
 
                     var routeIcons = instanceValue2.Get("buttonAvailable");
-                    return HookUtil.GetNumeric(rnsReloaded.ArrayGetLength(routeIcons)!.Value) switch
+                    return rnsReloaded.ArrayGetLength(routeIcons)!.Value.ToInt() switch
                     {
-                        6 or 7 => HookUtil.GetNumeric(instanceValue2.Get("selectedPos")) switch
+                        6 or 7 => instanceValue2.Get("selectedPos")->ToInt() switch
                         {
                             0 => "hw_keep",
                             1 => "hw_nest",
@@ -47,7 +47,7 @@ namespace RnSArchipelago.Game
                             5 => "hw_lakeside",
                             _ => "",
                         },
-                        4 => HookUtil.GetNumeric(instanceValue2.Get("selectedPos")) switch
+                        4 => instanceValue2.Get("selectedPos")->ToInt() switch
                         {
                             0 => "hw_darkhall",
                             1 => "hw_sanct",
@@ -55,7 +55,7 @@ namespace RnSArchipelago.Game
                             3 => "hw_aurum",
                             _ => "",
                         },
-                        2 => HookUtil.GetNumeric(instanceValue2.Get("selectedPos")) switch
+                        2 => instanceValue2.Get("selectedPos")->ToInt() switch
                         {
                             0 => "hw_outskirts",
                             1 => "hw_geode",
@@ -242,8 +242,8 @@ namespace RnSArchipelago.Game
 
                     if (routeIcons != null && routeIcons->ToString() != "unset" && buttonCount.HasValue)
                     {
-                        ModifyRouteKingdomIcons(routeIcons, (int)HookUtil.GetNumeric(buttonCount.Value), element);
-                        returnValue = routeIcons->Get((int)HookUtil.GetNumeric(buttonCount.Value) - 1);
+                        ModifyRouteKingdomIcons(routeIcons, buttonCount.Value.ToInt(), element);
+                        returnValue = routeIcons->Get(buttonCount.Value.ToInt() - 1);
                     }
                 }
                 return returnValue;

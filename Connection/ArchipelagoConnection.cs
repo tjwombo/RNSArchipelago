@@ -71,7 +71,7 @@ namespace RnSArchipelago.Connection
                 logger.PrintMessage("Unable to call client disconnect hook", System.Drawing.Color.Red);
             }
 
-            clientIds.Remove(HookUtil.GetNumeric(argv[0]));
+            clientIds.Remove(argv[0]->ToLong());
 
             return returnValue;
         }
@@ -90,7 +90,7 @@ namespace RnSArchipelago.Connection
 
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                 {
                     var args = new RValue[] { 60, 1, 1 }; // Create a buffer of initial size 60, set to grow, with 1 byte padding
                     var buffer = rnsReloaded.ExecuteCodeFunction("buffer_create", null, null, args);
@@ -101,7 +101,7 @@ namespace RnSArchipelago.Connection
                     args = new RValue[] { *rnsReloaded.FindValue(self, "clientId"), buffer!.Value };
                     rnsReloaded.ExecuteScript("scr_socket_send_tcp_to_client", null, null, args);
 
-                    clientIds.Add(HookUtil.GetNumeric(rnsReloaded.FindValue(self, "clientId")));
+                    clientIds.Add(rnsReloaded.FindValue(self, "clientId")->ToLong());
 
                     SendClientHallway();
                     SendClientNotch();
@@ -128,7 +128,7 @@ namespace RnSArchipelago.Connection
                     RValue instanceValue = new(instance->Instance);
                     var hallkey = instanceValue.Get("hallkey");
 
-                    for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("hallwayPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("hallwayNumber")); i++)
+                    for (var i = instanceValue.Get("hallwayPos")->ToInt(); i < instanceValue.Get("hallwayNumber")->ToInt(); i++)
                     {
                         info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("hallseed"), i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
                     }
@@ -162,7 +162,7 @@ namespace RnSArchipelago.Connection
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
                     var notches = instanceValue.Get("notches");
-                    for (var i = (int)HookUtil.GetNumeric(instanceValue.Get("currentPos")); i < (int)HookUtil.GetNumeric(instanceValue.Get("notchNumber")); i++)
+                    for (var i = instanceValue.Get("currentPos")->ToInt(); i < instanceValue.Get("notchNumber")->ToInt(); i++)
                     {
                         if (i == -1)
                         {
@@ -296,7 +296,7 @@ namespace RnSArchipelago.Connection
                                     }
 
                                     KingdomUtil.SetHallwayValue(index, instanceValue, info[2], subimg, Int64.Parse(info[3]));
-                                    *instanceValue.Get("hallwayNumber") = Math.Max(HookUtil.GetNumeric(instanceValue.Get("hallwayPos")), index + 1);
+                                    *instanceValue.Get("hallwayNumber") = Math.Max(instanceValue.Get("hallwayPos")->ToInt(), index + 1);
 
                                     break;
                                 case "1":
@@ -308,18 +308,18 @@ namespace RnSArchipelago.Connection
                                     RValue[] notch = [notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]];
 
                                     var notchesLength = rnsReloaded.ArrayGetLength(notches);
-                                    if (notchesLength.HasValue && HookUtil.GetNumeric(notchesLength.Value) < index)
+                                    if (notchesLength.HasValue && notchesLength.Value.ToInt() < index)
                                     {
-                                        var endArray = new RValue[(index + 1) - HookUtil.GetNumeric(notchesLength.Value) + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
+                                        var endArray = new RValue[(index + 1) - notchesLength.Value.ToInt() + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
                                         endArray[0] = *notches;
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }
 
                                     var xsubimg = instanceValue.Get("xSubimg");
                                     var subimgLength = rnsReloaded.ArrayGetLength(xsubimg);
-                                    if (subimgLength.HasValue && HookUtil.GetNumeric(subimgLength.Value) < index)
+                                    if (subimgLength.HasValue && subimgLength.Value.ToInt() < index)
                                     {
-                                        var endArray = new RValue[(index + 1) - HookUtil.GetNumeric(subimgLength.Value) + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
+                                        var endArray = new RValue[(index + 1) - subimgLength.Value.ToInt() + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
                                         endArray[0] = *xsubimg;
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }
@@ -327,7 +327,7 @@ namespace RnSArchipelago.Connection
                                     *rnsReloaded.ArrayGetEntry(notches, index) = new RValue([notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]]);
                                     *rnsReloaded.ArrayGetEntry(xsubimg, index) = info[3];
 
-                                    *instanceValue.Get("notchNumber") = Math.Max(HookUtil.GetNumeric(instanceValue.Get("notchNumber")), index + 1);
+                                    *instanceValue.Get("notchNumber") = Math.Max(instanceValue.Get("notchNumber")->ToInt(), index + 1);
 
                                     break;
                                 default:

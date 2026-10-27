@@ -38,7 +38,7 @@ namespace RnSArchipelago.Utils
                 case ModificationType.ModifyObject:
                     return;
                 case ModificationType.ModifyArray:
-                    *objectToModify->Get((int) GetNumeric(value[0])) = value[1];
+                    *objectToModify->Get(value[0].ToInt()) = value[1];
                     return;
                 case ModificationType.InsertToArray:
                     var args = new RValue[value.Length + 1];
@@ -58,26 +58,6 @@ namespace RnSArchipelago.Utils
             }
         }
 
-        internal static bool IsEqualToNumeric(RValue* value, long testValue)
-        {
-            return ((int)value->Real | value->Int32) == testValue;
-        }
-
-        internal static bool IsEqualToNumeric(RValue value, long testValue)
-        {
-            return ((int)value.Real | value.Int32) == testValue;
-        }
-
-        internal static long GetNumeric(RValue* value)
-        {
-            return (int)value->Real | value->Int32;
-        }
-
-        internal static long GetNumeric(RValue value)
-        {
-            return (int)value.Real | value.Int32;
-        }
-
         internal static string[] GetClass()
         {
             string[] classes = new string[4];
@@ -89,7 +69,7 @@ namespace RnSArchipelago.Utils
                     if (element != null)
                     {
                         var instance = ((CLayerInstanceElement*)element)->Instance;
-                        var characterId = (int)GetNumeric(rnsReloaded.FindValue(instance, "selectedChar"));
+                        var characterId = rnsReloaded.FindValue(instance, "selectedChar")->ToInt();
                         var character = InventoryHandler.GetClass(characterId);
                         classes[i] = character;
                     }

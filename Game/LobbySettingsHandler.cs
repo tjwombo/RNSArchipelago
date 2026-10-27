@@ -90,7 +90,7 @@ namespace RnSArchipelago.Game
                     originalName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(0));
                     originalDesc = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(1));
                     originalPass = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));
-                    originalNum = (int)GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(4));
+                    originalNum = rnsReloaded.utils.GetGlobalVar("lobbySettings")->Get(4)->ToInt();
 
                     initialSetup = false;
                 }
@@ -122,7 +122,7 @@ namespace RnSArchipelago.Game
 
                         ModifyElementVariable(element, "selectionWidth", ModificationType.ModifyLiteral, 250);
 
-                        if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                        if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                         {
                             ModifyElementVariable(element, "selectIndex", ModificationType.ModifyLiteral, 3);
                         }
@@ -144,7 +144,7 @@ namespace RnSArchipelago.Game
             }
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                 {
                     *returnValue = 1;
                 }
@@ -171,7 +171,7 @@ namespace RnSArchipelago.Game
                 FindElementInLayer("RunMenu_Options", "text", "LOBBY SETTINGS", out var lobby);
                 if (lobby != null)
                 {
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
                         ModifyElementVariable(lobby, "text", ModificationType.ModifyLiteral, "ARCHIPELAGO SETTINGS");
                     }
@@ -181,7 +181,7 @@ namespace RnSArchipelago.Game
                 if (name != null)
                 {
                     RValue nameValue;
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
                         ModifyElementVariable(name, "text", ModificationType.ModifyLiteral, "Archipelago name");
 
@@ -200,7 +200,7 @@ namespace RnSArchipelago.Game
                 if (name != null)
                 {
                     RValue descValue;
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
                         ModifyElementVariable(description, "text", ModificationType.ModifyLiteral, "Archipelago address");
 
@@ -218,7 +218,7 @@ namespace RnSArchipelago.Game
                 if (password != null)
                 {
                     RValue passValue;
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
                         ModifyElementVariable(password, "text", ModificationType.ModifyLiteral, "enter password:");
 
@@ -235,7 +235,7 @@ namespace RnSArchipelago.Game
                 if (passwordValue != null)
                 {
                     RValue passVal = 0;
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
                         if (ArchipelagoPassword != "")
                         {
@@ -261,7 +261,7 @@ namespace RnSArchipelago.Game
                 FindElementInLayer("RunMenu_Options", "text", "[ \"single player\",\"two players\",\"three players\",\"four players\" ]", out var players);
                 if (players != null)
                 {
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
                         ModifyElementVariable(players, "cursorPos", ModificationType.ModifyLiteral, ArchipelagoNum - 1);
                         rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = ArchipelagoNum;
@@ -293,13 +293,13 @@ namespace RnSArchipelago.Game
 
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                 {
                     ArchipelagoName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0));
 
                     ArchipelagoAddress = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
 
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1))
+                    if (rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->ToInt() == 1)
                     {
                         ArchipelagoPassword = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(3));
                     }
@@ -308,7 +308,7 @@ namespace RnSArchipelago.Game
                         ArchipelagoPassword = "";
                     }
 
-                    ArchipelagoNum = (int)GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
+                    ArchipelagoNum = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->ToInt();
                 }
                 else
                 {
@@ -316,7 +316,7 @@ namespace RnSArchipelago.Game
 
                     originalDesc = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
 
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1))
+                    if (rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->ToInt() == 1)
                     {
                         originalPass = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(3));
                     }
@@ -325,7 +325,7 @@ namespace RnSArchipelago.Game
                         originalPass = "";
                     }
 
-                    originalNum = (int)GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
+                    originalNum = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->ToInt();
                 }
             }
             return returnValue;
@@ -379,7 +379,7 @@ namespace RnSArchipelago.Game
                         if (route != null)
                         {
                             RValue descriptions;
-                            if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                             {
                                 descriptions = new RValue(["the pale keep will be visited if possible.",
                                     "the scholar's nest will be visited first if possible.",
@@ -415,14 +415,14 @@ namespace RnSArchipelago.Game
                         FindElementInLayer("name", "click to edit lobby settings", layer, out var lobbyButton);
                         if (lobbyButton != null)
                         {
-                            if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                             {
                                 RValue nameVar = 0;
                                 rnsReloaded.CreateString(&nameVar, "click to edit archipelago settings");
                                 ModifyElementVariable(lobbyButton, "name", ModificationType.ModifyLiteral, nameVar);
 
                             }
-                            else if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 1) || IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 2))
+                            else if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 1 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 2)
                             {
                                 RValue lobbyVar = 0;
                                 rnsReloaded.CreateString(&lobbyVar, "click to edit lobby settings");
@@ -466,15 +466,15 @@ namespace RnSArchipelago.Game
                             RValue instanceValue = new(instance->Instance);
 
                             // Update the text on the banner
-                            if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                            if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                             {
-                                archipelagoPassSet = IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1);
-                                ArchipelagoNum = (int)GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
+                                archipelagoPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->ToInt() == 1;
+                                ArchipelagoNum = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->ToInt();
                             }
                             else
                             {
-                                originalPassSet = IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2), 1);
-                                originalNum = (int)GetNumeric(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4));
+                                originalPassSet = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2)->ToInt() == 1;
+                                originalNum = rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->ToInt();
                             }
 
                             // Update the info in the banner
@@ -510,7 +510,7 @@ namespace RnSArchipelago.Game
                 if (instanceValue.Get("diffTxt") != null &&
                 rnsReloaded.GetString(instanceValue.Get("diffTxt")) == "[ \"CUTE\",\"NORMAL\",\"HARD\",\"LUNAR\" ]")
                 {
-                    if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                    if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
                         ModifyElementVariable(element, "name", ModificationType.ModifyLiteral, ArchipelagoName);
 
@@ -552,7 +552,7 @@ namespace RnSArchipelago.Game
             setNameHook?.OriginalFunction(self, other, returnValue, argc, argv);
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                 {
 
                     ArchipelagoName = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0));
@@ -574,7 +574,7 @@ namespace RnSArchipelago.Game
             setDescHook?.OriginalFunction(self, other, returnValue, argc, argv);
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                 {
 
                     ArchipelagoAddress = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1));
@@ -596,7 +596,7 @@ namespace RnSArchipelago.Game
             setPassHook?.OriginalFunction(self, other, returnValue, argc, argv);
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                 {
 
                     ArchipelagoPassword = rnsReloaded.GetString(rnsReloaded.utils.GetGlobalVar("lobbyPassword"));
@@ -616,7 +616,7 @@ namespace RnSArchipelago.Game
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (argv[0]->ToString() == "lobbydisplay" && IsEqualToNumeric(argv[2], -350) && HookUtil.IsEqualToNumeric(rnsReloaded.utils.GetGlobalVar("obLobbyType"), 3))
+                if (argv[0]->ToString() == "lobbydisplay" && argv[2]->ToInt() == -350 && rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                 {
                     var scoreId = rnsReloaded.CodeFunctionFind("parameter_count");
 
@@ -700,7 +700,7 @@ namespace RnSArchipelago.Game
 
                 var routeIcons = instanceValue.Get("cursorPos");
 
-                return GetNumeric(routeIcons) switch
+                return routeIcons->ToLong() switch
                 {
                     0 => "hw_keep",
                     1 => "hw_nest",

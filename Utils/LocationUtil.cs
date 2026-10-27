@@ -28,28 +28,28 @@ namespace RnSArchipelago.Utils
 
                 if (index == -1)
                 {
-                    index = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(instance, "currentPos"));
+                    index = rnsReloaded.FindValue(instance, "currentPos")->ToInt();
                 }
 
                 var currentXImg = rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "xSubimg"), index);
 
-                if (HookUtil.IsEqualToNumeric(currentXImg, 1))
+                if (currentXImg->ToInt() == 1)
                 {
                     return LocationType.Chest;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 2))
+                else if (currentXImg->ToInt() == 2)
                 {
                     return LocationType.Shop;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 4))
+                else if (currentXImg->ToInt() == 4)
                 {
                     return LocationType.Boss;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 5))
+                else if (currentXImg->ToInt() == 5)
                 {
                     return LocationType.SpecialChest;
                 }
-                else if (HookUtil.IsEqualToNumeric(currentXImg, 0))
+                else if (currentXImg->ToInt() == 0)
                 {
                     return LocationType.Battle;
                 }
@@ -62,7 +62,7 @@ namespace RnSArchipelago.Utils
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                var notchPos = (int)HookUtil.GetNumeric(rnsReloaded.FindValue(element, "currentPos"));
+                var notchPos = rnsReloaded.FindValue(element, "currentPos")->ToInt();
                 var notchType = GetLocationType();
 
                 if (notchType == LocationType.Boss)

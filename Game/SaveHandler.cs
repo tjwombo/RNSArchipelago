@@ -42,12 +42,12 @@ namespace RnSArchipelago.Game
                 var keysLength = rnsReloaded.ArrayGetLength(unlockKeys);
                 if (keysLength.HasValue)
                 {
-                    for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
+                    for (var i = 0; i < keysLength.Value.ToInt(); i++)
                     {
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
                         if (keys.Contains(entry))
                         {
-                            originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = HookUtil.GetNumeric(*rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i));
+                            originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i)->ToLong();
                         }
                     }
                 }
@@ -66,7 +66,7 @@ namespace RnSArchipelago.Game
 
                 if (keysLength.HasValue)
                 {
-                    for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
+                    for (var i = 0; i < keysLength.Value.ToInt(); i++)
                     {
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
                         if (keys.Contains(entry))
@@ -87,7 +87,7 @@ namespace RnSArchipelago.Game
 
                 if (keysLength.HasValue)
                 {
-                    for (var i = 0; i < HookUtil.GetNumeric(keysLength.Value); i++)
+                    for (var i = 0; i < keysLength.Value.ToInt(); i++)
                     {
                         var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
                         if (keys.Contains(entry))

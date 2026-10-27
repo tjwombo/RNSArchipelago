@@ -49,7 +49,7 @@ namespace RnSArchipelago.Game
                     for (var i = 0; i < InventoryHandler.CLASSES.Length; i++)
                     {
                         // Character selection
-                        if (HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 1))
+                        if (rnsReloaded.FindValue(self, "step")->ToInt() == 1)
                         {
                             if (inventoryHandler.IsClassAvailable(i))
                             {
@@ -63,7 +63,7 @@ namespace RnSArchipelago.Game
                             }
                         }
                         // Palette selection
-                        else if (HookUtil.IsEqualToNumeric(rnsReloaded.FindValue(self, "step"), 2))
+                        else if (rnsReloaded.FindValue(self, "step")->ToInt() == 2)
                         {
                             *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = 1;
                             *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = 1;
@@ -94,7 +94,7 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.isActive)
                 {
-                    if (inventoryHandler.isClassSanity && !inventoryHandler.IsClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    if (inventoryHandler.isClassSanity && !inventoryHandler.IsClassAvailable(rnsReloaded.FindValue(self, "selectedChar")->ToInt()))
                     {
                         var chars = rnsReloaded.FindValue(self, "step");
                         *chars = 1;
@@ -114,7 +114,7 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.isActive)
                 {
-                    if (inventoryHandler.isClassSanity && !inventoryHandler.IsClassAvailable((int)HookUtil.GetNumeric(rnsReloaded.FindValue(self, "selectedChar"))))
+                    if (inventoryHandler.isClassSanity && !inventoryHandler.IsClassAvailable(rnsReloaded.FindValue(self, "selectedChar")->ToInt()))
                     {
                         return returnValue;
                     }
