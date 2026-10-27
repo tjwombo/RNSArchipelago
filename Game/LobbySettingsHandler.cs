@@ -104,27 +104,27 @@ namespace RnSArchipelago.Game
                         var instance = (CLayerInstanceElement*)element;
                         RValue instanceValue = new(instance->Instance);
 
-                        *rnsReloaded.ArrayGetEntry(instanceValue.Get("nameXSc"), 1) = 0.75;
+                        *rnsReloaded.ArrayGetEntry(instanceValue["nameXSc"], 1) = 0.75;
 
-                        instanceValue.Get("nameXSc")->ArrayPush(0.75);
+                        instanceValue["nameXSc"]->ArrayPush(0.75);
 
-                        instanceValue.Get("nameStr")->ArrayPush("ARCHIPELAGO");
+                        instanceValue["nameStr"]->ArrayPush("ARCHIPELAGO");
 
-                        instanceValue.Get("descStr")->ArrayPush("lobby is open for archipelago");
+                        instanceValue["descStr"]->ArrayPush("lobby is open for archipelago");
 
-                        *rnsReloaded.ArrayGetEntry(instanceValue.Get("colorInd"), 3) = 8678193;
+                        *rnsReloaded.ArrayGetEntry(instanceValue["colorInd"], 3) = 8678193;
 
-                        *instanceValue.Get("diffXPos") = new([-210, 40, 290, 540]);
+                        *instanceValue["diffXPos"] = new([-210, 40, 290, 540]);
 
-                        instanceValue.Get("diffYPos")->ArrayPush(-20);
+                        instanceValue["diffYPos"]->ArrayPush(-20);
 
-                        *instanceValue.Get("maxIndex") = 4;
+                        *instanceValue["maxIndex"] = 4;
 
-                        *instanceValue.Get("selectionWidth") = 250;
+                        *instanceValue["selectionWidth"] = 250;
 
                         if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                         {
-                            *instanceValue.Get("selectIndex") = 3;
+                            *instanceValue["selectIndex"] = 3;
                         }
                     }
                 }
@@ -175,7 +175,7 @@ namespace RnSArchipelago.Game
                     {
                         var instance = (CLayerInstanceElement*)lobby;
                         RValue instanceValue = new(instance->Instance);
-                        *instanceValue.Get("text") = "ARCHIPELAGO SETTINGS";
+                        *instanceValue["text"] = "ARCHIPELAGO SETTINGS";
                     }
                 }
 
@@ -188,7 +188,7 @@ namespace RnSArchipelago.Game
                     RValue nameValue;
                     if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
-                        *instanceValue.Get("text") = "Archipelago name";
+                        *instanceValue["text"] = "Archipelago name";
 
                         nameValue = ArchipelagoName;
                     }
@@ -197,7 +197,7 @@ namespace RnSArchipelago.Game
                         nameValue = originalName;
                     }
 
-                    *instanceValue.Get("defText") = nameValue;
+                    *instanceValue["defText"] = nameValue;
                     *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(0) = nameValue;
                 }
 
@@ -210,7 +210,7 @@ namespace RnSArchipelago.Game
                     RValue descValue;
                     if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
-                        *instanceValue.Get("text") = "Archipelago address";
+                        *instanceValue["text"] = "Archipelago address";
 
                         descValue = ArchipelagoAddress;
                     }
@@ -218,7 +218,7 @@ namespace RnSArchipelago.Game
                     {
                         descValue = originalDesc;
                     }
-                    *instanceValue.Get("defText") = descValue;
+                    *instanceValue["defText"] = descValue;
                     *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(1) = descValue;
                 }
 
@@ -231,7 +231,7 @@ namespace RnSArchipelago.Game
                     RValue passValue;
                     if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
-                        *instanceValue.Get("text") = "enter password:";
+                        *instanceValue["text"] = "enter password:";
 
                         passValue = ArchipelagoPassword;
                     }
@@ -263,7 +263,7 @@ namespace RnSArchipelago.Game
                     var instance = (CLayerInstanceElement*)passwordValue;
                     RValue instanceValue = new(instance->Instance);
 
-                    *instanceValue.Get("cursorPos") = passVal;
+                    *instanceValue["cursorPos"] = passVal;
                     *rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(2) = passVal;
 
                     rnsReloaded.ExecuteScript("scr_runmenu_lobbysettings_passwordlock", instance->Instance, other, 0, argv);
@@ -277,12 +277,12 @@ namespace RnSArchipelago.Game
 
                     if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
-                        *instanceValue.Get("cursorPos") = ArchipelagoNum - 1;
+                        *instanceValue["cursorPos"] = ArchipelagoNum - 1;
                         rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = ArchipelagoNum;
                     }
                     else
                     {
-                        *instanceValue.Get("cursorPos") = originalNum - 1;
+                        *instanceValue["cursorPos"] = originalNum - 1;
                         rnsReloaded.utils.GetGlobalVar("lobbySettingsDef")->Get(4)->Real = originalNum;
                     }
                 }
@@ -425,7 +425,7 @@ namespace RnSArchipelago.Game
 
                             var instance = (CLayerInstanceElement*)route;
                             RValue instanceValue = new(instance->Instance);
-                            *instanceValue.Get("descStr") = descriptions;
+                            *instanceValue["descStr"] = descriptions;
                         }
 
                         // Update the text on the banner
@@ -439,14 +439,14 @@ namespace RnSArchipelago.Game
                             {
                                 RValue nameVar = 0;
                                 rnsReloaded.CreateString(&nameVar, "click to edit archipelago settings");
-                                *instanceValue.Get("name") = nameVar;
+                                *instanceValue["name"] = nameVar;
 
                             }
                             else if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 1 || rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 2)
                             {
                                 RValue lobbyVar = 0;
                                 rnsReloaded.CreateString(&lobbyVar, "click to edit lobby settings");
-                                *instanceValue.Get("name") = lobbyVar;
+                                *instanceValue["name"] = lobbyVar;
 
                             }
                         }
@@ -527,18 +527,18 @@ namespace RnSArchipelago.Game
         {
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (instanceValue.Get("diffTxt") != null &&
-                rnsReloaded.GetString(instanceValue.Get("diffTxt")) == "[ \"CUTE\",\"NORMAL\",\"HARD\",\"LUNAR\" ]")
+                if (instanceValue["diffTxt"] != null &&
+                rnsReloaded.GetString(instanceValue["diffTxt"]) == "[ \"CUTE\",\"NORMAL\",\"HARD\",\"LUNAR\" ]")
                 {
                     if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
                     {
-                        *instanceValue.Get("name") = ArchipelagoName;
+                        *instanceValue["name"] = ArchipelagoName;
 
-                        *instanceValue.Get("descEdit") = ArchipelagoAddress;
+                        *instanceValue["descEdit"] = ArchipelagoAddress;
 
-                        *instanceValue.Get("maxPlayers") = ArchipelagoNum;
+                        *instanceValue["maxPlayers"] = ArchipelagoNum;
 
-                        *instanceValue.Get("passwordLocked") = (archipelagoPassSet && ArchipelagoPassword != "");
+                        *instanceValue["passwordLocked"] = (archipelagoPassSet && ArchipelagoPassword != "");
 
                         // TODO: SET STARTING GOLD BASED OFF OF AMOUNT OF GOLD ITEMS, AND INCREASE CURRENT RUN GOLD WHEN RECIEVING GOLD ITEM
                         // TODO: LOOK INTO A BETTER PLACE FOR THIS TO LIVE
@@ -547,13 +547,13 @@ namespace RnSArchipelago.Game
                     }
                     else
                     {
-                        *instanceValue.Get("name") = originalName;
+                        *instanceValue["name"] = originalName;
 
-                        *instanceValue.Get("descEdit") = originalDesc;
+                        *instanceValue["descEdit"] = originalDesc;
 
-                        *instanceValue.Get("maxPlayers") = originalNum;
+                        *instanceValue["maxPlayers"] = originalNum;
 
-                        *instanceValue.Get("passwordLocked") = (originalPassSet && originalPass != "");
+                        *instanceValue["passwordLocked"] = (originalPassSet && originalPass != "");
 
                         // Set starting gold
                         *rnsReloaded.utils.GetGlobalVar("startingGold") = 10;
@@ -660,7 +660,7 @@ namespace RnSArchipelago.Game
                         {
                             // TODO: ACTUALLY DESTROY THE INSTANCE RATHER THAN CHANGE THE FUNCTION SO WE DONT FIND IT IN THE SEARCH
                             RValue destroyInstance = ((CLayerInstanceElement*)element)->Instance;
-                            *destroyInstance.Get("funct") = -1;
+                            *destroyInstance["funct"] = -1;
                         }
 
                         rnsReloaded.ExecuteScript("scr_runmenu_make_button", self, other, ["lobbysettings", new(), new(), new(), 0, -360, 1400, 110, scoreId.Value + 100000]);
@@ -674,29 +674,29 @@ namespace RnSArchipelago.Game
                     {
                         rnsReloaded.CreateString(&boxTitle, "connected to archipelago");
 
-                        *instance.Get("spr") = 28;
-                        *instance.Get("spriteOffsetX") = -400;
+                        *instance["spr"] = 28;
+                        *instance["spriteOffsetX"] = -400;
                     }
                     else
                     {
                         rnsReloaded.CreateString(&boxTitle, "disconencted - click to reconnect");
 
-                        *instance.Get("spr") = 285;
-                        *instance.Get("subimg") = 10;
-                        *instance.Get("spriteOffsetX") = -525;
+                        *instance["spr"] = 285;
+                        *instance["subimg"] = 10;
+                        *instance["spriteOffsetX"] = -525;
                     }
-                    *instance.Get("name") = boxTitle;
+                    *instance["name"] = boxTitle;
 
-                    *instance.Get("textScX") = 1;
-                    *instance.Get("textScY") = 1;
+                    *instance["textScX"] = 1;
+                    *instance["textScY"] = 1;
 
-                    *instance.Get("textOffsetY") = -10;
+                    *instance["textOffsetY"] = -10;
 
-                    *instance.Get("mouseob_height") = 110;
-                    *instance.Get("height") = 110;
+                    *instance["mouseob_height"] = 110;
+                    *instance["height"] = 110;
 
                     // Attach it to a dummy function so that we can hook it
-                    *instance.Get("funct") = scoreId.Value + 100000;
+                    *instance["funct"] = scoreId.Value + 100000;
 
                     return returnValue;
                 }
@@ -718,9 +718,7 @@ namespace RnSArchipelago.Game
                 var instance = (CLayerInstanceElement*)lobby;
                 RValue instanceValue = new(instance->Instance);
 
-                var routeIcons = instanceValue.Get("cursorPos");
-
-                return routeIcons->ToLong() switch
+                return instanceValue["cursorPos"]->ToLong() switch
                 {
                     0 => "hw_keep",
                     1 => "hw_nest",

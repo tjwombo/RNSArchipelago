@@ -126,11 +126,11 @@ namespace RnSArchipelago.Connection
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
-                    var hallkey = instanceValue.Get("hallkey");
+                    var hallkey = instanceValue["hallkey"];
 
-                    for (var i = instanceValue.Get("hallwayPos")->ToInt(); i < instanceValue.Get("hallwayNumber")->ToInt(); i++)
+                    for (var i = instanceValue["hallwayPos"]->ToInt(); i < instanceValue["hallwayNumber"]->ToInt(); i++)
                     {
-                        info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("hallseed"), i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
+                        info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue["hallseed"], i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
                     }
 
                     info = info.TrimEnd(';');
@@ -161,15 +161,15 @@ namespace RnSArchipelago.Connection
                     HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
-                    var notches = instanceValue.Get("notches");
-                    for (var i = instanceValue.Get("currentPos")->ToInt(); i < instanceValue.Get("notchNumber")->ToInt(); i++)
+                    var notches = instanceValue["notches"];
+                    for (var i = instanceValue["currentPos"]->ToInt(); i < instanceValue["notchNumber"]->ToInt(); i++)
                     {
                         if (i == -1)
                         {
                             continue;
                         }
 
-                        info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue.Get("xSubimg"), i)->ToString() + ";"; // 1 says its notch, position, value, xsubimg
+                        info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue["xSubimg"], i)->ToString() + ";"; // 1 says its notch, position, value, xsubimg
                     }
 
                     info = info.TrimEnd(';');
@@ -296,14 +296,14 @@ namespace RnSArchipelago.Connection
                                     }
 
                                     KingdomUtil.SetHallwayValue(index, instanceValue, info[2], subimg, Int64.Parse(info[3]));
-                                    *instanceValue.Get("hallwayNumber") = Math.Max(instanceValue.Get("hallwayPos")->ToInt(), index + 1);
+                                    *instanceValue["hallwayNumber"] = Math.Max(instanceValue["hallwayPos"]->ToInt(), index + 1);
 
                                     break;
                                 case "1":
 
                                     string[] notchInfo = info[2].TrimStart('[').TrimEnd(']').Trim().Split(",");
 
-                                    var notches = instanceValue.Get("notches");
+                                    var notches = instanceValue["notches"];
 
                                     RValue[] notch = [notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]];
 
@@ -315,7 +315,7 @@ namespace RnSArchipelago.Connection
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }
 
-                                    var xsubimg = instanceValue.Get("xSubimg");
+                                    var xsubimg = instanceValue["xSubimg"];
                                     var subimgLength = rnsReloaded.ArrayGetLength(xsubimg);
                                     if (subimgLength.HasValue && subimgLength.Value.ToInt() < index)
                                     {
@@ -327,7 +327,7 @@ namespace RnSArchipelago.Connection
                                     *rnsReloaded.ArrayGetEntry(notches, index) = new RValue([notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]]);
                                     *rnsReloaded.ArrayGetEntry(xsubimg, index) = info[3];
 
-                                    *instanceValue.Get("notchNumber") = Math.Max(instanceValue.Get("notchNumber")->ToInt(), index + 1);
+                                    *instanceValue["notchNumber"] = Math.Max(instanceValue["notchNumber"]->ToInt(), index + 1);
 
                                     break;
                                 default:

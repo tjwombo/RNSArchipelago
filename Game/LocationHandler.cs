@@ -914,7 +914,7 @@ namespace RnSArchipelago.Game
                     if (fieldElement != null)
                     {
                         RValue fieldInstance = ((CLayerInstanceElement*)fieldElement)->Instance;
-                        *fieldInstance.Get("percent") = -0.1;
+                        *fieldInstance["percent"] = -0.1;
                     }
                 }
             }

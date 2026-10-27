@@ -239,7 +239,7 @@ namespace RnSArchipelago.Utils
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 // Add to the hallkey, if we are unable to place it
-                var hallkey = instanceValue.Get("hallkey");
+                var hallkey = instanceValue["hallkey"];
                 var hallkeyLength = rnsReloaded.ArrayGetLength(hallkey);
                 if (hallkeyLength.HasValue && hallkeyLength.Value.ToInt() < index + 1)
                 {
@@ -249,7 +249,7 @@ namespace RnSArchipelago.Utils
                 }
 
                 // Hallway icons
-                var hallsubimg = instanceValue.Get("hallsubimg");
+                var hallsubimg = instanceValue["hallsubimg"];
                 var hallsubimgLength = rnsReloaded.ArrayGetLength(hallsubimg);
                 if (hallsubimgLength.HasValue && hallsubimgLength.Value.ToInt() < index + 1)
                 {
@@ -259,7 +259,7 @@ namespace RnSArchipelago.Utils
                 }
 
                 // Hallway seed
-                var hallseed = instanceValue.Get("hallseed");
+                var hallseed = instanceValue["hallseed"];
                 var hallseedLength = rnsReloaded.ArrayGetLength(hallseed);
                 if (hallseedLength.HasValue && hallseedLength.Value.ToInt() < index + 1)
                 {

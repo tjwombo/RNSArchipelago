@@ -66,7 +66,7 @@ namespace RnSArchipelago.Game
                 var instance = (CLayerInstanceElement*)element;
                 RValue instanceValue = new(instance->Instance);
 
-                var hallkey = instanceValue.Get("hallkey");
+                var hallkey = instanceValue["hallkey"];
 
                 var kingdoms = KingdomUtil.GetRunnableKingdoms(ref currentKingdomGroup);
                 var maxVisitableKingdoms = kingdoms.Count;
@@ -93,8 +93,8 @@ namespace RnSArchipelago.Game
                     return false;
                 }
 
-                var currentPos = instanceValue.Get("currentPos");
-                var notchNumber = instanceValue.Get("notchNumber");
+                var currentPos = instanceValue["currentPos"];
+                var notchNumber = instanceValue["notchNumber"];
 
                 if (currentPos != null && notchNumber != null)
                 {
@@ -259,7 +259,7 @@ namespace RnSArchipelago.Game
                 }
 
                 // Always add 3, so that we dont get the weird Shira visual glitch and account for outskirts
-                *instanceValue.Get("hallwayNumber") = maxCanRun + 3;
+                *instanceValue["hallwayNumber"] = maxCanRun + 3;
             }
         }
 
@@ -274,8 +274,8 @@ namespace RnSArchipelago.Game
                     if (element != null)
                     {
                         RValue instance = ((CLayerInstanceElement*)element)->Instance;
-                        var currentPos = instance.Get("currentPos")->ToLong(); // Wasn't playing well with IsEqualToNumeric
-                        var hallwayPos = instance.Get("hallwayPos")->ToLong();
+                        var currentPos = instance["currentPos"]->ToLong(); // Wasn't playing well with IsEqualToNumeric
+                        var hallwayPos = instance["hallwayPos"]->ToLong();
 
                         // Backup send location in case they disconnected during the fight
                         // First check is to prevent shop, second is general transitions, and last is final boss
@@ -326,11 +326,11 @@ namespace RnSArchipelago.Game
 
                 var unplacedKingdoms = KingdomUtil.GetRunnableKingdoms(ref currentKingdomGroup);
 
-                var hallkey = instanceValue.Get("hallkey");
+                var hallkey = instanceValue["hallkey"];
                 var maxKingdoms = this.inventoryHandler.maxKingdoms;
 
-                var currentHallwayPos = instanceValue.Get("hallwayPos")->ToInt();
-                var currentPos = instanceValue.Get("currentPos")->ToInt();
+                var currentHallwayPos = instanceValue["hallwayPos"]->ToInt();
+                var currentPos = instanceValue["currentPos"]->ToInt();
 
                 // Handle the 0th position
                 if (!currentHallwayPosAware || currentHallwayPos < 0 || (currentPos <= 0 && currentHallwayPos == 0))
@@ -387,7 +387,7 @@ namespace RnSArchipelago.Game
                     }
 
                     // Update the name
-                    *instanceValue.Get("stageNameRefresh") = 1;
+                    *instanceValue["stageNameRefresh"] = 1;
                 }
 
                 unplacedKingdoms.Remove("hw_outskirts");
@@ -598,7 +598,7 @@ namespace RnSArchipelago.Game
 
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
-                    var hallkey = instanceValue.Get("hallkey");
+                    var hallkey = instanceValue["hallkey"];
 
                     selectedKingdom = rnsReloaded.ArrayGetEntry(hallkey, 1)->ToString();
                 }

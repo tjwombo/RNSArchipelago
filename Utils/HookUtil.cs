@@ -68,7 +68,7 @@ namespace RnSArchipelago.Utils
                 var instance = (CLayerInstanceElement*)element;
                 RValue instanceValue = new(instance->Instance);
 
-                if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
+                if (rnsReloaded.GetString(instanceValue[variableName]) == variableValue)
                 {
                     return;
                 }
@@ -93,7 +93,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
 
-                    if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
+                    if (rnsReloaded.GetString(instanceValue[variableName]) == variableValue)
                     {
                         return;
                     }
@@ -119,7 +119,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
 
-                    if (instanceValue.Get(variableName) != null && instanceValue.Get(variableName)->ToString() != "unset")
+                    if (instanceValue[variableName] != null && instanceValue[variableName]->ToString() != "unset")
                     {
                         return;
                     }
@@ -145,7 +145,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
 
-                    if (rnsReloaded.GetString(instanceValue.Get(variableName)) == variableValue)
+                    if (rnsReloaded.GetString(instanceValue[variableName]) == variableValue)
                     {
                         return;
                     }
@@ -171,7 +171,7 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
 
-                    if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset")
+                    if (rnsReloaded.GetString(instanceValue[field]) != null && rnsReloaded.GetString(instanceValue[field]) != "unset")
                     {
                         return Marshal.PtrToStringAnsi((nint)layer->Name)!;
                     }
@@ -206,8 +206,8 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
 
-                    if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset"
-                        && rnsReloaded.GetString(instanceValue.Get(field)) == value)
+                    if (rnsReloaded.GetString(instanceValue[field]) != null && rnsReloaded.GetString(instanceValue[field]) != "unset"
+                        && rnsReloaded.GetString(instanceValue[field]) == value)
                     {
                         return Marshal.PtrToStringAnsi((nint)layer->Name)!;
                     }
@@ -243,8 +243,8 @@ namespace RnSArchipelago.Utils
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
 
-                    if (rnsReloaded.GetString(instanceValue.Get(field)) != null && rnsReloaded.GetString(instanceValue.Get(field)) != "unset"
-                        && rnsReloaded.GetString(instanceValue.Get(field)) == value)
+                    if (rnsReloaded.GetString(instanceValue[field]) != null && rnsReloaded.GetString(instanceValue[field]) != "unset"
+                        && rnsReloaded.GetString(instanceValue[field]) == value)
                     {
                         return;
                     }
@@ -277,8 +277,8 @@ namespace RnSArchipelago.Utils
 
                     for (var i = 0; i < args.Count / 2; i++)
                     {
-                        if (rnsReloaded.GetString(instanceValue.Get(args[i*2])) == null || rnsReloaded.GetString(instanceValue.Get(args[i*2])) == "unset"
-                            || rnsReloaded.GetString(instanceValue.Get(args[i*2])) != args[(i*2)+1])
+                        if (rnsReloaded.GetString(instanceValue[args[i*2]]) == null || rnsReloaded.GetString(instanceValue[args[i*2]]) == "unset"
+                            || rnsReloaded.GetString(instanceValue[args[i*2]]) != args[(i*2)+1])
                         {
                             element = element->Next;
                             found = false;

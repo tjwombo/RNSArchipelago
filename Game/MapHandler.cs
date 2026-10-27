@@ -34,10 +34,10 @@ namespace RnSArchipelago.Game
                     var instance2 = (CLayerInstanceElement*)map;
                     RValue instanceValue2 = instance2->Instance;
 
-                    var routeIcons = instanceValue2.Get("buttonAvailable");
+                    var routeIcons = instanceValue2["buttonAvailable"];
                     return rnsReloaded.ArrayGetLength(routeIcons)!.Value.ToInt() switch
                     {
-                        6 or 7 => instanceValue2.Get("selectedPos")->ToInt() switch
+                        6 or 7 => instanceValue2["selectedPos"]->ToInt() switch
                         {
                             0 => "hw_keep",
                             1 => "hw_nest",
@@ -47,7 +47,7 @@ namespace RnSArchipelago.Game
                             5 => "hw_lakeside",
                             _ => "",
                         },
-                        4 => instanceValue2.Get("selectedPos")->ToInt() switch
+                        4 => instanceValue2["selectedPos"]->ToInt() switch
                         {
                             0 => "hw_darkhall",
                             1 => "hw_sanct",
@@ -55,7 +55,7 @@ namespace RnSArchipelago.Game
                             3 => "hw_aurum",
                             _ => "",
                         },
-                        2 => instanceValue2.Get("selectedPos")->ToInt() switch
+                        2 => instanceValue2["selectedPos"]->ToInt() switch
                         {
                             0 => "hw_outskirts",
                             1 => "hw_geode",
@@ -75,11 +75,11 @@ namespace RnSArchipelago.Game
                 var instance = (CLayerInstanceElement*)element;
                 RValue instanceValue = new(instance->Instance);
 
-                *rnsReloaded.ArrayGetEntry(instanceValue.Get("buttonAvailable"), index) = activated;
+                *rnsReloaded.ArrayGetEntry(instanceValue["buttonAvailable"], index) = activated;
 
-                *(instanceValue.Get("buttonStr")->Get(index)) = desc;
+                *(instanceValue["buttonStr"]->Get(index)) = desc;
 
-                *(instanceValue.Get("buttonTitle")->Get(index)) = title;
+                *(instanceValue["buttonTitle"]->Get(index)) = title;
             }
         }
 
@@ -237,7 +237,7 @@ namespace RnSArchipelago.Game
                     var instance = (CLayerInstanceElement*)element;
                     RValue instanceValue = new(instance->Instance);
 
-                    var routeIcons = instanceValue.Get("buttonAvailable");
+                    var routeIcons = instanceValue["buttonAvailable"];
                     var buttonCount = rnsReloaded.ArrayGetLength(routeIcons);
 
                     if (routeIcons != null && routeIcons->ToString() != "unset" && buttonCount.HasValue)
