@@ -35,7 +35,7 @@ namespace RnSArchipelago.Game
                     RValue instanceValue2 = instance2->Instance;
 
                     var routeIcons = instanceValue2["buttonAvailable"];
-                    return rnsReloaded.ArrayGetLength(routeIcons)!.Value.ToInt() switch
+                    return routeIcons->ArrayLength() switch
                     {
                         6 or 7 => instanceValue2["selectedPos"]->ToInt() switch
                         {
@@ -238,12 +238,12 @@ namespace RnSArchipelago.Game
                     RValue instanceValue = new(instance->Instance);
 
                     var routeIcons = instanceValue["buttonAvailable"];
-                    var buttonCount = rnsReloaded.ArrayGetLength(routeIcons);
+                    var buttonCount = routeIcons->ArrayLength();
 
-                    if (routeIcons != null && routeIcons->ToString() != "unset" && buttonCount.HasValue)
+                    if (routeIcons != null && routeIcons->ToString() != "unset" && buttonCount > 0)
                     {
-                        ModifyRouteKingdomIcons(routeIcons, buttonCount.Value.ToInt(), element);
-                        returnValue = routeIcons->Get(buttonCount.Value.ToInt() - 1);
+                        ModifyRouteKingdomIcons(routeIcons, buttonCount, element);
+                        returnValue = routeIcons->Get(buttonCount - 1);
                     }
                 }
                 return returnValue;

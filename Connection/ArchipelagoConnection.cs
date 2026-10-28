@@ -307,19 +307,19 @@ namespace RnSArchipelago.Connection
 
                                     RValue[] notch = [notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]];
 
-                                    var notchesLength = rnsReloaded.ArrayGetLength(notches);
-                                    if (notchesLength.HasValue && notchesLength.Value.ToInt() < index)
+                                    var notchesLength = notches->ArrayLength();
+                                    if (notchesLength < index)
                                     {
-                                        var endArray = new RValue[(index + 1) - notchesLength.Value.ToInt() + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
+                                        var endArray = new RValue[(index + 1) - notchesLength + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
                                         endArray[0] = *notches;
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }
 
                                     var xsubimg = instanceValue["xSubimg"];
-                                    var subimgLength = rnsReloaded.ArrayGetLength(xsubimg);
-                                    if (subimgLength.HasValue && subimgLength.Value.ToInt() < index)
+                                    var subimgLength = xsubimg->ArrayLength();
+                                    if (subimgLength < index)
                                     {
-                                        var endArray = new RValue[(index + 1) - subimgLength.Value.ToInt() + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
+                                        var endArray = new RValue[(index + 1) - subimgLength + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
                                         endArray[0] = *xsubimg;
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }

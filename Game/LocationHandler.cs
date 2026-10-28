@@ -119,25 +119,22 @@ namespace RnSArchipelago.Game
             {
                 var modInfo = rnsReloaded.utils.GetGlobalVar("modInfo");
                 var foundMod = false;
-                var modInfoLength = rnsReloaded.ArrayGetLength(modInfo);
-                if (modInfoLength.HasValue)
+                var modInfoLength = modInfo->ArrayLength();
+                for (var i = 0; i < modInfoLength; i++)
                 {
-                    for (var i = 0; i < modInfoLength.Value.ToLong(); i++)
+                    var entry = modInfo->Get(i);
+                    if (entry->Get(0)->ToString() == "ArchipelagoItems")
                     {
-                        var entry = modInfo->Get(i);
-                        if (entry->Get(0)->ToString() == "ArchipelagoItems")
-                        {
-                            *entry->Get(4) = "Archipelago Items";
+                        *entry->Get(4) = "Archipelago Items";
 
-                            *entry->Get(5) = "Loot Items,";
+                        *entry->Get(5) = "Loot Items,";
 
-                            *entry->Get(8) = 1; // Enabled
-                            *entry->Get(10) = 0; // 'Workshop'
+                        *entry->Get(8) = 1; // Enabled
+                        *entry->Get(10) = 0; // 'Workshop'
 
-                            foundMod = true;
+                        foundMod = true;
 
-                            break;
-                        }
+                        break;
                     }
                 }
 
@@ -165,18 +162,15 @@ namespace RnSArchipelago.Game
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 var modInfo = rnsReloaded.utils.GetGlobalVar("modInfo");
-                var modInfoLength = rnsReloaded.ArrayGetLength(modInfo);
-                if (modInfoLength.HasValue)
+                var modInfoLength = modInfo->ArrayLength();
+                for (var i = 0; i < modInfoLength; i++)
                 {
-                    for (var i = 0; i < modInfoLength.Value.ToLong(); i++)
+                    var entry = modInfo->Get(i);
+                    if (entry->Get(0)->ToString() == "ArchipelagoItems")
                     {
-                        var entry = modInfo->Get(i);
-                        if (entry->Get(0)->ToString() == "ArchipelagoItems")
-                        {
-                            *entry->Get(8) = 1; // Enabled
+                        *entry->Get(8) = 1; // Enabled
 
-                            return returnValue;
-                        }
+                        return returnValue;
                     }
                 }
             }
@@ -843,7 +837,7 @@ namespace RnSArchipelago.Game
                     rnsReloaded.FindValue(instance, "notchNumber")->Real = notchNumber;
 
                     var subimg = rnsReloaded.FindValue(instance, "xSubimg");
-                    if (rnsReloaded.ArrayGetLength(subimg)!.Value.ToLong() >= notchNumber)
+                    if (subimg->ArrayLength() >= notchNumber)
                     {
                         for (int i = (int) notchNumber - 1; i > currentPos + 1; i--)
                         {

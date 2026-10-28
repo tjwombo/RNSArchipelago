@@ -240,30 +240,30 @@ namespace RnSArchipelago.Utils
             {
                 // Add to the hallkey, if we are unable to place it
                 var hallkey = instanceValue["hallkey"];
-                var hallkeyLength = rnsReloaded.ArrayGetLength(hallkey);
-                if (hallkeyLength.HasValue && hallkeyLength.Value.ToInt() < index + 1)
+                var hallkeyLength = hallkey->ArrayLength();
+                if (hallkeyLength < index + 1)
                 {
-                    var endArray = new RValue[(index + 1) - hallkeyLength.Value.ToInt() + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
+                    var endArray = new RValue[(index + 1) - hallkeyLength + 1]; // first +1 is to turn 0-based index into length, second is to account for array_push
                     endArray[0] = *hallkey;
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                 }
 
                 // Hallway icons
                 var hallsubimg = instanceValue["hallsubimg"];
-                var hallsubimgLength = rnsReloaded.ArrayGetLength(hallsubimg);
-                if (hallsubimgLength.HasValue && hallsubimgLength.Value.ToInt() < index + 1)
+                var hallsubimgLength = hallsubimg->ArrayLength();
+                if (hallsubimgLength < index + 1)
                 {
-                    var endArray = new RValue[(index + 1) - hallsubimgLength.Value.ToInt() + 1];
+                    var endArray = new RValue[(index + 1) - hallsubimgLength + 1];
                     endArray[0] = *hallsubimg;
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                 }
 
                 // Hallway seed
                 var hallseed = instanceValue["hallseed"];
-                var hallseedLength = rnsReloaded.ArrayGetLength(hallseed);
-                if (hallseedLength.HasValue && hallseedLength.Value.ToInt() < index + 1)
+                var hallseedLength = hallseed->ArrayLength();
+                if (hallseedLength < index + 1)
                 {
-                    var endArray = new RValue[(index + 1) - hallseedLength.Value.ToInt() + 1];
+                    var endArray = new RValue[(index + 1) - hallseedLength + 1];
                     endArray[0] = *hallseed;
                     rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);    
                 }
