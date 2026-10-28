@@ -130,7 +130,7 @@ namespace RnSArchipelago.Connection
 
                     for (var i = instanceValue["hallwayPos"]->ToInt(); i < instanceValue["hallwayNumber"]->ToInt(); i++)
                     {
-                        info = info + "0~" + i + "~" + rnsReloaded.ArrayGetEntry(hallkey, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue["hallseed"], i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
+                        info = info + "0~" + i + "~" + hallkey->Get(i)->ToString() + "~" + instanceValue["hallseed"]->Get(i)->ToString() + ";"; // 0 says its hallway, position, value, hallseed
                     }
 
                     info = info.TrimEnd(';');
@@ -169,7 +169,7 @@ namespace RnSArchipelago.Connection
                             continue;
                         }
 
-                        info = info + "1~" + i + "~" + rnsReloaded.ArrayGetEntry(notches, i)->ToString() + "~" + rnsReloaded.ArrayGetEntry(instanceValue["xSubimg"], i)->ToString() + ";"; // 1 says its notch, position, value, xsubimg
+                        info = info + "1~" + i + "~" + notches->Get(i)->ToString() + "~" + instanceValue["xSubimg"]->Get(i)->ToString() + ";"; // 1 says its notch, position, value, xsubimg
                     }
 
                     info = info.TrimEnd(';');
@@ -324,8 +324,8 @@ namespace RnSArchipelago.Connection
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }
 
-                                    *rnsReloaded.ArrayGetEntry(notches, index) = new RValue([notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]]);
-                                    *rnsReloaded.ArrayGetEntry(xsubimg, index) = info[3];
+                                    *notches->Get(index) = new RValue([notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]]);
+                                    *xsubimg->Get(index) = info[3];
 
                                     *instanceValue["notchNumber"] = Math.Max(instanceValue["notchNumber"]->ToInt(), index + 1);
 

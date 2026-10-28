@@ -53,20 +53,20 @@ namespace RnSArchipelago.Game
                         {
                             if (inventoryHandler.IsClassAvailable(i))
                             {
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = 1;
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = 1;
+                                *rnsReloaded.FindValue(self, "menuAvailable")->Get(i) = 1;
+                                *rnsReloaded.FindValue(self, "menuPreview")->Get(i) = 1;
                             }
                             else
                             {
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = 0;
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = 0;
+                                *rnsReloaded.FindValue(self, "menuAvailable")->Get(i) = 0;
+                                *rnsReloaded.FindValue(self, "menuPreview")->Get(i) = 0;
                             }
                         }
                         // Palette selection
                         else if (rnsReloaded.FindValue(self, "step")->ToInt() == 2)
                         {
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuAvailable"), i) = 1;
-                            *rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "menuPreview"), i) = 1;
+                            *rnsReloaded.FindValue(self, "menuAvailable")->Get(i) = 1;
+                            *rnsReloaded.FindValue(self, "menuPreview")->Get(i) = 1;
                         }
                     }
                 }

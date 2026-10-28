@@ -124,15 +124,15 @@ namespace RnSArchipelago.Game
                 {
                     for (var i = 0; i < modInfoLength.Value.ToLong(); i++)
                     {
-                        var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
-                        if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
+                        var entry = modInfo->Get(i);
+                        if (entry->Get(0)->ToString() == "ArchipelagoItems")
                         {
-                            *rnsReloaded.ArrayGetEntry(entry, 4) = "Archipelago Items";
+                            *entry->Get(4) = "Archipelago Items";
 
-                            *rnsReloaded.ArrayGetEntry(entry, 5) = "Loot Items,";
+                            *entry->Get(5) = "Loot Items,";
 
-                            *rnsReloaded.ArrayGetEntry(entry, 8) = 1; // Enabled
-                            *rnsReloaded.ArrayGetEntry(entry, 10) = 0; // 'Workshop'
+                            *entry->Get(8) = 1; // Enabled
+                            *entry->Get(10) = 0; // 'Workshop'
 
                             foundMod = true;
 
@@ -170,10 +170,10 @@ namespace RnSArchipelago.Game
                 {
                     for (var i = 0; i < modInfoLength.Value.ToLong(); i++)
                     {
-                        var entry = rnsReloaded.ArrayGetEntry(modInfo, i);
-                        if (rnsReloaded.ArrayGetEntry(entry, 0)->ToString() == "ArchipelagoItems")
+                        var entry = modInfo->Get(i);
+                        if (entry->Get(0)->ToString() == "ArchipelagoItems")
                         {
-                            *rnsReloaded.ArrayGetEntry(entry, 8) = 1; // Enabled
+                            *entry->Get(8) = 1; // Enabled
 
                             return returnValue;
                         }
@@ -273,7 +273,7 @@ namespace RnSArchipelago.Game
                             for (var i = 0; i < 5; i++)
                             {
                                 // Determine which slot item we are at, which should be the first -1
-                                if (rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 1), i), 1)->ToInt() == -1)
+                                if (rnsReloaded.FindValue(self, "slots")->Get(1)->Get(i)->Get(1)->ToInt() == -1)
                                 {
                                     var locationId = GetChestPositionLocationId(SlotIdToChestPos(i));
                                     var info = scoutHandler.chestContents[LocationUtil.GetBaseLocation()][locationId];
@@ -320,7 +320,7 @@ namespace RnSArchipelago.Game
                         // Determine which slot item we are at, which should be the first -1
                         for (var i = 0; i < 9; i++)
                         {
-                            if (rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(self, "slots"), 2), i), 1)->ToInt() == -1)
+                            if (rnsReloaded.FindValue(self, "slots")->Get(2)->Get(i)->Get(1)->ToInt() == -1)
                             {
                                 GetUnclaimedShopItems(i, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem, out long locationId);
 
@@ -667,10 +667,10 @@ namespace RnSArchipelago.Game
                                 // TODO: Wait until the location is sent to do this (has to be on the main thread)
                                 // Set the item cache to -1, so we create the right type of item, and then place it
                                 RValue items = new(self);
-                                *rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(items["slots"], 2), argv[2]->ToInt()), 1) = -1;
+                                *items["slots"]->Get(2)->Get(argv[2]->ToInt())->Get(1) = -1;
 
                                 // Make it so the item hasn't consumed their one per customer purchase
-                                *rnsReloaded.ArrayGetEntry(items["storeSlotOPCBin"], argv[2]->ToInt()) = 0;
+                                *items["storeSlotOPCBin"]->Get(argv[2]->ToInt()) = 0;
 
                             }
 
@@ -744,7 +744,7 @@ namespace RnSArchipelago.Game
                     var instance = ((CLayerInstanceElement*)element)->Instance;
                     for (var i = 0; i < 9; i++)
                     {
-                        if (rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "slots"), 2), i), 1)->ToInt() == -1)
+                        if (rnsReloaded.FindValue(instance, "slots")->Get(2)->Get(i)->Get(1)->ToInt() == -1)
                         {
                             var newItemId = rnsReloaded.ExecuteScript("scr_itemsys_create_item", instance, other, [0, 0, 2]);
                             rnsReloaded.ExecuteScript("scr_itemsys_place_item_in_row", instance, other, [newItemId!.Value, 2]);
@@ -847,9 +847,9 @@ namespace RnSArchipelago.Game
                     {
                         for (int i = (int) notchNumber - 1; i > currentPos + 1; i--)
                         {
-                            *rnsReloaded.ArrayGetEntry(subimg, i) = *rnsReloaded.ArrayGetEntry(subimg, i-1); 
+                            *subimg->Get(i) = *subimg->Get(i -1); 
                         }
-                        *rnsReloaded.ArrayGetEntry(subimg, (int) currentPos + 1) = 5;
+                        *subimg->Get((int) currentPos + 1) = 5;
                     } else
                     {
                         rnsReloaded.ExecuteCodeFunction("array_insert", instance, null, [*rnsReloaded.FindValue(instance, "xSubimg"), currentPos + 1, 5]);

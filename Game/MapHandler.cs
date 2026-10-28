@@ -75,11 +75,11 @@ namespace RnSArchipelago.Game
                 var instance = (CLayerInstanceElement*)element;
                 RValue instanceValue = new(instance->Instance);
 
-                *rnsReloaded.ArrayGetEntry(instanceValue["buttonAvailable"], index) = activated;
+                *instanceValue["buttonAvailable"]->Get(index) = activated;
 
-                *(instanceValue["buttonStr"]->Get(index)) = desc;
+                *instanceValue["buttonStr"]->Get(index) = desc;
 
-                *(instanceValue["buttonTitle"]->Get(index)) = title;
+                *instanceValue["buttonTitle"]->Get(index) = title;
             }
         }
 

@@ -44,10 +44,10 @@ namespace RnSArchipelago.Game
                 {
                     for (var i = 0; i < keysLength.Value.ToInt(); i++)
                     {
-                        var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
+                        var entry = unlockKeys->Get(i)->ToString();
                         if (keys.Contains(entry))
                         {
-                            originalUnlocks[Array.IndexOf(keys, rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString())] = rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i)->ToLong();
+                            originalUnlocks[Array.IndexOf(keys, unlockKeys->Get(i)->ToString())] = rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i)->ToLong();
                         }
                     }
                 }
@@ -68,7 +68,7 @@ namespace RnSArchipelago.Game
                 {
                     for (var i = 0; i < keysLength.Value.ToInt(); i++)
                     {
-                        var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
+                        var entry = unlockKeys->Get(i)->ToString();
                         if (keys.Contains(entry))
                         {
                             *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = 1;
@@ -89,7 +89,7 @@ namespace RnSArchipelago.Game
                 {
                     for (var i = 0; i < keysLength.Value.ToInt(); i++)
                     {
-                        var entry = rnsReloaded.ArrayGetEntry(unlockKeys, i)->ToString();
+                        var entry = unlockKeys->Get(i)->ToString();
                         if (keys.Contains(entry))
                         {
                             *rnsReloaded.utils.GetGlobalVar("otherUnlock")->Get(i) = originalUnlocks[i];

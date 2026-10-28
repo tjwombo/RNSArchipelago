@@ -31,7 +31,7 @@ namespace RnSArchipelago.Utils
                     index = rnsReloaded.FindValue(instance, "currentPos")->ToInt();
                 }
 
-                var currentXImg = rnsReloaded.ArrayGetEntry(rnsReloaded.FindValue(instance, "xSubimg"), index);
+                var currentXImg = rnsReloaded.FindValue(instance, "xSubimg")->Get(index);
 
                 if (currentXImg->ToInt() == 1)
                 {

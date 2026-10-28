@@ -198,8 +198,8 @@ namespace RnSArchipelago.Game
                         // if the item is an archipelago item, disable the purchase condition, mainly applies to hp and upgrades
                         if (id.HasValue && conn.session != null && !conn.session.Locations.AllLocationsChecked.Contains(id.Value))
                         {
-                            *rnsReloaded.ArrayGetEntry(instance["storeSlotHeal"], j) = 0;
-                            *rnsReloaded.ArrayGetEntry(instance["storeSlotUpgrade"], j) = 0;
+                            *instance["storeSlotHeal"]->Get(j) = 0;
+                            *instance["storeSlotUpgrade"]->Get(j) = 0;
                         }
                     }
 

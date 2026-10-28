@@ -104,7 +104,7 @@ namespace RnSArchipelago.Game
                         var instance = (CLayerInstanceElement*)element;
                         RValue instanceValue = new(instance->Instance);
 
-                        *rnsReloaded.ArrayGetEntry(instanceValue["nameXSc"], 1) = 0.75;
+                        *instanceValue["nameXSc"]->Get(1) = 0.75;
 
                         instanceValue["nameXSc"]->ArrayPush(0.75);
 
@@ -112,7 +112,7 @@ namespace RnSArchipelago.Game
 
                         instanceValue["descStr"]->ArrayPush("lobby is open for archipelago");
 
-                        *rnsReloaded.ArrayGetEntry(instanceValue["colorInd"], 3) = 8678193;
+                        *instanceValue["colorInd"]->Get(3) = 8678193;
 
                         *instanceValue["diffXPos"] = new([-210, 40, 290, 540]);
 
