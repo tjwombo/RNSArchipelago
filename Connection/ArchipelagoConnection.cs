@@ -305,8 +305,6 @@ namespace RnSArchipelago.Connection
 
                                     var notches = instanceValue["notches"];
 
-                                    RValue[] notch = [notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]];
-
                                     var notchesLength = notches->ArrayLength();
                                     if (notchesLength < index)
                                     {
@@ -324,8 +322,8 @@ namespace RnSArchipelago.Connection
                                         rnsReloaded.ExecuteCodeFunction("array_push", null, null, endArray);
                                     }
 
-                                    *notches->Get(index) = new RValue([notchInfo[0], notchInfo[1].Trim('"'), notchInfo[2], notchInfo[3]]);
-                                    *xsubimg->Get(index) = info[3];
+                                    *notches->Get(index) = new RValue([Int32.Parse(notchInfo[0]), notchInfo[1].Trim('"'), Double.Parse(notchInfo[2]), Int32.Parse(notchInfo[3])]);
+                                    *xsubimg->Get(index) = Int32.Parse(info[3]);
 
                                     *instanceValue["notchNumber"] = Math.Max(instanceValue["notchNumber"]->ToInt(), index + 1);
 

@@ -663,29 +663,28 @@ namespace RnSArchipelago.Game
                             *destroyInstance["funct"] = -1;
                         }
 
-                        rnsReloaded.ExecuteScript("scr_runmenu_make_button", self, other, ["lobbysettings", new(), new(), new(), 0, -360, 1400, 110, scoreId.Value + 100000]);
+                        var spr = rnsReloaded.ExecuteCodeFunction("asset_get_index", null, null, ["spr_empty"]);
+                        rnsReloaded.ExecuteScript("scr_runmenu_make_button", self, other, ["lobbysettings", "", spr!.Value, 0, 0, -360, 1400, 110, scoreId.Value + 100000]);
                         FindElement("funct", (scoreId.Value + 100000) + "", out element);
                     }
 
                     RValue instance = ((CLayerInstanceElement*)element)->Instance;
 
-                    RValue boxTitle = 0;
                     if (inventoryHandler.isActive)
                     {
-                        rnsReloaded.CreateString(&boxTitle, "connected to archipelago");
+                        *instance["name"] = "connected to archipelago";
 
                         *instance["spr"] = 28;
                         *instance["spriteOffsetX"] = -400;
                     }
                     else
                     {
-                        rnsReloaded.CreateString(&boxTitle, "disconencted - click to reconnect");
+                        *instance["name"] = "disconencted - click to reconnect";
 
                         *instance["spr"] = 285;
                         *instance["subimg"] = 10;
                         *instance["spriteOffsetX"] = -525;
                     }
-                    *instance["name"] = boxTitle;
 
                     *instance["textScX"] = 1;
                     *instance["textScY"] = 1;
