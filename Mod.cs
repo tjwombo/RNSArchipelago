@@ -348,6 +348,12 @@ namespace RnSArchipelago
             locationHandler.chestOpenHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SendChestOpen, chestOpenScript->Functions->Function);
             locationHandler.chestOpenHook.Activate();
             locationHandler.chestOpenHook.Enable();
+
+            // Remove AP items on ties
+            var tieScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemlootroll_update_roll") - 100000);
+            locationHandler.RemoveAPItemTieHook = hooks.CreateHook<ScriptDelegate>(locationHandler.RemoveAPItemTie, tieScript->Functions->Function);
+            locationHandler.RemoveAPItemTieHook.Activate();
+            locationHandler.RemoveAPItemTieHook.Enable();
         }
 
         // Set up the hooks to manipulate chest and shop items

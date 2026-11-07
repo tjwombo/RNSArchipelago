@@ -35,6 +35,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? itemSetDescriptionHook;
         //internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
         internal IHook<ScriptDelegate>? takeItemHook;
+        internal IHook<ScriptDelegate>? RemoveAPItemTieHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
         internal IHook<ScriptDelegate>? readyCheckHook;
 
@@ -581,6 +582,41 @@ namespace RnSArchipelago.Game
                 return conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + chestPos);
             }
             return -1;
+        }
+
+        // Remove AP items from the selection after the tie reroll
+        internal RValue* RemoveAPItemTie(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
+            {
+                var step = rnsReloaded.FindValue(self, "step");
+                var time = rnsReloaded.FindValue(self, "timect_current");
+                if (step->ToInt() == 1 && time->ToInt() >= 1000) // TODO: Maybe find a better way to get the item to be redrawn at the end which is step 0, rather than remove it midway
+                {
+                    HookUtil.FindElementInLayer("InventoryItems", "slots", out var instance);
+
+                    var playerCount = rnsReloaded.FindValue(self, "playerCount")->ToArray();
+                    for (var i = 0; i < playerCount.Length; i++)
+                    {
+                        if (playerCount[i].ToInt() > 1)
+                        {
+                            *rnsReloaded.FindValue(((CLayerInstanceElement*)instance)->Instance, "slots")->Get(1)->Get(i)->Get(1) = -1;
+                        }
+                    }
+                    this.logger.PrintMessage("done", System.Drawing.Color.Red);
+                }
+            }
+
+            if (this.RemoveAPItemTieHook != null)
+            {
+                returnValue = this.RemoveAPItemTieHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call item tie hook", System.Drawing.Color.Red);
+            }
+
+            return returnValue;
         }
 
         // Prevent 'fake' items from actually being taken
