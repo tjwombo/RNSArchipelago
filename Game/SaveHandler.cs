@@ -1,8 +1,6 @@
-﻿using RnSArchipelago.Utils;
-using RNSReloaded.Interfaces.Structs;
+﻿using RNSReloaded.Interfaces.Structs;
 using RNSReloaded.Interfaces;
 using Reloaded.Mod.Interfaces;
-using Reloaded.Hooks.Definitions;
 
 namespace RnSArchipelago.Game
 {
@@ -10,25 +8,25 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
-
-        internal IHook<ScriptDelegate>? originalUnlockHook;
+        private readonly HookHandler hookHandler;
 
         private static readonly string[] keys = { "hardDiff", "lunarDiff", "extraMode", "randomMode", "charSpBlade", "charSniper", "charBruiser", "charDefender", "charAncient", "charHammer", "charPyro", "charGunner", "charShadow" };
 
         private readonly long[] originalUnlocks = new long[keys.Length];
         private RValue* unlockKeys;
 
-        internal SaveHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger)
+        internal SaveHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookHandler hookHandler)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
         }
 
         internal RValue* RecordSaveInfo(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.originalUnlockHook != null)
+            if (hookHandler.originalUnlockHook != null)
             {
-                returnValue = this.originalUnlockHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.originalUnlockHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {

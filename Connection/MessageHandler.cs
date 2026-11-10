@@ -6,7 +6,6 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Packets;
 
-using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Data;
 using RnSArchipelago.Game;
@@ -20,12 +19,11 @@ namespace RnSArchipelago.Connection
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private readonly ScoutHandler scoutHandler;
         private readonly Config.Config modConfig;
         private readonly SharedData data;
-
-        internal IHook<ScriptDelegate>? addMessageHook;
 
         internal readonly ConcurrentQueue<LogMessage> messages = new();
         internal static readonly ConcurrentQueue<long> messageId = new();
@@ -35,10 +33,12 @@ namespace RnSArchipelago.Connection
         private readonly string[] ignoreSlotdataOptions = ["starting_class_name", "starting_hallway_name"];
         internal int slot = 0;
 
-        public MessageHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, ScoutHandler scoutHandler, Config.Config modConfig, SharedData data)
+        public MessageHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookHandler hookHandler,
+            InventoryHandler inventoryHandler, ScoutHandler scoutHandler, Config.Config modConfig, SharedData data)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
             this.scoutHandler = scoutHandler;
             this.modConfig = modConfig;
@@ -224,9 +224,9 @@ namespace RnSArchipelago.Connection
 
                 }
             }
-            if (this.addMessageHook != null)
+            if (hookHandler.addMessageHook != null)
             {
-                returnValue = this.addMessageHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.addMessageHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {

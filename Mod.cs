@@ -26,6 +26,7 @@ namespace RnSArchipelago
         private Config.Config config = null!;
         private Random rand = null!;
 
+        private HookHandler hookHandler = null!;
         private InventoryHandler inventoryHandler = null!;
         private ShopItemsHandler shopItemsHandler = null!;
         private RouteHandler routeHandler = null!;
@@ -107,19 +108,21 @@ namespace RnSArchipelago
                 KingdomUtil.inventoryHandler = inventoryHandler;
                 KingdomUtil.ResetRandom();
 
-                saveHandler = new SaveHandler(rnsReloadedRef, logger);
+                hookHandler = new HookHandler(rnsReloadedRef, hooks);
 
-                scoutHandler = new ScoutHandler(rnsReloadedRef, logger, inventoryHandler);
-                conn = new ArchipelagoConnection(rnsReloadedRef, logger, inventoryHandler, saveHandler, scoutHandler, this.config, data);
+                saveHandler = new SaveHandler(rnsReloadedRef, logger, hookHandler);
+
+                scoutHandler = new ScoutHandler(rnsReloadedRef, logger, hookHandler, inventoryHandler);
+                conn = new ArchipelagoConnection(rnsReloadedRef, logger, hookHandler, inventoryHandler, saveHandler, scoutHandler, this.config, data);
                 scoutHandler.SetConn(conn);
                 shopItemsHandler = new ShopItemsHandler(rand, logger, inventoryHandler);
-                locationHandler = new LocationHandler(rnsReloadedRef, rand, logger, inventoryHandler, shopItemsHandler, scoutHandler, this.config, conn);
-                lobby = new LobbySettingsHandler(rnsReloadedRef, logger, inventoryHandler, conn, this.config);
-                routeHandler = new RouteHandler(rnsReloadedRef, logger, inventoryHandler, locationHandler, conn);
-                mapHandler = new MapHandler(rnsReloadedRef, logger, inventoryHandler, routeHandler);
-                kingdomHandler = new KingdomHandler(rnsReloadedRef, logger, inventoryHandler, routeHandler, this.config);
-                
-                classHandler = new ClassHandler(rnsReloadedRef, logger, inventoryHandler);
+                locationHandler = new LocationHandler(rnsReloadedRef, rand, logger, hookHandler, inventoryHandler, shopItemsHandler, scoutHandler, this.config, conn);
+                lobby = new LobbySettingsHandler(rnsReloadedRef, logger, hookHandler, inventoryHandler, conn, this.config);
+                routeHandler = new RouteHandler(rnsReloadedRef, logger, hookHandler, inventoryHandler, locationHandler, conn);
+                mapHandler = new MapHandler(rnsReloadedRef, logger, hookHandler, inventoryHandler, routeHandler);
+                kingdomHandler = new KingdomHandler(rnsReloadedRef, logger, hookHandler, inventoryHandler, routeHandler, this.config);
+
+                classHandler = new ClassHandler(rnsReloadedRef, logger, hookHandler, inventoryHandler);
 
 
                 //TODO:  TEMP FOR QUICK ACCESS TO SHOP FOR TESTING
@@ -142,18 +145,25 @@ namespace RnSArchipelago
                 this.setItemHook.Activate();
                 this.setItemHook.Enable();*/
 
+                // TODO: FIND THIS A HOME
+                // Start the connection to archipelago
+                var menuId = rnsReloaded.ScriptFindId("scr_runmenu_main_startrun_multi");
+                var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
+                this.archipelagoWebsocketHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoWebsocket, menuScript->Functions->Function);
+                this.archipelagoWebsocketHook.Activate();
+                this.archipelagoWebsocketHook.Enable();
 
-                AddArchipelagoOptionsToMenu(); // Adds the options for archipelago
+                hookHandler.AddArchipelagoOptionsToMenu(lobby, conn); // Adds the options for archipelago
 
-                SetupArchipelagoWebsocket(); // Creates the websocket for archipelago
-                SetupArchipelagoOnlineMultiplayer(); // Create the online multiplayer hooks
+                hookHandler.SetupArchipelagoWebsocket(saveHandler, conn); // Creates the websocket for archipelago
+                hookHandler.SetupArchipelagoOnlineMultiplayer(conn); // Create the online multiplayer hooks
 
-                SetupSendBattleAndChestLocations(); // Creates the hook to send locations on encounter win and chest open
-                SetupArchipelagoItems(); // Creates the archipelago items and puts them in the correct chest
+                hookHandler.SetupSendBattleAndChestLocations(locationHandler); // Creates the hook to send locations on encounter win and chest open
+                hookHandler.SetupArchipelagoItems(locationHandler, scoutHandler); // Creates the archipelago items and puts them in the correct chest
 
-                SetupKingdomManagement(); // Modifies the route based on current items
+                hookHandler.SetupKingdomManagement(routeHandler, mapHandler, kingdomHandler, locationHandler); // Modifies the route based on current items
 
-                SetupClassSanity(); // Limits the classes you can play based on current items
+                hookHandler.SetupClassSanity(classHandler); // Limits the classes you can play based on current items
 
                 // TODO: REMOVE ONCE DONE TESTING
                 //oneShot();
@@ -181,290 +191,6 @@ namespace RnSArchipelago
             }
         }
 
-        // Set up the hooks relating to archipelago options
-        private void AddArchipelagoOptionsToMenu()
-        {
-            if (
-                this.IsReady(out var rnsReloaded, out var hooks) && lobby != null
-            )
-            {
-                // Create the archipelago lobby type button
-                var menuId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobby_select");
-                var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
-                lobby.archipelagoButtonHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoLobbyType, menuScript->Functions->Function);
-                lobby.archipelagoButtonHook.Activate();
-                lobby.archipelagoButtonHook.Enable();
-
-                // Create the archipelago banner
-                var optionsId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_setup");
-                var optionsScript = rnsReloaded.GetScriptData(optionsId - 100000);
-                lobby.archipelagoOptionsHook = hooks.CreateHook<ScriptDelegate>(lobby.CreateArchipelagoOptions, optionsScript->Functions->Function);
-                lobby.archipelagoOptionsHook.Activate();
-                lobby.archipelagoOptionsHook.Enable();
-
-                // Make all kingdoms available while under the AP lobby type
-                var availableId = rnsReloaded.ScriptFindId("scr_stagefirst_available");
-                var availableScript = rnsReloaded.GetScriptData(availableId - 100000);
-                lobby.kingdomAvailablityHook = hooks.CreateHook<ScriptDelegate>(lobby.ActivateAllKingdoms, availableScript->Functions->Function);
-                lobby.kingdomAvailablityHook.Activate();
-                lobby.kingdomAvailablityHook.Enable();
-
-                // Update the info banner through a step function
-                var displayId = rnsReloaded.ScriptFindId("gameframe_draw");
-                var displayScript = rnsReloaded.GetScriptData(displayId - 100000);
-                lobby.lobbySettingsDisplayStepHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDisplayStep, displayScript->Functions->Function);
-                lobby.lobbySettingsDisplayStepHook.Activate();
-
-
-                // Update the name if entered before returning
-                var nameId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_name");
-                var nameScript = rnsReloaded.GetScriptData(nameId - 100000);
-                lobby.setNameHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsName, nameScript->Functions->Function);
-                lobby.setNameHook.Activate();
-                lobby.setNameHook.Enable();
-
-                // Update the description if entered before returning
-                var descId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_set_desc");
-                var descScript = rnsReloaded.GetScriptData(descId - 100000);
-                lobby.setDescHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsDesc, descScript->Functions->Function);
-                lobby.setDescHook.Activate();
-                lobby.setDescHook.Enable();
-
-                // Update the password if entered before returning
-                var passId = rnsReloaded.ScriptFindId("textboxcomp_set_password");
-                var passScript = rnsReloaded.GetScriptData(passId - 100000);
-                lobby.setPassHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettingsPass, passScript->Functions->Function);
-                lobby.setPassHook.Activate();
-                lobby.setPassHook.Enable();
-
-                // Update all the settings after returning
-                var returnId = rnsReloaded.ScriptFindId("scr_runmenu_lobbysettings_return");
-                var returnScript = rnsReloaded.GetScriptData(returnId - 100000);
-                lobby.archipelagoOptionsReturnHook = hooks.CreateHook<ScriptDelegate>(lobby.UpdateLobbySettings, returnScript->Functions->Function);
-                lobby.archipelagoOptionsReturnHook.Activate();
-                lobby.archipelagoOptionsReturnHook.Enable();
-
-                // TODO: PROBABLY DOESN'T FIRE IF GAME CRASHES AND THAT CAUSES ARCHIPELAGO SETTINGS TO PERSIST IN REGULAR
-                // Restore settings to original when returned to the main menu
-                var titleId = rnsReloaded.ScriptFindId("scr_runmenu_char_return");
-                var titleScript = rnsReloaded.GetScriptData(titleId - 100000);
-                lobby.lobbyTitleHook = hooks.CreateHook<ScriptDelegate>(lobby.LobbyToTitle, titleScript->Functions->Function);
-                lobby.lobbyTitleHook.Activate();
-                lobby.lobbyTitleHook.Enable();
-
-                // Disables the lobby settings info while mid run
-                var visualSettingsId = rnsReloaded.ScriptFindId("scr_runmenu_make_lobbysettings");
-                var visualSettingsScript = rnsReloaded.GetScriptData(visualSettingsId - 100000);
-                lobby.supressLobbySettingsVisuallyHook = hooks.CreateHook<ScriptDelegate>(lobby.SupressLobbySettingsVisually, visualSettingsScript->Functions->Function);
-                lobby.supressLobbySettingsVisuallyHook.Activate();
-                lobby.supressLobbySettingsVisuallyHook.Enable();
-
-                // Hook into an unused function to insert our own reconnect function
-                var paramId = rnsReloaded.CodeFunctionFind("parameter_count");
-                if (paramId.HasValue)
-                {
-                    var paramScript = rnsReloaded.GetScriptData(paramId.Value);
-                    conn.recconectHook = hooks.CreateHook<ScriptDelegate>(conn.Recconect, paramScript->Functions->Function);
-                    conn.recconectHook.Activate();
-                    conn.recconectHook.Enable();
-                }
-            }
-        }
-
-        // Set up the hooks to set up the websocket
-        private void SetupArchipelagoWebsocket()
-        {
-            if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-
-            // Store the initial unlock keys configuration
-            var saveId = rnsReloaded.ScriptFindId("scr_unlock_read_save");
-            var saveScript = rnsReloaded.GetScriptData(saveId - 100000);
-            saveHandler.originalUnlockHook = hooks.CreateHook<ScriptDelegate>(saveHandler.RecordSaveInfo, saveScript->Functions->Function);
-            saveHandler.originalUnlockHook.Activate();
-            saveHandler.originalUnlockHook.Enable();
-
-            // Start the connection to archipelago
-            var menuId = rnsReloaded.ScriptFindId("scr_runmenu_main_startrun_multi");
-            var menuScript = rnsReloaded.GetScriptData(menuId - 100000);
-            this.archipelagoWebsocketHook = hooks.CreateHook<ScriptDelegate>(this.CreateArchipelagoWebsocket, menuScript->Functions->Function);
-            this.archipelagoWebsocketHook.Activate();
-            this.archipelagoWebsocketHook.Enable();
-
-            // Close the AP connection
-            var resetAPConnId = rnsReloaded.ScriptFindId("scr_socketmap_clear_and_disconnect");
-            var resetAPConnScript = rnsReloaded.GetScriptData(resetAPConnId - 100000);
-            conn.resetConnHook = hooks.CreateHook<ScriptDelegate>(conn.ResetConn, resetAPConnScript->Functions->Function);
-            conn.resetConnHook.Activate();
-            conn.resetConnHook.Enable();
-
-            // Set up in game message queue checking
-            var drawId = rnsReloaded.ScriptFindId("scr_gamecontrol_update_adventure");
-            var drawScript = rnsReloaded.GetScriptData(drawId - 100000);
-            conn.messageHandler.addMessageHook = hooks.CreateHook<ScriptDelegate>(conn.messageHandler.AddMessage, drawScript->Functions->Function);
-            conn.messageHandler.addMessageHook.Activate();
-            conn.messageHandler.addMessageHook.Enable();
-        }
-
-        private void SetupArchipelagoOnlineMultiplayer()
-        {
-            if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-
-            // Start the connection to archipelago
-            var connectId = rnsReloaded.ScriptFindId("scr_lobbyhost_buff_client");
-            var connectScript = rnsReloaded.GetScriptData(connectId - 100000);
-            conn.sendClientConnectionHook = hooks.CreateHook<ScriptDelegate>(conn.SendClientConnection, connectScript->Functions->Function);
-            conn.sendClientConnectionHook.Activate();
-            conn.sendClientConnectionHook.Enable();
-
-            // Handle host communication
-            var packetId = rnsReloaded.ScriptFindId("scr_steam_handle_packet");
-            var packetScript = rnsReloaded.GetScriptData(packetId - 100000);
-            conn.parseSteamPacketHook = hooks.CreateHook<ScriptDelegate>(conn.ParseSteamPacket, packetScript->Functions->Function);
-            conn.parseSteamPacketHook.Activate();
-            conn.parseSteamPacketHook.Enable();
-
-            // Handle client disconnect
-            var disconnectId = rnsReloaded.ScriptFindId("scr_clientmap_delete");
-            var disconnectScript = rnsReloaded.GetScriptData(disconnectId - 100000);
-            conn.handleClientDisconnectHook = hooks.CreateHook<ScriptDelegate>(conn.HandleClientDisconnect, disconnectScript->Functions->Function);
-            conn.handleClientDisconnectHook.Activate();
-            conn.handleClientDisconnectHook.Enable();
-            
-        }
-
-        // Set up the hooks to send locations through the websocket
-        private void SetupSendBattleAndChestLocations()
-        {
-            if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-
-            // Send out locations on encounter win
-            var battleWonScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_notchexbattle_victory_transfer") - 100000);
-            locationHandler.notchCompleteHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SendNotchComplete, battleWonScript->Functions->Function);
-            locationHandler.notchCompleteHook.Activate();
-            locationHandler.notchCompleteHook.Enable();
-
-            // Send out locations on chest open
-            var chestOpenScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_npc_treasure_explode") - 100000);
-            locationHandler.chestOpenHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SendChestOpen, chestOpenScript->Functions->Function);
-            locationHandler.chestOpenHook.Activate();
-            locationHandler.chestOpenHook.Enable();
-
-            // Remove AP items on ties
-            var tieScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemlootroll_update_roll") - 100000);
-            locationHandler.RemoveAPItemTieHook = hooks.CreateHook<ScriptDelegate>(locationHandler.RemoveAPItemTie, tieScript->Functions->Function);
-            locationHandler.RemoveAPItemTieHook.Activate();
-            locationHandler.RemoveAPItemTieHook.Enable();
-        }
-
-        // Set up the hooks to manipulate chest and shop items
-        private void SetupArchipelagoItems()
-        {
-            if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-
-            // Setup the mod items that corresponds to the items in CopyItemModToRnSMod()
-            var setupItemsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_init_mods") - 100000);
-            locationHandler.setupItemsHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetupArchipelagoItems, setupItemsScript->Functions->Function);
-            locationHandler.setupItemsHook.Activate();
-            locationHandler.setupItemsHook.Enable();
-
-            // Make it so that the archipelago items mod cannot be disabled
-            var modApplyScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_runmenu_mods_apply") - 100000);
-            locationHandler.enableModHook = hooks.CreateHook<ScriptDelegate>(locationHandler.EnableArchipelagoItems, modApplyScript->Functions->Function);
-            locationHandler.enableModHook.Activate();
-            locationHandler.enableModHook.Enable();
-
-            // Set amount of items in chest, 5 for archipelago, normal for chest # for normal
-            var itemAmtScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_loot_amount") - 100000);
-            locationHandler.itemAmtHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetAmountOfItems, itemAmtScript->Functions->Function);
-            locationHandler.itemAmtHook.Activate();
-            locationHandler.itemAmtHook.Enable();
-
-            // Get the id of the archipelago item 
-            var itemGetScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_readsheet_items") - 100000);
-            locationHandler.itemGetHook = hooks.CreateHook<ScriptDelegate>(locationHandler.GetItems, itemGetScript->Functions->Function);
-            locationHandler.itemGetHook.Activate();
-            locationHandler.itemGetHook.Enable();
-
-            // Scout the archipelago item to display values in a shop
-            var itemScoutShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_populate_store") - 100000);
-            scoutHandler.itemScoutShopHook = hooks.CreateHook<ScriptDelegate>(scoutHandler.ScoutShopItems, itemScoutShopScript->Functions->Function);
-            scoutHandler.itemScoutShopHook.Activate();
-            scoutHandler.itemScoutShopHook.Enable();
-
-            // Set the item to be an archipelago item
-            var itemSetScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_create_item") - 100000);
-            locationHandler.itemSetHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetItems, itemSetScript->Functions->Function);
-            locationHandler.itemSetHook.Activate();
-            locationHandler.itemSetHook.Enable();
-
-            // Set the description of an item to match its archipelago item
-            var itemSetDescriptionScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_infodraw_get_item_desc") - 100000);
-            locationHandler.itemSetDescriptionHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetItemsDescription, itemSetDescriptionScript->Functions->Function);
-            locationHandler.itemSetDescriptionHook.Activate();
-            locationHandler.itemSetDescriptionHook.Enable();
-
-            //TODO: FINISH GETTING IT WORKING
-            // Set the shop upgrade description to match the class that ability is from
-            /*var itemSetUpgradeDescriptionId = rnsReloaded.ScriptFindId("scr_infodraw_get_item_desc");
-                var itemSetUpgradeDescriptionScript = rnsReloaded.GetScriptData(itemSetUpgradeDescriptionId - 100000);
-                locationHandler.itemSetUpgradeDescriptionHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SetUpgradeDescription, itemSetUpgradeDescriptionScript->Functions->Function);
-                locationHandler.itemSetUpgradeDescriptionHook.Activate();
-                locationHandler.itemSetUpgradeDescriptionHook.Enable();*/
-
-            // Prevents you from actually taking an item, and sends out the corresponding location
-            var takeItemScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_pickup_loot") - 100000);
-            locationHandler.takeItemHook = hooks.CreateHook<ScriptDelegate>(locationHandler.TakeItem, takeItemScript->Functions->Function);
-            locationHandler.takeItemHook.Activate();
-            locationHandler.takeItemHook.Enable();
-
-            // Give treasurespheres that have accumulated 
-            var treasuresphereOnStartScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_generate") - 100000);
-            locationHandler.spawnTreasuresphereOnStartHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartScript->Functions->Function);
-            locationHandler.spawnTreasuresphereOnStartHook.Activate();
-            locationHandler.spawnTreasuresphereOnStartHook.Enable();
-
-            // Activates the restock shop hook when the store is opened
-            var openShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_open_store") - 100000);
-            locationHandler.openShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.OpenShop, openShopScript->Functions->Function);
-            locationHandler.openShopHook.Activate();
-            locationHandler.openShopHook.Enable();
-
-            // Deactivates the restock shop hook when the store is closed
-            var closeShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_close_store") - 100000);
-            locationHandler.closeShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.CloseShop, closeShopScript->Functions->Function);
-            locationHandler.closeShopHook.Activate();
-            locationHandler.closeShopHook.Enable();
-
-            // Replacese the newly bought AP item in the shop
-            var restockShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_draw_itemrow") - 100000);
-            locationHandler.restockShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.RestockShop, restockShopScript->Functions->Function);
-            locationHandler.restockShopHook.Activate();
-
-        }
-
-        // Set up the hooks for class sanity handling
-        private void SetupClassSanity()
-        {
-            if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-
-            // Visually lock characters not yet obtained
-            var lockVisualClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_draw_menu") - 100000);
-            classHandler.lockClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.SetClassAvailability, lockVisualClassScript->Functions->Function);
-            classHandler.lockClassHook.Activate();
-            classHandler.lockClassHook.Enable();
-
-            // Lock characters not yet obtained on mouse click
-            var lockClassScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_update_choosecolor") - 100000);
-            classHandler.mouseClassHook = hooks.CreateHook<ScriptDelegate>(classHandler.LockClass, lockClassScript->Functions->Function);
-            classHandler.mouseClassHook.Activate();
-            classHandler.mouseClassHook.Enable();
-
-            // Prevent the drawing of colors if trying to select a locked class when doing a mouse click on a locked class
-            var stopColorScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_setup_colors") - 100000);
-            classHandler.stopColorHook = hooks.CreateHook<ScriptDelegate>(classHandler.StopColorDraw, stopColorScript->Functions->Function);
-            classHandler.stopColorHook.Activate();
-            classHandler.stopColorHook.Enable();
-        }
 
         // TODO: REMOVE Testing function for timing printing
         private RValue* test(
@@ -568,60 +294,6 @@ namespace RnSArchipelago
             return returnValue;
         }
 
-        // Set up the hooks for kingdom sanity handling
-        private void SetupKingdomManagement()
-        {
-            if (!this.IsReady(out var rnsReloaded, out var hooks)) return;
-
-            // Create the planned route
-            var chooseHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_choose_halls") - 100000);
-            routeHandler.chooseHallsHook = hooks.CreateHook<ScriptDelegate>(routeHandler.CreateRoute, chooseHallsScript->Functions->Function);
-            routeHandler.chooseHallsHook.Activate();
-            routeHandler.chooseHallsHook.Enable();
-
-            // Modify the icons on the route selection screen
-            var iconsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stagefirst_get_subimg") - 100000);
-            mapHandler.fixChooseIconsHook = hooks.CreateHook<ScriptDelegate>(mapHandler.ModifyRouteIcons, iconsScript->Functions->Function);
-            mapHandler.fixChooseIconsHook.Activate();
-            mapHandler.fixChooseIconsHook.Enable();
-
-            // Make sure you can go to the next hallway and perform additional functions that need to run every room
-            var endHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_move_next") - 100000);
-            routeHandler.endHallsHook = hooks.CreateHook<ScriptDelegate>(routeHandler.MoveNext, endHallsScript->Functions->Function);
-            routeHandler.endHallsHook.Activate();
-            routeHandler.endHallsHook.Enable();
-
-            // Modify the kingdoms on the end screen
-            var iconsEndScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_victorydefeat_draw_char") - 100000);
-            kingdomHandler.fixEndIconsHook = hooks.CreateHook<ScriptDelegate>(kingdomHandler.ModifyEndScreenIcons, iconsEndScript->Functions->Function);
-            kingdomHandler.fixEndIconsHook.Activate();
-            kingdomHandler.fixEndIconsHook.Enable();
-
-            // Modifies the notch xsubimg
-            var xSubimgScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_subimgs") - 100000);
-            routeHandler.StopXSubimgHook = hooks.CreateHook<ScriptDelegate>(routeHandler.StopXSubimg, xSubimgScript->Functions->Function);
-            routeHandler.StopXSubimgHook.Activate();
-            routeHandler.StopXSubimgHook.Enable();
-
-            // WIP FUNCTION
-            /*// Modifys 
-            var iconsEndScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_change_stage") - 100000);
-            kingdom.fixEndIconsHook = hooks.CreateHook<ScriptDelegate>(kingdom.ModifyEndScreenIcons, iconsEndScript->Functions->Function);
-            kingdom.fixEndIconsHook.Activate();
-            kingdom.fixEndIconsHook.Enable();*/
-
-            // Changes the background of the starting kingdom on run start
-            var changeStartingKingdomBackgroundScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_charselect2_start_run") - 100000);
-            kingdomHandler.changeStartingKingdomBackgroundScriptHook = hooks.CreateHook<ScriptDelegate>(kingdomHandler.ChangeStartingKingdom, changeStartingKingdomBackgroundScript->Functions->Function);
-            kingdomHandler.changeStartingKingdomBackgroundScriptHook.Activate();
-            kingdomHandler.changeStartingKingdomBackgroundScriptHook.Enable();
-
-            // Removes option to go to next stage if disconnected
-            var readyCheckScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_should_update") - 100000);
-            locationHandler.readyCheckHook = hooks.CreateHook<ScriptDelegate>(locationHandler.StopReadyCheck, readyCheckScript->Functions->Function);
-            locationHandler.readyCheckHook.Activate();
-            locationHandler.readyCheckHook.Enable();
-        }
 
         // TODO: REMOVE Testing function to oneshot
         private void oneShot()

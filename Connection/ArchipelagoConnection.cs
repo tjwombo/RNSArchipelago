@@ -3,7 +3,6 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 
-using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 
 using RnSArchipelago.Data;
@@ -19,19 +18,13 @@ namespace RnSArchipelago.Connection
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private readonly SaveHandler saveHandler;
         private readonly SharedData data;
         private readonly Config.Config config;
 
         internal readonly MessageHandler messageHandler;
-
-        internal IHook<ScriptDelegate>? resetConnHook;
-        internal IHook<ScriptDelegate>? recconectHook;
-        internal IHook<ScriptDelegate>? parseSteamPacketHook;
-        internal IHook<ScriptDelegate>? sendClientConnectionHook;
-        internal IHook<ScriptDelegate>? sendClientHallwayHook;
-        internal IHook<ScriptDelegate>? handleClientDisconnectHook;
 
         internal ArchipelagoSession? session;
         internal bool isHost = true;
@@ -40,31 +33,27 @@ namespace RnSArchipelago.Connection
         private static readonly NetworkVersion VERSION = new(0, 6, 7);
         internal static readonly string GAME = "Rabbit and Steel";
 
-        internal ArchipelagoConnection(
-            WeakReference<IRNSReloaded> rnsReloadedRef,
-            ILogger logger,
-            InventoryHandler inventoryHandler,
-            SaveHandler saveHandler,
-            ScoutHandler scoutHandler,
-            Config.Config config,
-            SharedData data)
+        internal ArchipelagoConnection(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger,
+            HookHandler hookHandler, InventoryHandler inventoryHandler, SaveHandler saveHandler,
+            ScoutHandler scoutHandler, Config.Config config, SharedData data)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
             this.saveHandler = saveHandler;
             this.data = data;
             this.config = config;
 
-            this.messageHandler = new MessageHandler(rnsReloadedRef, logger, inventoryHandler, scoutHandler, config, data);
+            this.messageHandler = new MessageHandler(rnsReloadedRef, logger, hookHandler, inventoryHandler, scoutHandler, config, data);
         }
 
         // Disconnect the client
         internal unsafe RValue* HandleClientDisconnect(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.handleClientDisconnectHook != null)
+            if (hookHandler.handleClientDisconnectHook != null)
             {
-                returnValue = this.handleClientDisconnectHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.handleClientDisconnectHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -79,9 +68,9 @@ namespace RnSArchipelago.Connection
         // Send the connection command to the client joining
         internal unsafe RValue* SendClientConnection(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.sendClientConnectionHook != null)
+            if (hookHandler.sendClientConnectionHook != null)
             {
-                returnValue = this.sendClientConnectionHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.sendClientConnectionHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -336,9 +325,9 @@ namespace RnSArchipelago.Connection
                 }
             }
 
-            if (this.parseSteamPacketHook != null)
+            if (hookHandler.parseSteamPacketHook != null)
             {
-                returnValue = this.parseSteamPacketHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.parseSteamPacketHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -396,9 +385,9 @@ namespace RnSArchipelago.Connection
         // Return to the lobby settings
         internal unsafe RValue* ResetConn(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.resetConnHook != null)
+            if (hookHandler.resetConnHook != null)
             {
-                this.resetConnHook?.OriginalFunction(self, other, returnValue, argc, argv);
+                hookHandler.resetConnHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -435,7 +424,7 @@ namespace RnSArchipelago.Connection
             }
 
             this.session = null;
-            isHost = true;
+            isHost = true; // Need to reset this because leaving crashes if we skip change_stage call, which we do for clients
         }
 
         internal void ConnectionOpened()
@@ -510,7 +499,7 @@ namespace RnSArchipelago.Connection
             session?.Socket.SendMultiplePacketsAsync(new List<ArchipelagoPacketBase>() { data, connect }).Wait();
         }
 
-        internal unsafe RValue* Recconect(
+        internal unsafe RValue* Reconnect(
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
@@ -522,7 +511,15 @@ namespace RnSArchipelago.Connection
 
                 return returnValue;
             }
-            recconectHook?.OriginalFunction(self, other, returnValue, argc, argv);
+
+            if (hookHandler.resetConnHook != null)
+            {
+                hookHandler.resetConnHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call reconnect hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
     }

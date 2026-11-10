@@ -1,5 +1,4 @@
-﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces;
+﻿using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
@@ -11,15 +10,15 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private readonly RouteHandler routeHandler;
 
-        internal IHook<ScriptDelegate>? fixChooseIconsHook;
-
-        internal MapHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, RouteHandler routeHandler)
+        internal MapHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookHandler hookHandler, InventoryHandler inventoryHandler, RouteHandler routeHandler)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
             this.routeHandler = routeHandler;
         }
@@ -217,9 +216,9 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
-                if (this.fixChooseIconsHook != null)
+                if (hookHandler.fixChooseIconsHook != null)
                 {
-                    returnValue = this.fixChooseIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    returnValue = hookHandler.fixChooseIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
                 }
                 else
                 {
@@ -250,9 +249,9 @@ namespace RnSArchipelago.Game
             }
             else
             {
-                if (this.fixChooseIconsHook != null)
+                if (hookHandler.fixChooseIconsHook != null)
                 {
-                    returnValue = this.fixChooseIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    returnValue = hookHandler.fixChooseIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
                 }
                 else
                 {

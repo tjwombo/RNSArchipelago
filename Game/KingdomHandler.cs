@@ -1,5 +1,4 @@
-﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces;
+﻿using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Utils;
 
 using RNSReloaded.Interfaces;
@@ -11,17 +10,17 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private readonly RouteHandler routeHandler;
         private readonly Config.Config modConfig;
-        
-        internal IHook<ScriptDelegate>? fixEndIconsHook;
-        internal IHook<ScriptDelegate>? changeStartingKingdomBackgroundScriptHook;
 
-        internal KingdomHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, RouteHandler routeHandler, Config.Config modConfig)
+        internal KingdomHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookHandler hookHandler,
+            InventoryHandler inventoryHandler, RouteHandler routeHandler, Config.Config modConfig)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
             this.routeHandler = routeHandler;
             this.modConfig = modConfig;
@@ -63,9 +62,10 @@ namespace RnSArchipelago.Game
                                 //this.logger.PrintMessage(rnsReloaded.GetString(seed) + "", System.Drawing.Color.RebeccaPurple);
                                 //RValue b = new(self);
                                 //this.logger.PrintMessage(rnsReloaded.GetString(&b), System.Drawing.Color.DarkOrange);
-                                if (this.fixEndIconsHook != null)
+                                
+                                if (hookHandler.fixEndIconsHook != null)
                                 {
-                                    returnValue = this.fixEndIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                                    returnValue = hookHandler.fixEndIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
                                 }
                                 else
                                 {
@@ -81,9 +81,9 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (this.fixEndIconsHook != null)
+            if (hookHandler.fixEndIconsHook != null)
             {
-                returnValue = this.fixEndIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.fixEndIconsHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -105,9 +105,9 @@ namespace RnSArchipelago.Game
                 rnsReloaded.ExecuteScript("scr_hallwayprogress_change_stage", instance, null, []);
             }
 
-            if (this.changeStartingKingdomBackgroundScriptHook != null)
+            if (hookHandler.changeStartingKingdomBackgroundScriptHook != null)
             {
-                returnValue = this.changeStartingKingdomBackgroundScriptHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.changeStartingKingdomBackgroundScriptHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {

@@ -1,6 +1,4 @@
-﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces;
-using RnSArchipelago.Utils;
+﻿using Reloaded.Mod.Interfaces;
 
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
@@ -11,16 +9,14 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
 
-        internal IHook<ScriptDelegate>? lockClassHook;
-        internal IHook<ScriptDelegate>? mouseClassHook;
-        internal IHook<ScriptDelegate>? stopColorHook;
-
-        public ClassHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler)
+        public ClassHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookHandler hookHandler, InventoryHandler inventoryHandler)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
         }
 
@@ -33,9 +29,9 @@ namespace RnSArchipelago.Game
         // Makes it so you can't progress in a class and remove the preview, and restore it in the palette selection
         internal RValue* SetClassAvailability(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.lockClassHook != null)
+            if (hookHandler.lockClassHook != null)
             {
-                returnValue = this.lockClassHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.lockClassHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -81,9 +77,9 @@ namespace RnSArchipelago.Game
         // When using a mouse, make it so that in the state machine if we select a locked class, instead of going to the next state, we loop back
         internal RValue* LockClass(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.mouseClassHook != null)
+            if (hookHandler.mouseClassHook != null)
             {
-                returnValue = this.mouseClassHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.mouseClassHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -121,9 +117,9 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (this.stopColorHook != null)
+            if (hookHandler.stopColorHook != null)
             {
-                returnValue = this.stopColorHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.stopColorHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {

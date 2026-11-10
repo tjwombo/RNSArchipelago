@@ -2,7 +2,6 @@
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 
-using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 
 using RnSArchipelago.Connection;
@@ -18,30 +17,12 @@ namespace RnSArchipelago.Game
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly Random rand;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private readonly ShopItemsHandler shopItemsHandler;
         private readonly ScoutHandler scoutHandler;
         private readonly Config.Config modConfig;
         private readonly ArchipelagoConnection conn;
-
-        internal IHook<ScriptDelegate>? notchCompleteHook;
-        internal IHook<ScriptDelegate>? chestOpenHook;
-
-        internal IHook<ScriptDelegate>? setupItemsHook;
-        internal IHook<ScriptDelegate>? enableModHook;
-        internal IHook<ScriptDelegate>? itemAmtHook;
-        internal IHook<ScriptDelegate>? itemGetHook;
-        internal IHook<ScriptDelegate>? itemSetHook;
-        internal IHook<ScriptDelegate>? itemSetDescriptionHook;
-        //internal IHook<ScriptDelegate>? itemSetUpgradeDescriptionHook;
-        internal IHook<ScriptDelegate>? takeItemHook;
-        internal IHook<ScriptDelegate>? RemoveAPItemTieHook;
-        internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
-        internal IHook<ScriptDelegate>? readyCheckHook;
-
-        internal IHook<ScriptDelegate>? openShopHook;
-        internal IHook<ScriptDelegate>? closeShopHook;
-        internal IHook<ScriptDelegate>? restockShopHook;
 
         private long baseItemId = -1;
         private int treasurespheresToSpawn = 0;
@@ -50,11 +31,14 @@ namespace RnSArchipelago.Game
         internal static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
-        internal LocationHandler(WeakReference<IRNSReloaded> rnsReloadedRef, Random rand, ILogger logger, InventoryHandler inventoryHandler, ShopItemsHandler shopItemsHandler, ScoutHandler scoutHandler, Config.Config modConfig, ArchipelagoConnection conn)
+        internal LocationHandler(WeakReference<IRNSReloaded> rnsReloadedRef, Random rand, ILogger logger,
+            HookHandler hookHandler, InventoryHandler inventoryHandler, ShopItemsHandler shopItemsHandler,
+            ScoutHandler scoutHandler, Config.Config modConfig, ArchipelagoConnection conn)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.rand = rand;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
             this.shopItemsHandler = shopItemsHandler;
             this.scoutHandler = scoutHandler;
@@ -68,9 +52,9 @@ namespace RnSArchipelago.Game
         // Send the location for completing an encounter
         internal RValue* SendNotchComplete(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.notchCompleteHook != null)
+            if (hookHandler.notchCompleteHook != null)
             {
-                returnValue = this.notchCompleteHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.notchCompleteHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -87,9 +71,9 @@ namespace RnSArchipelago.Game
         // Send the location for opening a chest
         internal RValue* SendChestOpen(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.chestOpenHook != null)
+            if (hookHandler.chestOpenHook != null)
             {
-                returnValue = this.chestOpenHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.chestOpenHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -107,9 +91,9 @@ namespace RnSArchipelago.Game
         // Update the archipelago items mod data
         internal RValue* SetupArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.setupItemsHook != null)
+            if (hookHandler.setupItemsHook != null)
             {
-                returnValue = this.setupItemsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.setupItemsHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -151,9 +135,9 @@ namespace RnSArchipelago.Game
         // After applying mod settings in game, ensure the archipelago items mod is enabled
         internal RValue* EnableArchipelagoItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.enableModHook != null)
+            if (hookHandler.enableModHook != null)
             {
-                returnValue = this.enableModHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.enableModHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -182,9 +166,9 @@ namespace RnSArchipelago.Game
         // Set the amount of items in the chest to be 5
         internal RValue* SetAmountOfItems(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.itemAmtHook != null)
+            if (hookHandler.itemAmtHook != null)
             {
-                returnValue = this.itemAmtHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.itemAmtHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -357,9 +341,9 @@ namespace RnSArchipelago.Game
                                         break;
                                 }
 
-                                if (this.itemSetHook != null)
+                                if (hookHandler.itemSetHook != null)
                                 {
-                                    returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
+                                    returnValue = hookHandler.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
                                 }
                                 else
                                 {
@@ -396,9 +380,9 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (this.itemSetHook != null)
+            if (hookHandler.itemSetHook != null)
             {
-                returnValue = this.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -419,9 +403,9 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (this.itemGetHook != null)
+            if (hookHandler.itemGetHook != null)
             {
-                returnValue = this.itemGetHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.itemGetHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -434,9 +418,9 @@ namespace RnSArchipelago.Game
         // Set the description for archipelago items to reflect their actual item
         internal RValue* SetItemsDescription(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.itemSetDescriptionHook != null)
+            if (hookHandler.itemSetDescriptionHook != null)
             {
-                returnValue = this.itemSetDescriptionHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.itemSetDescriptionHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -602,13 +586,12 @@ namespace RnSArchipelago.Game
                             *rnsReloaded.FindValue(((CLayerInstanceElement*)instance)->Instance, "slots")->Get(1)->Get(i)->Get(1) = -1;
                         }
                     }
-                    this.logger.PrintMessage("done", System.Drawing.Color.Red);
                 }
             }
 
-            if (this.RemoveAPItemTieHook != null)
+            if (hookHandler.RemoveAPItemTieHook != null)
             {
-                returnValue = this.RemoveAPItemTieHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.RemoveAPItemTieHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -644,9 +627,9 @@ namespace RnSArchipelago.Game
                     // Take the item if its not an ap item
                     if (itemId->ToLong() != baseItemId && itemId->ToLong() != baseItemId + 1 && itemId->ToLong() != baseItemId + 2)
                     {
-                        if (this.takeItemHook != null)
+                        if (hookHandler.takeItemHook != null)
                         {
-                            returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
+                            returnValue = hookHandler.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
                         }
                         else
                         {
@@ -712,9 +695,9 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (this.takeItemHook != null)
+            if (hookHandler.takeItemHook != null)
             {
-                returnValue = this.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -727,9 +710,9 @@ namespace RnSArchipelago.Game
         // Activate the restock shop hook when the shop opens
         internal RValue* OpenShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.openShopHook != null)
+            if (hookHandler.openShopHook != null)
             {
-                returnValue = this.openShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.openShopHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -738,7 +721,7 @@ namespace RnSArchipelago.Game
 
             if (this.inventoryHandler.isActive)
             {
-                restockShopHook!.Enable();
+                hookHandler.restockShopHook!.Enable();
             }
             return returnValue;
         }
@@ -746,9 +729,9 @@ namespace RnSArchipelago.Game
         // Deactivate the restock shop hook when the shop closes
         internal RValue* CloseShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.closeShopHook != null)
+            if (hookHandler.closeShopHook != null)
             {
-                returnValue = this.closeShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.closeShopHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -757,7 +740,7 @@ namespace RnSArchipelago.Game
 
             if (this.inventoryHandler.isActive)
             {
-                restockShopHook!.Disable();
+                hookHandler.restockShopHook!.Disable();
             }
             return returnValue;
         }
@@ -782,9 +765,9 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            if (this.restockShopHook != null)
+            if (hookHandler.restockShopHook != null)
             {
-                returnValue = this.restockShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.restockShopHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -905,9 +888,9 @@ namespace RnSArchipelago.Game
         {
             this.rnsReloadedRef.TryGetTarget(out var rnsReloaded);
 
-            if (this.spawnTreasuresphereOnStartHook != null)
+            if (hookHandler.spawnTreasuresphereOnStartHook != null)
             {
-                returnValue = this.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.spawnTreasuresphereOnStartHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -948,9 +931,9 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (this.readyCheckHook != null)
+            if (hookHandler.readyCheckHook != null)
             {
-                returnValue = this.readyCheckHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.readyCheckHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
 
             return returnValue;

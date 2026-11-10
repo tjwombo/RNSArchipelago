@@ -1,6 +1,5 @@
 ﻿using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
-using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Connection;
 using RNSReloaded.Interfaces;
@@ -12,10 +11,9 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private ArchipelagoConnection conn = null!;
-
-        internal IHook<ScriptDelegate>? itemScoutShopHook;
 
         internal static readonly string[] CHEST_POSITIONS = ["Top Left", "Bottom Left", "Middle", "Bottom Right", "Top Right"];
         internal static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
@@ -24,10 +22,11 @@ namespace RnSArchipelago.Game
         internal Dictionary<string, Dictionary<long, ScoutedItemInfo>> chestContents = [];
         internal Dictionary<string, Dictionary<long, ScoutedItemInfo>> shopContents = [];
 
-        internal ScoutHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler)
+        internal ScoutHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookHandler hookHandler, InventoryHandler inventoryHandler)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
         }
 
@@ -178,9 +177,9 @@ namespace RnSArchipelago.Game
             {
                 if (inventoryHandler.isActive)
                 {
-                    if (this.itemScoutShopHook != null)
+                    if (hookHandler.itemScoutShopHook != null)
                     {
-                        returnValue = this.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+                        returnValue = hookHandler.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
                     }
                     else
                     {
@@ -207,9 +206,9 @@ namespace RnSArchipelago.Game
                 }
             }
 
-            if (this.itemScoutShopHook != null)
+            if (hookHandler.itemScoutShopHook != null)
             {
-                returnValue = this.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.itemScoutShopHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {

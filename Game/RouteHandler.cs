@@ -1,10 +1,8 @@
-﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces;
+﻿using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Connection;
 using RnSArchipelago.Utils;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
-using static RnSArchipelago.Utils.HookUtil;
 
 namespace RnSArchipelago.Game
 {
@@ -12,21 +10,20 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private readonly LocationHandler locationHandler;
         private readonly ArchipelagoConnection conn;
 
-        internal IHook<ScriptDelegate>? chooseHallsHook;
-        internal IHook<ScriptDelegate>? endHallsHook;
-        internal IHook<ScriptDelegate>? StopXSubimgHook;
-
         internal string currentKingdomGroup = "";
         private string selectedKingdom = "";
 
-        internal RouteHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, InventoryHandler inventoryHandler, LocationHandler locationHandler, ArchipelagoConnection conn)
+        internal RouteHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger, HookHandler hookHandler,
+            InventoryHandler inventoryHandler, LocationHandler locationHandler, ArchipelagoConnection conn)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
             this.locationHandler = locationHandler;
             this.conn = conn;
@@ -302,9 +299,9 @@ namespace RnSArchipelago.Game
                     }
                 }
             }
-            if (this.endHallsHook != null)
+            if (hookHandler.endHallsHook != null)
             {
-                returnValue = this.endHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.endHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -570,9 +567,9 @@ namespace RnSArchipelago.Game
                     return returnValue;
                 }
 
-                if (this.chooseHallsHook != null)
+                if (hookHandler.chooseHallsHook != null)
                 {
-                    returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    returnValue = hookHandler.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
                 }
                 else
                 {
@@ -617,9 +614,9 @@ namespace RnSArchipelago.Game
                 return returnValue;
             }
             
-            if (this.chooseHallsHook != null)
+            if (hookHandler.chooseHallsHook != null)
             {
-                returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -632,18 +629,18 @@ namespace RnSArchipelago.Game
         // Stop client from overriding recieved xsubimg info
         internal RValue* StopXSubimg(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.StopXSubimgHook != null)
+            if (hookHandler.stopXSubimgHook != null)
             {
                 if (conn.session == null || conn.isHost)
                 {
-                    returnValue = this.StopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
+                    returnValue = hookHandler.stopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
                 } else if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
                 {
                     var currentPos = rnsReloaded.FindValue(self, "currentPos")->ToInt();
 
                     if (currentPos != 0)
                     {
-                        returnValue = this.StopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
+                        returnValue = hookHandler.stopXSubimgHook.OriginalFunction(self, other, returnValue, argc, argv);
                     }
                 }
             }

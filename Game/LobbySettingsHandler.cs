@@ -1,5 +1,4 @@
-﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Mod.Interfaces;
+﻿using Reloaded.Mod.Interfaces;
 using RnSArchipelago.Connection;
 using RNSReloaded.Interfaces;
 using RNSReloaded.Interfaces.Structs;
@@ -11,25 +10,9 @@ namespace RnSArchipelago.Game
     {
         private readonly WeakReference<IRNSReloaded> rnsReloadedRef;
         private readonly ILogger logger;
+        private readonly HookHandler hookHandler;
         private readonly InventoryHandler inventoryHandler;
         private readonly ArchipelagoConnection conn;
-
-        internal IHook<ScriptDelegate>? archipelagoButtonHook;
-
-        internal IHook<ScriptDelegate>? lobbySettingsDisplayStepHook;
-
-        internal IHook<ScriptDelegate>? archipelagoOptionsHook;
-        internal IHook<ScriptDelegate>? kingdomAvailablityHook;
-
-        internal IHook<ScriptDelegate>? setNameHook;
-        internal IHook<ScriptDelegate>? setDescHook;
-        internal IHook<ScriptDelegate>? setPassHook;
-        //internal IHook<ScriptDelegate>? setNumHook;
-        internal IHook<ScriptDelegate>? archipelagoOptionsReturnHook;
-
-        internal IHook<ScriptDelegate>? lobbyTitleHook;
-
-        internal IHook<ScriptDelegate>? supressLobbySettingsVisuallyHook;
 
         internal string ArchipelagoAddress { get; private set; } = "localhost:38281";
         internal string ArchipelagoName { get; private set; } = "Player1";
@@ -45,16 +28,13 @@ namespace RnSArchipelago.Game
 
         private bool initialSetup = true;
 
-        internal LobbySettingsHandler(
-            WeakReference<IRNSReloaded> rnsReloadedRef,
-            ILogger logger,
-            InventoryHandler inventoryHandler,
-            ArchipelagoConnection conn,
-            Config.Config modConfig
-            )
+        internal LobbySettingsHandler(WeakReference<IRNSReloaded> rnsReloadedRef, ILogger logger,
+            HookHandler hookHandler, InventoryHandler inventoryHandler, ArchipelagoConnection conn,
+            Config.Config modConfig)
         {
             this.rnsReloadedRef = rnsReloadedRef;
             this.logger = logger;
+            this.hookHandler = hookHandler;
             this.inventoryHandler = inventoryHandler;
             this.conn = conn;
 
@@ -71,9 +51,9 @@ namespace RnSArchipelago.Game
         )
         {
             // Create the object
-            if (archipelagoButtonHook != null)
+            if (hookHandler.archipelagoButtonHook != null)
             {
-                returnValue = archipelagoButtonHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.archipelagoButtonHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -97,7 +77,7 @@ namespace RnSArchipelago.Game
                 FindElementInLayer("RunMenu_Options", out var layer, "name", "LOBBY", out var element);
                 if (layer != null)
                 {
-                    lobbySettingsDisplayStepHook?.Enable();
+                    hookHandler.lobbySettingsDisplayStepHook?.Enable();
 
                     if (element != null)
                     {
@@ -134,9 +114,9 @@ namespace RnSArchipelago.Game
 
         internal RValue* ActivateAllKingdoms(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (kingdomAvailablityHook != null)
+            if (hookHandler.kingdomAvailablityHook != null)
             {
-                returnValue = kingdomAvailablityHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.kingdomAvailablityHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -157,9 +137,9 @@ namespace RnSArchipelago.Game
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            if (archipelagoOptionsHook != null)
+            if (hookHandler.archipelagoOptionsHook != null)
             {
-                returnValue = archipelagoOptionsHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.archipelagoOptionsHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -296,9 +276,9 @@ namespace RnSArchipelago.Game
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            if (archipelagoOptionsReturnHook != null)
+            if (hookHandler.archipelagoOptionsReturnHook != null)
             {
-                returnValue = archipelagoOptionsReturnHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.archipelagoOptionsReturnHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -363,9 +343,9 @@ namespace RnSArchipelago.Game
                 rnsReloaded.ExecuteScript("scr_online_save", null, null, []);
             }
 
-            if (lobbyTitleHook != null)
+            if (hookHandler.lobbyTitleHook != null)
             {
-                returnValue = lobbyTitleHook.OriginalFunction(self, other, returnValue, argc, argv);
+                returnValue = hookHandler.lobbyTitleHook.OriginalFunction(self, other, returnValue, argc, argv);
             }
             else
             {
@@ -508,17 +488,31 @@ namespace RnSArchipelago.Game
                     }
                     else
                     {
-                        lobbySettingsDisplayStepHook?.OriginalFunction(self, other, returnValue, argc, argv);
+                        if (hookHandler.lobbySettingsDisplayStepHook != null)
+                        {
+                            returnValue = hookHandler.lobbySettingsDisplayStepHook.OriginalFunction(self, other, returnValue, argc, argv);
+                        }
+                        else
+                        {
+                            logger.PrintMessage("Unable to call lobby settings display hook", System.Drawing.Color.Red);
+                        }
 
                         // Called as a layer step function, so we want to disable it once we leave the screens
-                        lobbySettingsDisplayStepHook?.Disable();
+                        hookHandler.lobbySettingsDisplayStepHook?.Disable();
                     }
 
                     return returnValue;
                 }
             }
 
-            lobbySettingsDisplayStepHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            if (hookHandler.lobbySettingsDisplayStepHook != null)
+            {
+                returnValue = hookHandler.lobbySettingsDisplayStepHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call lobby settings display hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
 
@@ -569,7 +563,14 @@ namespace RnSArchipelago.Game
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            setNameHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            if (hookHandler.setNameHook != null)
+            {
+                returnValue = hookHandler.setNameHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call set name hook", System.Drawing.Color.Red);
+            }
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
@@ -591,7 +592,14 @@ namespace RnSArchipelago.Game
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            setDescHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            if (hookHandler.setDescHook != null)
+            {
+                returnValue = hookHandler.setDescHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call set desc hook", System.Drawing.Color.Red);
+            }
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
@@ -613,7 +621,14 @@ namespace RnSArchipelago.Game
             CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv
         )
         {
-            setPassHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            if (hookHandler.setPassHook != null)
+            {
+                returnValue = hookHandler.setPassHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call set pass hook", System.Drawing.Color.Red);
+            }
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 if (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3)
@@ -700,7 +715,14 @@ namespace RnSArchipelago.Game
                     return returnValue;
                 }
             }
-            supressLobbySettingsVisuallyHook?.OriginalFunction(self, other, returnValue, argc, argv);
+            if (hookHandler.supressLobbySettingsVisuallyHook != null)
+            {
+                returnValue = hookHandler.supressLobbySettingsVisuallyHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                logger.PrintMessage("Unable to call supress lobby settings visual hook", System.Drawing.Color.Red);
+            }
             return returnValue;
         }
 
