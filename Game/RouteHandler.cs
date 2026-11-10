@@ -289,7 +289,7 @@ namespace RnSArchipelago.Game
                         if (currentPos == 0 && hallwayPos == 0 && LocationUtil.GetLocationType((int)currentPos + 1) == LocationUtil.LocationType.SpecialChest)
                         {
                             *rnsReloaded.utils.GetGlobalVar("notchExHideMap") = 0;
-                            // TODO: Stop the joining message
+                            // TODO: Stop the joining message, by finding the ui that includes the difficulty and first stage and switching its state (probably)
                         }
                     }
 
@@ -565,6 +565,11 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3))
             {
+                if (!conn.isHost)
+                {
+                    return returnValue;
+                }
+
                 if (this.chooseHallsHook != null)
                 {
                     returnValue = this.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -572,13 +577,6 @@ namespace RnSArchipelago.Game
                 else
                 {
                     this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
-                }
-
-                if (!conn.isHost)
-                {
-                    conn.RequestSync("hallway");
-
-                    return returnValue;
                 }
 
                 // Get the user selected kingdom

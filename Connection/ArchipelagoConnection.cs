@@ -435,6 +435,7 @@ namespace RnSArchipelago.Connection
             }
 
             this.session = null;
+            isHost = true;
         }
 
         internal void ConnectionOpened()

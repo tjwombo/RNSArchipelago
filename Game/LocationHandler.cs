@@ -232,13 +232,12 @@ namespace RnSArchipelago.Game
                         if (info.Flags.HasFlag(ItemFlags.Advancement))
                         {
                             archipelagoItem = baseItemId + 1;
-                            useArchipelagoItem = true;
                         }
                         else
                         {
                             archipelagoItem = baseItemId;
-                            useArchipelagoItem = true;
                         }
+                        useArchipelagoItem = true;
                         return;
                     }
                 }
