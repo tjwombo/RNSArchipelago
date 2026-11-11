@@ -31,6 +31,12 @@ namespace RnSArchipelago.Utils
                     index = rnsReloaded.FindValue(instance, "currentPos")->ToInt();
                 }
 
+                // Client sometimes delays their currentpos update, so this is to make sure the first notch is counted correctly, as client gets chest ids from the host
+                if (index == -1)
+                {
+                    index = 0;
+                }
+
                 var currentXImg = rnsReloaded.FindValue(instance, "xSubimg")->Get(index);
 
                 if (currentXImg->ToInt() == 1)

@@ -219,7 +219,6 @@ namespace RnSArchipelago.Game
             this.handleClientDisconnectHook = hooks.CreateHook<ScriptDelegate>(conn.HandleClientDisconnect, disconnectScript->Functions->Function);
             this.handleClientDisconnectHook.Activate();
             this.handleClientDisconnectHook.Enable();
-
         }
 
         // Set up the hooks to send locations through the websocket

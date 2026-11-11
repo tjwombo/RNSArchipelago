@@ -243,7 +243,7 @@ namespace RnSArchipelago.Game
                     var location = LocationUtil.GetLocationType();
 
                     // If the item that is being created is a chest loot item
-                    if (location == LocationUtil.LocationType.Chest)
+                    if (location == LocationUtil.LocationType.Chest && conn.isHost) // Only set shot items as client as hp and lvl up isn't sent from host
                     {
                         // Set the item to the archipelago item
                         if (this.inventoryHandler.checksPerItemInChest)
@@ -354,7 +354,7 @@ namespace RnSArchipelago.Game
                             }
                         }
                     }
-                    else if (location == LocationUtil.LocationType.SpecialChest)
+                    else if (location == LocationUtil.LocationType.SpecialChest && conn.isHost)
                     {
                         if (this.inventoryHandler.ItemSanity != InventoryHandler.ItemSetting.None)
                         {

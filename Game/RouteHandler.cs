@@ -562,11 +562,7 @@ namespace RnSArchipelago.Game
         {
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3))
             {
-                if (!conn.isHost)
-                {
-                    return returnValue;
-                }
-
+                
                 if (hookHandler.chooseHallsHook != null)
                 {
                     returnValue = hookHandler.chooseHallsHook.OriginalFunction(self, other, returnValue, argc, argv);
@@ -574,6 +570,14 @@ namespace RnSArchipelago.Game
                 else
                 {
                     this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
+                }
+
+                // TODO: MOVE THIS BEFORE THE ORIGINAL FUNCTION CALL, BUT NEED TO FIGURE OUT HOW TO LET CLIENT NOT CRASH ON HOST LOBBY RESTART
+                if (!conn.isHost)
+                {
+                    conn.RequestSync("hallway");
+
+                    return returnValue;
                 }
 
                 // Get the user selected kingdom
