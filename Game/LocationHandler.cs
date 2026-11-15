@@ -31,6 +31,8 @@ namespace RnSArchipelago.Game
         internal static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
+        private long[] cacheToItemId = new long[9];
+
         internal LocationHandler(WeakReference<IRNSReloaded> rnsReloadedRef, Random rand, ILogger logger,
             HookHandler hookHandler, InventoryHandler inventoryHandler, ShopItemsHandler shopItemsHandler,
             ScoutHandler scoutHandler, Config.Config modConfig, ArchipelagoConnection conn)
@@ -275,7 +277,19 @@ namespace RnSArchipelago.Game
                                     {
                                         *argv[0] = baseItemId;
                                     }
-                                    break;
+
+                                    if (hookHandler.itemSetHook != null)
+                                    {
+                                        returnValue = hookHandler.itemSetHook.OriginalFunction(self, other, returnValue, argc, argv);
+                                    }
+                                    else
+                                    {
+                                        this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
+                                    }
+
+                                    cacheToItemId[i] = argv[0]->ToLong();
+
+                                    return returnValue;
                                 }
                             }
                         }
@@ -350,6 +364,8 @@ namespace RnSArchipelago.Game
                                     this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
                                 }
 
+                                cacheToItemId[i] = argv[0]->ToLong();
+
                                 return returnValue;
                             }
                         }
@@ -387,6 +403,21 @@ namespace RnSArchipelago.Game
             else
             {
                 this.logger.PrintMessage("Unable to call item set hook", System.Drawing.Color.Red);
+            }
+
+            // Only get here if its a chest, so we dont need to worry about the shop slots
+            // Used to set the client slots as client doesnt go through the chest pathways
+            if (rnsReloaded != null)
+            {
+                for (var i = 0; i < 5; i++)
+                {
+                    // Determine which slot item we are at, which should be the first -1
+                    if (rnsReloaded.FindValue(self, "slots")->Get(1)->Get(i)->Get(1)->ToInt() == -1)
+                    {
+                        cacheToItemId[i] = argv[0]->ToLong();
+
+                    }
+                }
             }
 
             return returnValue;
@@ -607,92 +638,77 @@ namespace RnSArchipelago.Game
             if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded))
             {
                 
-                var itemPos = argv[2]->ToLong();
-                CLayerElementBase* instance = null;
+                var itemPos = argv[2]->ToInt();
+                var itemId = cacheToItemId[itemPos];
 
-                if (LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
+                // Take the item if its not an ap item
+                if (!(itemId >= baseItemId && itemId <= baseItemId + 2))
                 {
-                    HookUtil.FindElementInLayer("LootInfo", "slotId", itemPos + "", out instance);
-                }
-                else if (LocationUtil.GetLocationType() == LocationUtil.LocationType.Shop)
-                {
-                    HookUtil.FindElementInLayer("InventoryInfo", "slotId", itemPos + "", out instance);
-                }
-
-                if (instance != null)
-                {
-                    var element = ((CLayerInstanceElement*)instance)->Instance;
-                    var itemId = rnsReloaded.FindValue(element, "itemId");
-
-                    // Take the item if its not an ap item
-                    if (itemId->ToLong() != baseItemId && itemId->ToLong() != baseItemId + 1 && itemId->ToLong() != baseItemId + 2)
+                    if (hookHandler.takeItemHook != null)
                     {
-                        if (hookHandler.takeItemHook != null)
-                        {
-                            returnValue = hookHandler.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
-                        }
-                        else
-                        {
-                            this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
-                        }
-
-                        return returnValue;
+                        returnValue = hookHandler.takeItemHook.OriginalFunction(self, other, returnValue, argc, argv);
                     }
-
-                    if (this.inventoryHandler.isActive)
+                    else
                     {
-                        // Send the AP item
-                        if (this.inventoryHandler.checksPerItemInChest && LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
-                        {
-                            var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos(rnsReloaded.FindValue(element, "slotId")->ToInt()))] };
-                            if (conn.session != null)
-                            {
-                                if (conn.session.Locations.AllMissingLocations.Contains(locationPacket.Locations[0]))
-                                {
-                                    MessageHandler.messageId.Enqueue(argv[0]->ToLong());
-                                }
-                            }
-                            conn.session?.Socket.SendPacketAsync(locationPacket);
-                        }
-                        else if (this.inventoryHandler.ShopSanity != InventoryHandler.ShopSetting.None && LocationUtil.GetLocationType() == LocationUtil.LocationType.Shop)
-                        {
-                            if (conn.session != null)
-                            {
-                                LocationChecksPacket locationPacket = new();
-                                if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Global)
-                                {
-                                    locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[argv[2]->ToInt()])] };
-                                    
-                                }
-                                else if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Regional)
-                                {
-                                    locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[argv[2]->ToInt()])] };
-                                }
-
-                                if (conn.session.Locations.AllMissingLocations.Contains(locationPacket.Locations[0]))
-                                {
-                                    MessageHandler.messageId.Enqueue(argv[0]->ToLong());
-                                }
-                                
-                                conn.session?.Socket.SendPacketAsync(locationPacket);
-
-                                // TODO: Wait until the location is sent to do this (has to be on the main thread)
-                                // Set the item cache to -1, so we create the right type of item, and then place it
-                                RValue items = new(self);
-                                *items["slots"]->Get(2)->Get(argv[2]->ToInt())->Get(1) = -1;
-
-                                // Make it so the item hasn't consumed their one per customer purchase
-                                *items["storeSlotOPCBin"]->Get(argv[2]->ToInt()) = 0;
-
-                            }
-
-                            // TODO: Fix the width of item names
-                            // TODO: Subtract user gold, and set price of AP items
-                        }
+                        this.logger.PrintMessage("Unable to call take item hook", System.Drawing.Color.Red);
                     }
 
                     return returnValue;
                 }
+
+                if (this.inventoryHandler.isActive)
+                {
+                    // Send the AP item
+                    if (this.inventoryHandler.checksPerItemInChest && LocationUtil.GetLocationType() == LocationUtil.LocationType.Chest)
+                    {
+                        var locationPacket = new LocationChecksPacket { Locations = [GetChestPositionLocationId(SlotIdToChestPos(itemPos))] };
+                        if (conn.session != null)
+                        {
+                            if (conn.session.Locations.AllMissingLocations.Contains(locationPacket.Locations[0]))
+                            {
+                                MessageHandler.messageId.Enqueue(argv[0]->ToLong());
+                            }
+                        }
+                        conn.session?.Socket.SendPacketAsync(locationPacket);
+                    }
+                    else if (this.inventoryHandler.ShopSanity != InventoryHandler.ShopSetting.None && LocationUtil.GetLocationType() == LocationUtil.LocationType.Shop)
+                    {
+                        if (conn.session != null)
+                        {
+                            LocationChecksPacket locationPacket = new();
+                            if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Global)
+                            {
+                                locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, SHOP_POSITIONS[itemPos])] };
+                                    
+                            }
+                            else if (this.inventoryHandler.ShopSanity == InventoryHandler.ShopSetting.Regional)
+                            {
+                                locationPacket = new LocationChecksPacket { Locations = [conn.session.Locations.GetLocationIdFromName(ArchipelagoConnection.GAME, LocationUtil.GetBaseLocation() + " " + SHOP_POSITIONS[itemPos])] };
+                            }
+
+                            if (conn.session.Locations.AllMissingLocations.Contains(locationPacket.Locations[0]))
+                            {
+                                MessageHandler.messageId.Enqueue(argv[0]->ToLong());
+                            }
+                                
+                            conn.session?.Socket.SendPacketAsync(locationPacket);
+
+                            // TODO: Wait until the location is sent to do this (has to be on the main thread)
+                            // Set the item cache to -1, so we create the right type of item, and then place it
+                            RValue items = new(self);
+                            *items["slots"]->Get(2)->Get(argv[2]->ToInt())->Get(1) = -1;
+
+                            // Make it so the item hasn't consumed their one per customer purchase
+                            *items["storeSlotOPCBin"]->Get(argv[2]->ToInt()) = 0;
+
+                        }
+
+                        // TODO: Fix the width of item names
+                        // TODO: Subtract user gold, and set price of AP items
+                    }
+                }
+
+                return returnValue;
             }
 
             if (hookHandler.takeItemHook != null)
