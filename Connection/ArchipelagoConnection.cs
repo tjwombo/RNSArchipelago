@@ -407,13 +407,13 @@ namespace RnSArchipelago.Connection
                 this.logger.PrintMessage("Unable to call reset conn hook", System.Drawing.Color.Red);
             }
 
-            ResetConn();
-
             // Reset the lobby type so that joining into a non AP lobby afterwards isn't broken
             if (rnsReloadedRef.TryGetTarget(out var rnsReloaded) && !isHost)
             {
                 *rnsReloaded.utils.GetGlobalVar("obLobbyType") = 0;
             }
+
+            ResetConn();
 
             return returnValue;
         }
