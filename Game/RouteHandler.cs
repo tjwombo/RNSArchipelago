@@ -34,7 +34,7 @@ namespace RnSArchipelago.Game
         // Upon loading into the lobby for the first time, update the background to match the real first hallway
         internal RValue* UpdateBackground(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
-            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3))
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3) && conn.isHost)
             {
                 HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
 
@@ -416,7 +416,6 @@ namespace RnSArchipelago.Game
                     }
 
                     // Update the name
-                    *instanceValue["stageNameRefresh"] = 1;
                     *instanceValue["stageNameRefresh"] = 1; // TODO: Probably safe to remove after UpdateBackground introduction, but keeping it for now just in case
                 }
 

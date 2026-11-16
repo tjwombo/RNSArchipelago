@@ -257,6 +257,8 @@ namespace RnSArchipelago.Connection
                         var instance = (CLayerInstanceElement*)element;
                         RValue instanceValue = new(instance->Instance);
 
+                        var hallkey = instanceValue["hallkey"];
+
                         for (var i = 0; i < parts.Length; i++)
                         {
                             string[] info = parts[i].Split("~");
@@ -270,10 +272,17 @@ namespace RnSArchipelago.Connection
                                     if (info[2] == "hw_outskirts")
                                     {
                                         subimg = 7;
+
+                                        //TODO: FIND A WAY TO MAKE IT NOT DO IT IF THE BACKGROUND ALREADY MATCHES OR FIX THE CREATE ROUTE CLIENT PROBLEM
+                                        rnsReloaded.ExecuteScript("scr_hallwayprogress_change_stage", instance->Instance, null, []);
+                                        *instanceValue["stageName"] = "Kingdom\r\nOutskirts"; // TODO: MAKE SURE THIS WORKS FOR MAC, BECAUSE THIS IS APPARANTLY A WINDOWS THING AND MAKE IT BETTER
                                     }
                                     else if (info[2] == "hw_geode")
                                     {
                                         subimg = 9;
+
+                                        rnsReloaded.ExecuteScript("scr_hallwayprogress_change_stage", instance->Instance, null, []);
+                                        *instanceValue["stageName"] = "Crack in\r\nthe Geode";
                                     }
                                     else if (info[2] == "hw_keep" || info[2] == "hw_pinnacle")
                                     {
