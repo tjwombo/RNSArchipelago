@@ -384,12 +384,6 @@ namespace RnSArchipelago.Game
                                 *argv[0] = this.inventoryHandler.AvailableItems[index];
                             }
 
-                            // TODO: Trying to force the icon to show when its a chest after the intro room, but its not working (probably will fix itself if/when i can properly start the adventure at the beginning
-                            //HookUtil.FindElementInLayer(rnsReloaded, "RunMenu_Blocker", "xSubimg", out var element);
-                            //var instance = ((CLayerInstanceElement*)element)->Instance;
-                            /*rnsReloaded.FindValue(instance, "yScale")->Real = 1;
-                            rnsReloaded.FindValue(instance, "yScale")->Real = 1;*/
-
                             this.logger.PrintMessage(HookUtil.PrintHook("mod", self, returnValue, argc, argv), System.Drawing.Color.DarkOrange);
                         }
                     }

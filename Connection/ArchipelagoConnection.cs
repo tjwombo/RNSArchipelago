@@ -200,8 +200,12 @@ namespace RnSArchipelago.Connection
             {
                 var buffer = *argv[1];
 
+                // Get the position of the buffer
+                RValue[] args = [buffer];
+                var pos = rnsReloaded.ExecuteCodeFunction("buffer_tell", null, null, args);
+
                 // Make sure we're at the beginning of the buffer
-                RValue[] args = [buffer, 0, 0];
+                args = [buffer, 0, 0];
                 rnsReloaded.ExecuteCodeFunction("buffer_seek", null, null, args);
 
                 // Read the buffer as a string
@@ -209,7 +213,7 @@ namespace RnSArchipelago.Connection
                 var message = rnsReloaded.ExecuteCodeFunction("buffer_read", null, null, args);
 
                 // Reset the position to the beginning for the actual read
-                args = [buffer, 0, 0];
+                args = [buffer, 0, pos!.Value];
                 rnsReloaded.ExecuteCodeFunction("buffer_seek", null, null, args);
 
                 if (message.HasValue)
