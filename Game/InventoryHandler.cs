@@ -21,7 +21,7 @@ namespace RnSArchipelago.Game
             Reset();
         }
 
-        private int lastRecievedIndex = -1;
+        internal int lastRecievedIndex = -1;
 
         internal bool isActive;
         internal bool isKingdomSanity;

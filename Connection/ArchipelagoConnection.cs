@@ -440,6 +440,7 @@ namespace RnSArchipelago.Connection
 
             this.session = null;
             isHost = true; // Need to reset this because leaving crashes if we skip change_stage call, which we do for clients
+            inventoryHandler.lastRecievedIndex = -1;
         }
 
         internal void ConnectionOpened()
