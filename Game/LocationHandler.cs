@@ -31,7 +31,7 @@ namespace RnSArchipelago.Game
         internal static readonly string[] SHOP_POSITIONS = ["Full Heal Potion Slot", "Level Up Slot", "Potion 1 Slot", "Potion 2 Slot", "Potion 3 Slot",
                   "Primary Upgrade Slot", "Secondary Upgrade Slot", "Special Upgrade Slot", "Defensive Upgrade Slot"];
 
-        private long[] cacheToItemId = new long[9];
+        private readonly long[] cacheToItemId = new long[9];
 
         internal LocationHandler(WeakReference<IRNSReloaded> rnsReloadedRef, Random rand, ILogger logger,
             HookHandler hookHandler, InventoryHandler inventoryHandler, ShopItemsHandler shopItemsHandler,

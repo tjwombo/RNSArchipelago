@@ -396,6 +396,12 @@ namespace RnSArchipelago.Connection
 
             ResetConn();
 
+            // Reset the lobby type so that joining into a non AP lobby afterwards isn't broken
+            if (rnsReloadedRef.TryGetTarget(out var rnsReloaded) && !isHost)
+            {
+                *rnsReloaded.utils.GetGlobalVar("obLobbyType") = 0;
+            }
+
             return returnValue;
         }
 

@@ -100,15 +100,15 @@ namespace RnSArchipelago
                 HookUtil.rnsReloadedRef = rnsReloadedRef;
                 HookUtil.logger = logger;
 
+                hookHandler = new HookHandler(rnsReloadedRef, hooks);
+
                 LocationUtil.rnsReloadedRef = rnsReloadedRef;
 
-                inventoryHandler = new InventoryHandler(logger, data);
+                inventoryHandler = new InventoryHandler(logger, data, hookHandler);
 
                 KingdomUtil.rnsReloadedRef = rnsReloadedRef;
                 KingdomUtil.inventoryHandler = inventoryHandler;
                 KingdomUtil.ResetRandom();
-
-                hookHandler = new HookHandler(rnsReloadedRef, hooks);
 
                 saveHandler = new SaveHandler(rnsReloadedRef, logger, hookHandler);
 

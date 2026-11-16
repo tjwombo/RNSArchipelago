@@ -27,6 +27,7 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? stopColorHook;
 
         // Route Handler
+        internal IHook<ScriptDelegate>? updateBackgroundHook;
         internal IHook<ScriptDelegate>? chooseHallsHook;
         internal IHook<ScriptDelegate>? endHallsHook;
         internal IHook<ScriptDelegate>? stopXSubimgHook;
@@ -359,6 +360,12 @@ namespace RnSArchipelago.Game
         internal void SetupKingdomManagement(RouteHandler routeHandler, MapHandler mapHandler, KingdomHandler kingdomHandler, LocationHandler locationHandler)
         {
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
+
+            // Update the background to match kingdom after receiving index 0
+            var updateBackgroundScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stage_play_music_firstnotch") - 100000);
+            this.updateBackgroundHook = hooks.CreateHook<ScriptDelegate>(routeHandler.UpdateBackground, updateBackgroundScript->Functions->Function);
+            this.updateBackgroundHook.Activate();
+            this.updateBackgroundHook.Enable();
 
             // Create the planned route
             var chooseHallsScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_hallwayprogress_choose_halls") - 100000);

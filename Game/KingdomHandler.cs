@@ -101,7 +101,7 @@ namespace RnSArchipelago.Game
                 HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
                 var instance = ((CLayerInstanceElement*)element)->Instance;
 
-                // TODO: FIND A CALL THIS ON JOIN AFTER ITEM RECIEVING FOR HOST
+                // TODO: FIND A CALL THIS ON JOIN AFTER ITEM RECEIVING FOR HOST
                 rnsReloaded.ExecuteScript("scr_hallwayprogress_change_stage", instance, null, []);
             }
 

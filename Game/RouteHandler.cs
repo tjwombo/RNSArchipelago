@@ -31,6 +31,41 @@ namespace RnSArchipelago.Game
             this.inventoryHandler.UpdateHallwayOnItemRecieve += OnKingdomRecieve;
         }
 
+        // Upon loading into the lobby for the first time, update the background to match the real first hallway
+        internal RValue* UpdateBackground(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
+        {
+            if (this.rnsReloadedRef.TryGetTarget(out var rnsReloaded) && (rnsReloaded.utils.GetGlobalVar("obLobbyType")->ToInt() == 3))
+            {
+                HookUtil.FindElementInLayer("RunMenu_Blocker", "stageNameKey", out var element);
+
+                var instance = (CLayerInstanceElement*)element;
+                RValue instanceValue = new(instance->Instance);
+
+                var originalStartingHallway = instanceValue["hallkey"]->Get(0)->ToString();
+
+                rnsReloaded.ExecuteScript("scr_hallwayprogress_choose_halls", instance->Instance, null, []);
+
+
+                if (originalStartingHallway != instanceValue["hallkey"]->Get(0)->ToString())
+                {
+                    rnsReloaded.ExecuteScript("scr_hallwayprogress_change_stage", instance->Instance, null, []);
+                }
+
+                hookHandler.updateBackgroundHook?.Disable();
+            }
+
+            if (hookHandler.updateBackgroundHook != null)
+            {
+                returnValue = hookHandler.updateBackgroundHook.OriginalFunction(self, other, returnValue, argc, argv);
+            }
+            else
+            {
+                this.logger.PrintMessage("Unable to call choose halls hook", System.Drawing.Color.Red);
+            }
+
+            return returnValue;
+        }
+
         // Update the kingdoms we visit and the number of kingdoms we should be visiting
         internal void OnKingdomRecieve(bool currentHallwayPosAware = true)
         {
@@ -40,10 +75,7 @@ namespace RnSArchipelago.Game
 
                 UpdateRouteLength();
 
-                if (conn.isHost)
-                {
-                    conn.SendClientHallway();
-                }
+                conn.SendClientHallway();
             }
         }
 
@@ -385,6 +417,7 @@ namespace RnSArchipelago.Game
 
                     // Update the name
                     *instanceValue["stageNameRefresh"] = 1;
+                    *instanceValue["stageNameRefresh"] = 1; // TODO: Probably safe to remove after UpdateBackground introduction, but keeping it for now just in case
                 }
 
                 unplacedKingdoms.Remove("hw_outskirts");
@@ -612,7 +645,7 @@ namespace RnSArchipelago.Game
 
                 if (this.inventoryHandler.isActive)
                 {
-                    OnKingdomRecieve(false);  
+                    OnKingdomRecieve(false);
                 }
 
                 return returnValue;

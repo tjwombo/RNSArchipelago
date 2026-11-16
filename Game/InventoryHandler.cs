@@ -11,13 +11,17 @@ namespace RnSArchipelago.Game
     {
         private readonly ILogger logger;
         private readonly SharedData data;
+        private readonly HookHandler hookHandler;
 
-        public InventoryHandler(ILogger logger, SharedData data)
+        public InventoryHandler(ILogger logger, SharedData data, HookHandler hookHandler)
         {
             this.logger = logger;
             this.data = data;
+            this.hookHandler = hookHandler;
             Reset();
         }
+
+        private int lastRecievedIndex = -1;
 
         internal bool isActive;
         internal bool isKingdomSanity;
@@ -1006,6 +1010,28 @@ namespace RnSArchipelago.Game
         // Handle receiving kingdom related items
         internal void ReceiveItem(ReceivedItemsPacket receivedItem)
         {
+            // Don't process already processed items
+            if (receivedItem.Index <= lastRecievedIndex)
+            {
+                return;
+            }
+
+            lastRecievedIndex = receivedItem.Index;
+
+            // Don't print or apply route changes until all the items have been registered
+            bool updatedKingdom = false;
+            bool updatedRegion = false;
+            bool updatedClasses = false;
+            bool updatedItems = false;
+            bool updatedTreasuresphere = false;
+            bool updatedPrimaryUpgrades = false;
+            bool updatedSecondaryUpgrades = false;
+            bool updatedSpecialUpgrades = false;
+            bool updatedDefensiveUpgrades = false;
+            bool updatedPotions = false;
+            bool updatedShira = false;
+            bool updatedWitch = false;
+
             foreach (var item in receivedItem.Items)
             {
                 var itemName = data.idToItem.Get<string>(item.Item);
@@ -1014,35 +1040,32 @@ namespace RnSArchipelago.Game
                     if (KINGDOMS.Contains(itemName))
                     {
                         AvailableKingdoms = AvailableKingdoms | (KingdomFlags)Enum.Parse(typeof(KingdomFlags), itemName.Replace(" ", "_").Replace("'", ""));
-                        logger.PrintMessage("Kingdoms: " + AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
-                        UpdateHallwayOnItemRecieve?.Invoke();
+                        updatedKingdom = true;
                     }
                     else if (itemName == "Progressive Region")
                     {
                         ProgressiveRegions++;
-                        logger.PrintMessage("Progressive Regions: " + ProgressiveRegions, System.Drawing.Color.DarkOrange);
-                        UpdateHallwayOnItemRecieve?.Invoke();
+                        updatedRegion = true;
                     }
                     else if (CLASSES.Contains(itemName))
                     {
                         AvailableClasses = AvailableClasses | (ClassFlags)Enum.Parse(typeof(ClassFlags), itemName);
-                        logger.PrintMessage("Classes: " + AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
+                        updatedClasses = true;
                     }
                     else if (ITEMSETS.Contains(itemName))
                     {
                         AddItemsFromItemset(itemName);
-                        logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+                        updatedItems = true;
                     }
                     else if (ITEMS.TryGetValue(itemName, out long individualItem))
                     {
                         availableItems.Add(individualItem);
-                        logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
                     }
                     else if (itemName == "Treasuresphere")
                     {
                         AddChest?.Invoke();
                         AvailableTreasurespheres++;
-                        logger.PrintMessage("Treasuresphers: " + AvailableTreasurespheres, System.Drawing.Color.DarkOrange);
+                        updatedTreasuresphere = true;
                     }
                     else if (UPGRADES.Contains(itemName))
                     {
@@ -1084,57 +1107,136 @@ namespace RnSArchipelago.Game
                                 AvailableSpecialUpgrades = AvailableSpecialUpgrades | SpecialUpgradeFlags.SpecialOpalGem;
                                 AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | DefensiveUpgradeFlags.DefensiveOpalGem;
                             }
-                            logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                            logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                            logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
-                            logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            updatedPrimaryUpgrades = true;
+                            updatedSecondaryUpgrades = true;
+                            updatedSpecialUpgrades = true;
+                            updatedDefensiveUpgrades = true;
                         }
                         else if (enumName.Contains("Primary"))
                         {
                             AvailablePrimaryUpgrades = AvailablePrimaryUpgrades | (PrimaryUpgradeFlags)Enum.Parse(typeof(PrimaryUpgradeFlags), enumName);
-                            logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            updatedPrimaryUpgrades = true;
                         }
                         else if (enumName.Contains("Secondary"))
                         {
                             AvailableSecondaryUpgrades = AvailableSecondaryUpgrades | (SecondaryUpgradeFlags)Enum.Parse(typeof(SecondaryUpgradeFlags), enumName);
-                            logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            updatedSecondaryUpgrades = true;
                         }
                         else if (enumName.Contains("Special"))
                         {
                             AvailableSpecialUpgrades = AvailableSpecialUpgrades | (SpecialUpgradeFlags)Enum.Parse(typeof(SpecialUpgradeFlags), enumName);
-                            logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            updatedSpecialUpgrades = true;
                         }
                         else if (enumName.Contains("Defensive"))
                         {
                             AvailableDefensiveUpgrades = AvailableDefensiveUpgrades | (DefensiveUpgradeFlags)Enum.Parse(typeof(DefensiveUpgradeFlags), enumName);
-                            logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+                            updatedDefensiveUpgrades = true;
                         }
                     }
                     else if (POTIONS.Contains(itemName))
                     {
                         AvailablePotions.Add(itemName);
-                        logger.PrintMessage("Potions: " + string.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
+                        updatedPotions = true;
                     }
                     else if (itemName.Contains("Defeat"))
                     {
                         if (itemName.Contains("Shira"))
                         {
                             shira_victories.Add(itemName);
-                            logger.PrintMessage("Shira Victories: " + string.Join(", ", shira_victories), System.Drawing.Color.DarkOrange);
+                            updatedShira = true;
                         }
                         else if (itemName.Contains("Witch"))
                         {
                             witch_victories.Add(itemName);
-                            logger.PrintMessage("Witch Victories: " + string.Join(", ", witch_victories), System.Drawing.Color.DarkOrange);
-                        }
-
-                        if (CheckGoal())
-                        {
-                            SendGoal?.Invoke();
+                            updatedWitch = true;
                         }
                     }
                 }
 
+            }
+
+            if (updatedKingdom)
+            {
+                logger.PrintMessage("Kingdoms: " + AvailableKingdoms.ToString(), System.Drawing.Color.DarkOrange);
+                if (receivedItem.Index == 0)
+                {
+                    hookHandler.updateBackgroundHook?.Enable();
+                }
+                else
+                {
+                    UpdateHallwayOnItemRecieve?.Invoke();
+                }
+            }
+
+            if (updatedRegion)
+            {
+                logger.PrintMessage("Progressive Regions: " + ProgressiveRegions, System.Drawing.Color.DarkOrange);
+                if (receivedItem.Index == 0)
+                {
+                    hookHandler.updateBackgroundHook?.Enable();
+                }
+                else
+                {
+                    UpdateHallwayOnItemRecieve?.Invoke();
+                }
+            }
+
+            if (updatedClasses)
+            {
+                logger.PrintMessage("Classes: " + AvailableClasses.ToString(), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedItems)
+            {
+                logger.PrintMessage("Items: " + string.Join(", ", AvailableItems), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedTreasuresphere)
+            {
+                logger.PrintMessage("Treasuresphers: " + AvailableTreasurespheres, System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedPrimaryUpgrades)
+            {
+                logger.PrintMessage("Primaries: " + AvailablePrimaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedSecondaryUpgrades)
+            {
+                logger.PrintMessage("Secondaries: " + AvailableSecondaryUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedSpecialUpgrades)
+            {
+                logger.PrintMessage("Specials: " + AvailableSpecialUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedDefensiveUpgrades)
+            {
+                logger.PrintMessage("Defensives: " + AvailableDefensiveUpgrades.ToString(), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedPotions)
+            {
+                logger.PrintMessage("Potions: " + string.Join(", ", AvailablePotions), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedShira)
+            {
+                logger.PrintMessage("Shira Victories: " + string.Join(", ", shira_victories), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedWitch)
+            {
+                logger.PrintMessage("Witch Victories: " + string.Join(", ", witch_victories), System.Drawing.Color.DarkOrange);
+            }
+
+            if (updatedShira || updatedWitch)
+            {
+                if (CheckGoal())
+                {
+                    SendGoal?.Invoke();
+                }
             }
         }
 
