@@ -362,7 +362,7 @@ namespace RnSArchipelago.Game
             if (!rnsReloadedRef.TryGetTarget(out var rnsReloaded)) return;
 
             // Update the background to match kingdom after receiving index 0
-            var updateBackgroundScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_stage_play_music_firstnotch") - 100000);
+            var updateBackgroundScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_input_check") - 100000);
             this.updateBackgroundHook = hooks.CreateHook<ScriptDelegate>(routeHandler.UpdateBackground, updateBackgroundScript->Functions->Function);
             this.updateBackgroundHook.Activate();
             this.updateBackgroundHook.Enable();
