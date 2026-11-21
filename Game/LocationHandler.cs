@@ -245,7 +245,7 @@ namespace RnSArchipelago.Game
                     var location = LocationUtil.GetLocationType();
 
                     // If the item that is being created is a chest loot item
-                    if (location == LocationUtil.LocationType.Chest && conn.isHost) // Only set shot items as client as hp and lvl up isn't sent from host
+                    if (location == LocationUtil.LocationType.Chest && conn.isHost)
                     {
                         // Set the item to the archipelago item
                         if (this.inventoryHandler.checksPerItemInChest)
@@ -310,10 +310,15 @@ namespace RnSArchipelago.Game
                     else if (location == LocationUtil.LocationType.Shop)
                     {
                         // Determine which slot item we are at, which should be the first -1
-                        for (var i = 0; i < 9; i++)
-                        {
+                        for (var i = 0; i < 9; i++) { 
+                        
                             if (rnsReloaded.FindValue(self, "slots")->Get(2)->Get(i)->Get(1)->ToInt() == -1)
                             {
+                                if (i > 1 && !conn.isHost)
+                                {
+                                    break;
+                                }
+
                                 GetUnclaimedShopItems(i, out ScoutedItemInfo? info, out long archipelagoItem, out bool useArchipelagoItem, out long locationId);
 
                                 if (conn.session != null && info != null && MessageHandler.HintConfigIsOn(modConfig, info.Flags))
