@@ -689,8 +689,11 @@ namespace RnSArchipelago.Game
                             {
                                 MessageHandler.messageId.Enqueue(argv[0]->ToLong());
                             }
-                                
-                            conn.session?.Socket.SendPacketAsync(locationPacket);
+
+                            conn.session?.Socket.SendPacketAsync(locationPacket).ContinueWith(_ =>
+                            {
+                                hookHandler.restockShopHook!.Enable();
+                            });
 
                             // TODO: Wait until the location is sent to do this (has to be on the main thread)
                             // Set the item cache to -1, so we create the right type of item, and then place it
@@ -722,44 +725,6 @@ namespace RnSArchipelago.Game
             return returnValue;
         }
 
-        // Activate the restock shop hook when the shop opens
-        internal RValue* OpenShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
-        {
-            if (hookHandler.openShopHook != null)
-            {
-                returnValue = hookHandler.openShopHook.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                this.logger.PrintMessage("Unable to call open shop hook", System.Drawing.Color.Red);
-            }
-
-            if (this.inventoryHandler.isActive)
-            {
-                hookHandler.restockShopHook!.Enable();
-            }
-            return returnValue;
-        }
-
-        // Deactivate the restock shop hook when the shop closes
-        internal RValue* CloseShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
-        {
-            if (hookHandler.closeShopHook != null)
-            {
-                returnValue = hookHandler.closeShopHook.OriginalFunction(self, other, returnValue, argc, argv);
-            }
-            else
-            {
-                this.logger.PrintMessage("Unable to call close shop hook", System.Drawing.Color.Red);
-            }
-
-            if (this.inventoryHandler.isActive)
-            {
-                hookHandler.restockShopHook!.Disable();
-            }
-            return returnValue;
-        }
-
         // Creates and set a new item when an AP shop item was bought
         internal RValue* RestockShop(CInstance* self, CInstance* other, RValue* returnValue, int argc, RValue** argv)
         {
@@ -778,6 +743,9 @@ namespace RnSArchipelago.Game
                             rnsReloaded.ExecuteScript("scr_itemsys_populate_loot_end", instance, other, []); // Makes it so the new item is highlightable
                         }
                     }
+
+                    *rnsReloaded.FindValue(instance, "storeRefreshStringWidths") = 1;
+                    hookHandler.restockShopHook!.Disable();
                 }
             }
             if (hookHandler.restockShopHook != null)

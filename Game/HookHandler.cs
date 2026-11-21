@@ -69,8 +69,6 @@ namespace RnSArchipelago.Game
         internal IHook<ScriptDelegate>? RemoveAPItemTieHook;
         internal IHook<ScriptDelegate>? spawnTreasuresphereOnStartHook;
         internal IHook<ScriptDelegate>? readyCheckHook;
-        internal IHook<ScriptDelegate>? openShopHook;
-        internal IHook<ScriptDelegate>? closeShopHook;
         internal IHook<ScriptDelegate>? restockShopHook;
 
         // Scout Handler
@@ -312,18 +310,6 @@ namespace RnSArchipelago.Game
             this.spawnTreasuresphereOnStartHook = hooks.CreateHook<ScriptDelegate>(locationHandler.SpawnTreasuresphereOnStart, treasuresphereOnStartScript->Functions->Function);
             this.spawnTreasuresphereOnStartHook.Activate();
             this.spawnTreasuresphereOnStartHook.Enable();
-
-            // Activates the restock shop hook when the store is opened
-            var openShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_open_store") - 100000);
-            this.openShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.OpenShop, openShopScript->Functions->Function);
-            this.openShopHook.Activate();
-            this.openShopHook.Enable();
-
-            // Deactivates the restock shop hook when the store is closed
-            var closeShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_close_store") - 100000);
-            this.closeShopHook = hooks.CreateHook<ScriptDelegate>(locationHandler.CloseShop, closeShopScript->Functions->Function);
-            this.closeShopHook.Activate();
-            this.closeShopHook.Enable();
 
             // Replacese the newly bought AP item in the shop
             var restockShopScript = rnsReloaded.GetScriptData(rnsReloaded.ScriptFindId("scr_itemsys_draw_itemrow") - 100000);
